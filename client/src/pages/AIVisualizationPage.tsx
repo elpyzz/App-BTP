@@ -93,7 +93,7 @@ export default function AIVisualizationPage() {
           </div>
           
           {/* Step indicator */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-40">
             <Badge variant={step === 'upload' ? 'default' : 'secondary'}>1. Upload</Badge>
             <Badge variant={step === 'configure' ? 'default' : 'secondary'}>2. Configuration</Badge>
             <Badge variant={step === 'generating' ? 'default' : 'secondary'}>3. Génération</Badge>

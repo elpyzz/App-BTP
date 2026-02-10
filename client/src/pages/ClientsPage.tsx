@@ -4,15 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Plus, Building, Mail, Phone, Image as ImageIcon } from 'lucide-react';
+import { User, Plus, Building, Mail, Phone, Image as ImageIcon, Edit2, Trash2, MoreVertical, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useChantiers, Client } from '@/context/ChantiersContext';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export default function ClientsPage() {
-  const { clients, chantiers, addClient } = useChantiers();
+  const { clients, chantiers, addClient, updateClient, deleteClient } = useChantiers();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' });
+  const [editedClient, setEditedClient] = useState({ name: '', email: '', phone: '' });
 
   // Filtrer les chantiers du client sélectionné
   const clientChantiers = selectedClient
@@ -32,6 +39,48 @@ export default function ClientsPage() {
     setIsDialogOpen(false);
   };
 
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setEditedClient({ name: client.name, email: client.email, phone: client.phone });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateClient = () => {
+    if (!editingClient || !editedClient.name || !editedClient.email || !editedClient.phone) return;
+
+    updateClient(editingClient.id, editedClient);
+    setIsEditDialogOpen(false);
+    setEditingClient(null);
+    setEditedClient({ name: '', email: '', phone: '' });
+    
+    // Mettre à jour le client sélectionné si c'est celui qui a été modifié
+    if (selectedClient && selectedClient.id === editingClient.id) {
+      setSelectedClient({ ...selectedClient, ...editedClient });
+    }
+  };
+
+  const handleDeleteClick = (clientId: string) => {
+    setClientToDelete(clientId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (clientToDelete) {
+      deleteClient(clientToDelete);
+      setClientToDelete(null);
+      setDeleteConfirmOpen(false);
+      
+      // Si le client supprimé était sélectionné, revenir à la liste
+      if (selectedClient && selectedClient.id === clientToDelete) {
+        setSelectedClient(null);
+      }
+    }
+  };
+
+  const getClientChantiersCount = (clientId: string) => {
+    return chantiers.filter(c => c.clientId === clientId).length;
+  };
+
   return (
     <PageWrapper>
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20">
@@ -44,14 +93,15 @@ export default function ClientsPage() {
               {selectedClient ? `Chantiers de ${selectedClient.name}` : 'Gérez vos clients et leurs chantiers'}
             </p>
           </div>
-          {!selectedClient && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter un Client
-                </Button>
-              </DialogTrigger>
+          <div className="flex items-center gap-2 mr-40">
+            {!selectedClient && (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter un Client
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
                 <DialogHeader>
                   <DialogTitle className="text-white">Nouveau Client</DialogTitle>
@@ -104,16 +154,36 @@ export default function ClientsPage() {
                 </div>
               </DialogContent>
             </Dialog>
-          )}
-          {selectedClient && (
-            <Button
-              variant="outline"
-              onClick={() => setSelectedClient(null)}
-              className="text-white border-white/20 hover:bg-white/10"
-            >
-              Retour à la liste
-            </Button>
-          )}
+            )}
+            {selectedClient && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEditClient(selectedClient)}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDeleteClick(selectedClient.id)}
+                  className="text-red-400 border-red-400/50 hover:bg-red-400/20"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedClient(null)}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour à la liste
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -123,10 +193,57 @@ export default function ClientsPage() {
             {clients.map((client) => (
               <Card
                 key={client.id}
-                className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setSelectedClient(client)}
+                className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:shadow-lg transition-shadow relative group"
               >
-                <CardHeader>
+                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-black/60 backdrop-blur-sm border border-white/20 hover:bg-black/80 text-white"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-black/30 backdrop-blur-lg border-white/10 text-white">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClient(client);
+                        }}
+                        className="text-white hover:bg-white/10 cursor-pointer"
+                      >
+                        Voir les détails
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClient(client);
+                        }}
+                        className="text-white hover:bg-white/10 cursor-pointer"
+                      >
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(client.id);
+                        }}
+                        className="text-red-300 hover:bg-red-500/20 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <CardHeader
+                  className="cursor-pointer"
+                  onClick={() => setSelectedClient(client)}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
                       <User className="h-6 w-6 text-white/70" />
@@ -136,7 +253,10 @@ export default function ClientsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent 
+                  className="space-y-2 cursor-pointer"
+                  onClick={() => setSelectedClient(client)}
+                >
                   <div className="flex items-center gap-2 text-sm text-white/70">
                     <Mail className="h-4 w-4" />
                     {client.email}
@@ -148,7 +268,7 @@ export default function ClientsPage() {
                   <div className="mt-4 pt-4 border-t border-white/10">
                     <div className="flex items-center gap-2 text-sm text-white/70">
                       <Building className="h-4 w-4" />
-                      {chantiers.filter(c => c.clientId === client.id).length} chantier(s)
+                      {getClientChantiersCount(client.id)} chantier(s)
                     </div>
                   </div>
                 </CardContent>
@@ -230,6 +350,105 @@ export default function ClientsPage() {
           </div>
         )}
       </main>
+
+      {/* Dialog de modification */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditingClient(null);
+          setEditedClient({ name: '', email: '', phone: '' });
+        }
+      }}>
+        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">Modifier le Client</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white">Nom</Label>
+              <Input
+                value={editedClient.name}
+                onChange={(e) => setEditedClient({ ...editedClient, name: e.target.value })}
+                placeholder="Nom du client"
+                className="bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+              />
+            </div>
+            <div>
+              <Label className="text-white">Email</Label>
+              <Input
+                type="email"
+                value={editedClient.email}
+                onChange={(e) => setEditedClient({ ...editedClient, email: e.target.value })}
+                placeholder="email@example.com"
+                className="bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+              />
+            </div>
+            <div>
+              <Label className="text-white">Téléphone</Label>
+              <Input
+                type="tel"
+                value={editedClient.phone}
+                onChange={(e) => setEditedClient({ ...editedClient, phone: e.target.value })}
+                placeholder="06 12 34 56 78"
+                className="bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="text-white border-white/20 hover:bg-white/10"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleUpdateClient}
+                disabled={!editedClient.name || !editedClient.email || !editedClient.phone}
+                className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30 disabled:opacity-50"
+              >
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmation de suppression */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Supprimer le client</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/70">
+              {clientToDelete && (() => {
+                const client = clients.find(c => c.id === clientToDelete);
+                const chantiersCount = getClientChantiersCount(clientToDelete);
+                return (
+                  <>
+                    Êtes-vous sûr de vouloir supprimer le client <strong>{client?.name}</strong> ?
+                    {chantiersCount > 0 && (
+                      <span className="block mt-2 text-yellow-300">
+                        ⚠️ Attention : {chantiersCount} chantier(s) associé(s) seront également supprimé(s).
+                      </span>
+                    )}
+                    Cette action est irréversible.
+                  </>
+                );
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-white border-white/20 hover:bg-white/10">
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-red-500/20 text-red-300 border border-red-500/50 hover:bg-red-500/30"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageWrapper>
   );
 }

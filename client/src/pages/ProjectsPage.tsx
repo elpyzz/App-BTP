@@ -168,7 +168,7 @@ export default function ProjectsPage() {
             </h1>
             <p className="text-sm text-white/70">Gérez tous vos projets en cours et terminés</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 flex-shrink-0 ml-auto lg:ml-0 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-3 flex-shrink-0 ml-auto lg:ml-0 w-full lg:w-auto mr-0 lg:mr-40">
             <Link href="/dashboard/clients">
               <Button variant="outline" className="text-white border-white/20 hover:bg-white/10 whitespace-nowrap flex-shrink-0">
                 <User className="h-4 w-4 mr-2" />
