@@ -1,7 +1,8 @@
 import { PageWrapper } from '@/components/PageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Building, Clock, User } from 'lucide-react';
-import { useChantiers } from '@/context/ChantiersContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar, Building, Clock, User, Image as ImageIcon, Mail, Phone } from 'lucide-react';
+import { useChantiers, Chantier } from '@/context/ChantiersContext';
 import { useState, useMemo } from 'react';
 
 // Fonction pour parser la durée et calculer la date de fin
@@ -77,13 +78,20 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 export default function PlanningPage() {
-  const { chantiers } = useChantiers();
+  const { chantiers, clients } = useChantiers();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedChantier, setSelectedChantier] = useState<Chantier | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   
   const days = useMemo(() => getDaysInMonth(year, month), [year, month]);
+
+  const handleChantierClick = (chantier: Chantier) => {
+    setSelectedChantier(chantier);
+    setIsDialogOpen(true);
+  };
   
   // Fonction pour obtenir les chantiers d'un jour donné
   const getChantiersForDay = (date: Date) => {
@@ -216,7 +224,11 @@ export default function PlanningPage() {
                         return (
                           <div
                             key={chantier.id}
-                            className={`text-xs p-1 rounded truncate ${
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleChantierClick(chantier);
+                            }}
+                            className={`text-xs p-1 rounded truncate cursor-pointer transition-all hover:opacity-80 hover:scale-105 ${
                               chantier.statut === 'planifié'
                                 ? 'bg-blue-500/30 text-blue-200 border border-blue-500/50'
                                 : chantier.statut === 'en cours'
@@ -295,7 +307,8 @@ export default function PlanningPage() {
                     return (
                       <div
                         key={chantier.id}
-                        className="p-3 rounded-lg bg-black/20 border border-white/10"
+                        onClick={() => handleChantierClick(chantier)}
+                        className="p-3 rounded-lg bg-black/20 border border-white/10 cursor-pointer transition-all hover:bg-black/30 hover:border-white/20 hover:scale-[1.02]"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -332,6 +345,128 @@ export default function PlanningPage() {
           </Card>
         )}
       </main>
+
+      {/* Dialog de détails du chantier */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white text-2xl flex items-center gap-2">
+              <Building className="h-6 w-6" />
+              {selectedChantier?.nom}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedChantier && (
+            <div className="space-y-6 mt-4">
+              {/* Informations client */}
+              <div className="p-4 bg-black/20 backdrop-blur-md border border-white/10 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Informations Client
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-white">
+                    <span className="font-medium">Nom :</span>
+                    <span>{selectedChantier.clientName}</span>
+                  </div>
+                  {(() => {
+                    const client = clients.find(c => c.id === selectedChantier.clientId);
+                    return client ? (
+                      <>
+                        {client.email && (
+                          <div className="flex items-center gap-2 text-white/80">
+                            <Mail className="h-4 w-4" />
+                            <span>{client.email}</span>
+                          </div>
+                        )}
+                        {client.phone && (
+                          <div className="flex items-center gap-2 text-white/80">
+                            <Phone className="h-4 w-4" />
+                            <span>{client.phone}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+
+              {/* Dates et durée */}
+              <div className="p-4 bg-black/20 backdrop-blur-md border border-white/10 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Planning
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-white">
+                    <span className="font-medium">Date de début :</span>
+                    <span>{new Date(selectedChantier.dateDebut).toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white">
+                    <span className="font-medium">Date de fin :</span>
+                    <span>{calculateEndDate(selectedChantier.dateDebut, selectedChantier.duree).toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">Durée :</span>
+                    <span>{selectedChantier.duree}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statut */}
+              <div className="p-4 bg-black/20 backdrop-blur-md border border-white/10 rounded-lg">
+                <h3 className="text-lg font-semibold text-white mb-3">Statut</h3>
+                <span className={`px-3 py-1.5 rounded text-sm font-medium ${
+                  selectedChantier.statut === 'planifié'
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/50'
+                    : selectedChantier.statut === 'en cours'
+                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
+                    : 'bg-green-500/20 text-green-300 border border-green-500/50'
+                }`}>
+                  {selectedChantier.statut}
+                </span>
+              </div>
+
+              {/* Images */}
+              {selectedChantier.images && selectedChantier.images.length > 0 && (
+                <div className="p-4 bg-black/20 backdrop-blur-md border border-white/10 rounded-lg">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    Photos du Chantier ({selectedChantier.images.length})
+                  </h3>
+                  <div className={`grid gap-3 ${
+                    selectedChantier.images.length === 1 
+                      ? 'grid-cols-1' 
+                      : selectedChantier.images.length === 2
+                      ? 'grid-cols-2'
+                      : 'grid-cols-2 md:grid-cols-3'
+                  }`}>
+                    {selectedChantier.images.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Photo ${index + 1} du chantier ${selectedChantier.nom}`}
+                          className="w-full h-48 object-cover rounded-lg border border-white/20 hover:border-white/40 transition-colors"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </PageWrapper>
   );
 }

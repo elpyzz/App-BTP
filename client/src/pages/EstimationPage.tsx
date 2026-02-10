@@ -1,27 +1,24 @@
 import { PageWrapper } from '@/components/PageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Wand2, Plus, Calculator, User, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useChantiers, type Client } from '@/context/ChantiersContext';
 
 interface UploadedImage {
   file: File;
   preview: string;
 }
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-}
-
 export default function EstimationPage() {
+  const { clients, addClient } = useChantiers();
   const [step, setStep] = useState(1);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientMode, setClientMode] = useState<'select' | 'create'>('select');
   const [newClient, setNewClient] = useState({ name: '', email: '', phone: '' });
   const [chantierInfo, setChantierInfo] = useState({
     surface: '',
@@ -113,8 +110,17 @@ export default function EstimationPage() {
       id: Date.now().toString(),
       ...newClient
     };
+    addClient(client);
     setSelectedClient(client);
     setNewClient({ name: '', email: '', phone: '' });
+    setClientMode('select');
+  };
+
+  const handleSelectClient = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setSelectedClient(client);
+    }
   };
 
   return (
@@ -247,53 +253,121 @@ export default function EstimationPage() {
                           variant="outline"
                           size="sm"
                           className="mt-2 text-white border-white/20 hover:bg-white/10"
-                          onClick={() => setSelectedClient(null)}
+                          onClick={() => {
+                            setSelectedClient(null);
+                            setClientMode('select');
+                          }}
                         >
                           Changer de client
                         </Button>
                       </div>
                     ) : (
                       <div className="space-y-4 p-4 bg-black/20 backdrop-blur-md border border-white/10 rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="text-sm font-medium text-white block mb-2">Nom</label>
-                            <input
-                              type="text"
-                              value={newClient.name}
-                              onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                              className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
-                              placeholder="Nom du client"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-white block mb-2">Email</label>
-                            <input
-                              type="email"
-                              value={newClient.email}
-                              onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                              className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
-                              placeholder="email@example.com"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium text-white block mb-2">Téléphone</label>
-                            <input
-                              type="tel"
-                              value={newClient.phone}
-                              onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                              className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
-                              placeholder="06 12 34 56 78"
-                            />
-                          </div>
+                        {/* Mode Selection */}
+                        <div className="flex gap-2 mb-4">
+                          <Button
+                            type="button"
+                            variant={clientMode === 'select' ? 'default' : 'outline'}
+                            onClick={() => setClientMode('select')}
+                            className={`flex-1 ${
+                              clientMode === 'select'
+                                ? 'bg-violet-500 text-white'
+                                : 'bg-transparent border-white/20 text-white hover:bg-white/10'
+                            }`}
+                          >
+                            Sélectionner un client existant
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={clientMode === 'create' ? 'default' : 'outline'}
+                            onClick={() => setClientMode('create')}
+                            className={`flex-1 ${
+                              clientMode === 'create'
+                                ? 'bg-violet-500 text-white'
+                                : 'bg-transparent border-white/20 text-white hover:bg-white/10'
+                            }`}
+                          >
+                            Créer un nouveau client
+                          </Button>
                         </div>
-                        <Button
-                          onClick={handleCreateClient}
-                          disabled={!newClient.name || !newClient.email || !newClient.phone}
-                          className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30 disabled:opacity-50"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Ajouter le client
-                        </Button>
+
+                        {clientMode === 'select' ? (
+                          <div className="space-y-4">
+                            {clients.length > 0 ? (
+                              <div>
+                                <label className="text-sm font-medium text-white block mb-2">Sélectionner un client</label>
+                                <Select onValueChange={handleSelectClient}>
+                                  <SelectTrigger className="w-full bg-black/20 backdrop-blur-md border-white/10 text-white">
+                                    <SelectValue placeholder="Choisir un client..." />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-black/30 backdrop-blur-lg border-white/10 text-white">
+                                    {clients.map((client) => (
+                                      <SelectItem key={client.id} value={client.id} className="text-white">
+                                        {client.name} - {client.email}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-black/10 rounded-lg border border-white/5 text-center">
+                                <p className="text-white/70 text-sm mb-2">Aucun client enregistré</p>
+                                <p className="text-white/50 text-xs mb-3">Créez votre premier client pour commencer</p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setClientMode('create')}
+                                  className="text-white border-white/20 hover:bg-white/10"
+                                >
+                                  Créer un client
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="text-sm font-medium text-white block mb-2">Nom</label>
+                                <input
+                                  type="text"
+                                  value={newClient.name}
+                                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                                  className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+                                  placeholder="Nom du client"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-white block mb-2">Email</label>
+                                <input
+                                  type="email"
+                                  value={newClient.email}
+                                  onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                                  className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+                                  placeholder="email@example.com"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-sm font-medium text-white block mb-2">Téléphone</label>
+                                <input
+                                  type="tel"
+                                  value={newClient.phone}
+                                  onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                                  className="w-full px-3 py-2 rounded-md border bg-black/20 backdrop-blur-md border-white/10 text-white placeholder:text-white/50"
+                                  placeholder="06 12 34 56 78"
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              onClick={handleCreateClient}
+                              disabled={!newClient.name || !newClient.email || !newClient.phone}
+                              className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30 disabled:opacity-50"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Ajouter le client
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
