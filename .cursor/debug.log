@@ -1,0 +1,63 @@
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770715497302,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770715497306,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770715497306,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770715497307,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770715497307,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770715497309,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770715497309,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770715497309,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770715497309,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770715497363,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770715497364,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770715497363,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770715497366,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770715594726,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770715594731,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770715594731,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770715594732,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770715594732,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770715594734,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770715594734,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770715594735,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770715594735,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770715594768,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770715594769,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770715594769,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770715610648,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770715610653,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770715610653,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770715610653,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770715610655,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770715610654,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770715610655,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770715610656,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770715610656,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770715610684,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770715610685,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770715610685,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770715899276,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770715899281,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770715899281,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770715899282,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770715899282,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770715899284,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770715899284,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770715899285,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770715899285,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770715899321,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770715899321,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770715899321,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770715899324,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770715997589,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770715997593,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770715997594,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770715997594,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770715997594,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770715997596,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770715997596,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770715997596,"runId":"run1","hypothesisId":"D"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770715997597,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770715997632,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770715997633,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770715997633,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770715997636,"runId":"run1","hypothesisId":"B"}
