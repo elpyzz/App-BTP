@@ -10,6 +10,31 @@ async function getCurrentUserId(): Promise<string | null> {
   return null;
 }
 
+// Permission interface and constants
+export interface Permission {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+export const AVAILABLE_PERMISSIONS: Permission[] = [
+  { id: 'view_projects', label: 'Voir les chantiers', description: 'Accès en lecture aux projets' },
+  { id: 'edit_projects', label: 'Modifier les chantiers', description: 'Modification des projets' },
+  { id: 'view_quotes', label: 'Voir les devis', description: 'Accès en lecture aux devis' },
+  { id: 'edit_quotes', label: 'Modifier les devis', description: 'Modification des devis' },
+  { id: 'view_clients', label: 'Voir les clients', description: 'Accès aux informations clients' },
+  { id: 'view_planning', label: 'Voir le planning', description: 'Accès au planning' },
+  { id: 'view_analytics', label: 'Voir les analytics', description: 'Accès aux statistiques' }
+];
+
+export const PERMISSION_ROUTES: Record<string, string> = {
+  'view_projects': '/team-dashboard/projects',
+  'view_planning': '/team-dashboard/planning',
+  'view_analytics': '/team-dashboard/analytics',
+  'view_quotes': '/team-dashboard/quotes',
+  'view_clients': '/team-dashboard/clients'
+};
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -21,6 +46,20 @@ export interface TeamMember {
   user_id: string | null;
   created_at: string;
   updated_at: string;
+  permissions: string[]; // Obligatoire
+}
+
+// Helper functions for permissions
+export function hasPermission(member: TeamMember | null, permission: string): boolean {
+  if (!member || !member.permissions) return false;
+  return member.permissions.includes(permission);
+}
+
+export function getAuthorizedRoutes(member: TeamMember | null): string[] {
+  if (!member || !member.permissions) return [];
+  return member.permissions
+    .map(permission => PERMISSION_ROUTES[permission])
+    .filter(route => route !== undefined);
 }
 
 // Helper functions pour gérer les données mock
@@ -43,6 +82,10 @@ export async function fetchTeamMembers(): Promise<TeamMember[]> {
     const data = getMockData('team_members');
     return data
       .filter((member: TeamMember) => member.user_id === userId && member.status === 'actif')
+      .map((member: TeamMember) => ({
+        ...member,
+        permissions: member.permissions || [] // Rétrocompatibilité
+      }))
       .sort((a: TeamMember, b: TeamMember) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
@@ -64,6 +107,7 @@ export async function createTeamMember(member: Omit<TeamMember, 'id' | 'created_
       id: crypto.randomUUID(),
       login_code: loginCode,
       user_id: userId,
+      permissions: member.permissions || [], // S'assurer que permissions existe
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -92,6 +136,7 @@ export async function updateTeamMember(id: string, updates: Partial<TeamMember>)
     data[index] = {
       ...data[index],
       ...updates,
+      permissions: updates.permissions !== undefined ? updates.permissions : (data[index].permissions || []), // Préserver les permissions
       updated_at: new Date().toISOString(),
     };
     saveMockData('team_members', data);
@@ -129,7 +174,13 @@ export async function verifyTeamMemberCode(code: string, invitationToken?: strin
       const member = data.find(
         (m: TeamMember) => m.id === invitation.team_member_id && m.login_code === code && m.status === 'actif'
       );
-      return member || null;
+      if (member) {
+        return {
+          ...member,
+          permissions: member.permissions || [] // Rétrocompatibilité
+        };
+      }
+      return null;
     }
 
     const userId = await getCurrentUserId();
@@ -139,7 +190,13 @@ export async function verifyTeamMemberCode(code: string, invitationToken?: strin
     const member = data.find(
       (m: TeamMember) => m.login_code === code && m.status === 'actif' && m.user_id === userId
     );
-    return member || null;
+    if (member) {
+      return {
+        ...member,
+        permissions: member.permissions || [] // Rétrocompatibilité
+      };
+    }
+    return null;
   } catch (error) {
     console.error('Error verifying code:', error);
     return null;

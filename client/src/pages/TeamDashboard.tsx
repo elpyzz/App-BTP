@@ -6,20 +6,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import TeamSidebar from '@/components/TeamSidebar'
 import { GlobalBackground } from '@/components/GlobalBackground'
+import { hasPermission, getAuthorizedRoutes, PERMISSION_ROUTES, type TeamMember } from '@/lib/supabase'
 import { 
   Building, 
   Calendar,
   Clock,
   CheckCircle,
   AlertCircle,
+  Settings,
 } from 'lucide-react'
+import MaterialSettings from '@/components/MaterialSettings'
 import { useChantiers } from '@/context/ChantiersContext'
 
 export default function TeamDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'planning'>('overview')
-  const [location] = useLocation()
+  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'planning' | 'settings'>('overview')
+  const [location, setLocation] = useLocation()
   const { chantiers } = useChantiers()
-  const [teamMember, setTeamMember] = useState<any>(null)
+  const [teamMember, setTeamMember] = useState<TeamMember | null>(null)
 
   useEffect(() => {
     // Vérifier si l'utilisateur est un membre d'équipe
@@ -32,8 +35,36 @@ export default function TeamDashboard() {
       return
     }
 
-    setTeamMember(JSON.parse(storedMember))
+    try {
+      const member = JSON.parse(storedMember);
+      setTeamMember(member);
+    } catch (error) {
+      console.error('Erreur lors du parsing des données membre:', error);
+      window.location.href = '/';
+    }
   }, [])
+
+  useEffect(() => {
+    if (!teamMember || !teamMember.permissions || teamMember.permissions.length === 0) {
+      // Aucune permission, on peut laisser l'utilisateur sur la vue d'ensemble
+      return;
+    }
+
+    // Vérifier si la route actuelle nécessite une permission
+    const requiredPermission = Object.entries(PERMISSION_ROUTES).find(
+      ([_, route]) => location.startsWith(route)
+    )?.[0];
+
+    if (requiredPermission && !hasPermission(teamMember, requiredPermission)) {
+      // Rediriger vers la première route autorisée ou la vue d'ensemble
+      const authorizedRoutes = getAuthorizedRoutes(teamMember);
+      if (authorizedRoutes.length > 0) {
+        setLocation(authorizedRoutes[0]);
+      } else {
+        setLocation('/team-dashboard');
+      }
+    }
+  }, [location, teamMember, setLocation])
 
   // Stats pour le membre
   const myChantiers = chantiers.filter(c => c.statut !== 'terminé')
@@ -81,23 +112,36 @@ export default function TeamDashboard() {
                 >
                   Vue d'ensemble
                 </Button>
+                {hasPermission(teamMember, 'view_projects') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('projects')}
+                    className={activeTab === 'projects' ? 'bg-white/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30' : 'text-white hover:bg-white/10'}
+                  >
+                    <Building className="h-4 w-4 mr-2" />
+                    Mes Chantiers
+                  </Button>
+                )}
+                {hasPermission(teamMember, 'view_planning') && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('planning')}
+                    className={activeTab === 'planning' ? 'bg-white/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30' : 'text-white hover:bg-white/10'}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Planning
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setActiveTab('projects')}
-                  className={activeTab === 'projects' ? 'bg-white/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30' : 'text-white hover:bg-white/10'}
+                  onClick={() => setActiveTab('settings')}
+                  className={activeTab === 'settings' ? 'bg-white/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30' : 'text-white hover:bg-white/10'}
                 >
-                  <Building className="h-4 w-4 mr-2" />
-                  Mes Chantiers
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setActiveTab('planning')}
-                  className={activeTab === 'planning' ? 'bg-white/20 backdrop-blur-md border border-white/10 text-white hover:bg-white/30' : 'text-white hover:bg-white/10'}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Planning
+                  <Settings className="h-4 w-4 mr-2" />
+                  Paramètres
                 </Button>
               </div>
             </div>
@@ -178,7 +222,7 @@ export default function TeamDashboard() {
                 </div>
               )}
 
-              {activeTab === 'projects' && (
+              {activeTab === 'projects' && hasPermission(teamMember, 'view_projects') && (
                 <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
                   <CardHeader>
                     <CardTitle>Mes Chantiers</CardTitle>
@@ -223,7 +267,7 @@ export default function TeamDashboard() {
                 </Card>
               )}
 
-              {activeTab === 'planning' && (
+              {activeTab === 'planning' && hasPermission(teamMember, 'view_planning') && (
                 <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
                   <CardHeader>
                     <CardTitle>Mon Planning</CardTitle>
@@ -235,6 +279,10 @@ export default function TeamDashboard() {
                     {/* Ici vous pouvez ajouter un calendrier simplifié si nécessaire */}
                   </CardContent>
                 </Card>
+              )}
+
+              {activeTab === 'settings' && (
+                <MaterialSettings />
               )}
             </main>
           </motion.div>

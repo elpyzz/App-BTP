@@ -6,6 +6,7 @@ import { Upload, Wand2, Plus, Calculator, User, ArrowRight, ArrowLeft, CheckCirc
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChantiers, type Client } from '@/context/ChantiersContext';
+import { getMaterials } from '@/lib/materials';
 
 interface UploadedImage {
   file: File;
@@ -76,10 +77,10 @@ export default function EstimationPage() {
     }
   };
 
-  const handleLaunchAnalysis = () => {
+  const handleLaunchAnalysis = async () => {
     // TODO: Implement AI analysis API call
     // Simulate analysis results
-    setAnalysisResults({
+    const defaultResults = {
       tempsRealisation: '3 semaines',
       materiaux: [
         { nom: 'Carrelage', quantite: '50m²', prix: 800 },
@@ -101,7 +102,81 @@ export default function EstimationPage() {
         'Outil spécifique nécessaire : coupe-carrelage électrique',
         'Vérifier l\'état des murs avant pose du carrelage'
       ]
-    });
+    };
+
+    // Récupérer les matériaux du membre connecté (si connecté en tant que membre d'équipe)
+    try {
+      const materials = await getMaterials();
+      
+      if (materials.length > 0) {
+        // Remplacer les prix par les prix réels des matériaux
+        const estimatedMaterials = defaultResults.materiaux.map((mat: any) => {
+          // Extraire la quantité et l'unité
+          const quantityMatch = mat.quantite.match(/(\d+(?:[.,]\d+)?)\s*(m²|m|kg|L|unité|sac|rouleau)/i);
+          const quantity = quantityMatch ? parseFloat(quantityMatch[1].replace(',', '.')) : 0;
+          const unit = quantityMatch ? quantityMatch[2] : '';
+
+          // Chercher un matériau correspondant par nom ou catégorie
+          const matchingMaterial = materials.find(m => {
+            const matNameLower = mat.nom.toLowerCase();
+            const materialNameLower = m.name.toLowerCase();
+            
+            // Correspondance exacte ou partielle du nom
+            if (materialNameLower.includes(matNameLower) || matNameLower.includes(materialNameLower)) {
+              // Vérifier aussi que l'unité correspond si disponible
+              if (unit && m.unit.toLowerCase() !== unit.toLowerCase()) {
+                return false;
+              }
+              return true;
+            }
+            return false;
+          });
+
+          if (matchingMaterial && quantity > 0) {
+            // Calculer le prix basé sur la quantité et le prix unitaire
+            const calculatedPrice = quantity * matchingMaterial.unitPrice;
+            return {
+              ...mat,
+              prix: Math.round(calculatedPrice * 100) / 100, // Arrondir à 2 décimales
+              prixReel: true // Indicateur que le prix vient de la base de données
+            };
+          }
+          
+          return {
+            ...mat,
+            prixReel: false // Prix par défaut
+          };
+        });
+
+        // Recalculer le coût total des matériaux
+        const totalMateriaux = estimatedMaterials.reduce((sum: number, mat: any) => sum + mat.prix, 0);
+        
+        // Recalculer le coût total
+        const newCoutTotal = defaultResults.repartitionCouts.transport + 
+                             defaultResults.repartitionCouts.mainOeuvre + 
+                             totalMateriaux + 
+                             defaultResults.repartitionCouts.autres;
+
+        setAnalysisResults({
+          ...defaultResults,
+          materiaux: estimatedMaterials,
+          repartitionCouts: {
+            ...defaultResults.repartitionCouts,
+            materiaux: totalMateriaux
+          },
+          coutTotal: newCoutTotal,
+          benefice: newCoutTotal - (newCoutTotal - defaultResults.marge)
+        });
+      } else {
+        // Aucun matériau enregistré, utiliser les prix par défaut
+        setAnalysisResults(defaultResults);
+      }
+    } catch (error) {
+      console.error('Error loading materials for estimation:', error);
+      // En cas d'erreur, utiliser les prix par défaut
+      setAnalysisResults(defaultResults);
+    }
+    
     setStep(3);
   };
 
@@ -492,11 +567,18 @@ export default function EstimationPage() {
                     <div className="space-y-2">
                       {analysisResults.materiaux.map((mat: any, index: number) => (
                         <div key={index} className="flex justify-between items-center p-2 bg-black/10 rounded">
-                          <div>
-                            <p className="text-white font-medium">{mat.nom}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="text-white font-medium">{mat.nom}</p>
+                              {mat.prixReel && (
+                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30">
+                                  Prix réel
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-white/70">{mat.quantite}</p>
                           </div>
-                          <p className="text-white font-semibold">{mat.prix} €</p>
+                          <p className="text-white font-semibold">{mat.prix.toFixed(2)} €</p>
                         </div>
                       ))}
                     </div>

@@ -6,10 +6,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Users, Plus, User, Mail, Phone, Trash2, Building, Key, Edit2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { fetchTeamMembers, createTeamMember, updateTeamMember, deleteTeamMember, type TeamMember } from '@/lib/supabase';
+import { fetchTeamMembers, createTeamMember, updateTeamMember, deleteTeamMember, type TeamMember, AVAILABLE_PERMISSIONS } from '@/lib/supabase';
 import { Copy, Check } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -22,8 +24,10 @@ export default function TeamPage() {
     role: '',
     email: '',
     phone: '',
-    login_code: ''
+    login_code: '',
+    permissions: [] as string[]
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     loadMembers();
@@ -44,9 +48,35 @@ export default function TeamPage() {
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
+  const handlePermissionChange = (permissionId: string, checked: boolean, isEditing = false) => {
+    if (isEditing && editingMember) {
+      const updatedPermissions = checked
+        ? [...(editingMember.permissions || []), permissionId]
+        : (editingMember.permissions || []).filter(p => p !== permissionId);
+      
+      setEditingMember({
+        ...editingMember,
+        permissions: updatedPermissions
+      });
+    } else {
+      const updatedPermissions = checked
+        ? [...newMember.permissions, permissionId]
+        : newMember.permissions.filter(p => p !== permissionId);
+      
+      setNewMember({
+        ...newMember,
+        permissions: updatedPermissions
+      });
+    }
+  };
+
   const handleAddMember = async () => {
     if (!newMember.name || !newMember.role || !newMember.email || !newMember.login_code) {
-      alert("Veuillez remplir tous les champs, y compris le code de connexion");
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs, y compris le code de connexion",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -57,6 +87,7 @@ export default function TeamPage() {
       phone: newMember.phone || null,
       status: 'actif',
       login_code: newMember.login_code,
+      permissions: newMember.permissions,
     });
 
     if (result) {
@@ -70,8 +101,18 @@ export default function TeamPage() {
       }
 
       await loadMembers();
-      setNewMember({ name: '', role: '', email: '', phone: '', login_code: '' });
+      setNewMember({ name: '', role: '', email: '', phone: '', login_code: '', permissions: [] });
       setIsDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: "Membre ajouté avec succès",
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'ajout du membre",
+        variant: "destructive"
+      });
     }
   };
 
@@ -90,12 +131,23 @@ export default function TeamPage() {
       phone: editingMember.phone,
       status: editingMember.status,
       login_code: editingMember.login_code,
+      permissions: editingMember.permissions || [],
     });
 
     if (result) {
       await loadMembers();
       setEditingMember(null);
       setIsEditDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: "Membre mis à jour avec succès",
+      });
+    } else {
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour",
+        variant: "destructive"
+      });
     }
   };
 
@@ -118,13 +170,14 @@ export default function TeamPage() {
             </h1>
             <p className="text-sm text-white/70">Gérez les membres de votre équipe et leurs codes de connexion</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un Membre
-              </Button>
-            </DialogTrigger>
+          <div className="mr-40 lg:mr-40">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter un Membre
+                </Button>
+              </DialogTrigger>
             <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="text-white">Ajouter un Nouveau Membre</DialogTitle>
@@ -188,6 +241,34 @@ export default function TeamPage() {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-white font-medium">Fonctionnalités autorisées</Label>
+                  <div className="space-y-3 max-h-60 overflow-y-auto p-2 bg-black/10 rounded-lg border border-white/10">
+                    {AVAILABLE_PERMISSIONS.map(permission => (
+                      <div key={permission.id} className="flex items-start space-x-3">
+                        <Checkbox
+                          id={permission.id}
+                          checked={newMember.permissions.includes(permission.id)}
+                          onCheckedChange={(checked) => 
+                            handlePermissionChange(permission.id, checked as boolean, false)
+                          }
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label 
+                            htmlFor={permission.id} 
+                            className="text-white cursor-pointer text-sm font-medium"
+                          >
+                            {permission.label}
+                          </Label>
+                          {permission.description && (
+                            <p className="text-xs text-white/60 mt-1">{permission.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="text-white border-white/20 hover:bg-white/10">
@@ -197,6 +278,7 @@ export default function TeamPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
       </header>
 
@@ -358,6 +440,34 @@ export default function TeamPage() {
                       <SelectItem value="inactif">Inactif</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white font-medium">Fonctionnalités autorisées</Label>
+                  <div className="space-y-3 max-h-60 overflow-y-auto p-2 bg-black/10 rounded-lg border border-white/10">
+                    {AVAILABLE_PERMISSIONS.map(permission => (
+                      <div key={permission.id} className="flex items-start space-x-3">
+                        <Checkbox
+                          id={`edit-${permission.id}`}
+                          checked={(editingMember.permissions || []).includes(permission.id)}
+                          onCheckedChange={(checked) => 
+                            handlePermissionChange(permission.id, checked as boolean, true)
+                          }
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <Label 
+                            htmlFor={`edit-${permission.id}`} 
+                            className="text-white cursor-pointer text-sm font-medium"
+                          >
+                            {permission.label}
+                          </Label>
+                          {permission.description && (
+                            <p className="text-xs text-white/60 mt-1">{permission.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

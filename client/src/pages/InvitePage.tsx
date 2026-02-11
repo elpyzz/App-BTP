@@ -77,8 +77,14 @@ export default function InvitePage() {
       const member = await verifyTeamMemberCode(code.trim(), token)
 
       if (member) {
+        // S'assurer que les permissions sont incluses
+        const memberWithPermissions = {
+          ...member,
+          permissions: member.permissions || []
+        };
+        
         // Stocker les infos du membre dans le localStorage
-        localStorage.setItem('teamMember', JSON.stringify(member))
+        localStorage.setItem('teamMember', JSON.stringify(memberWithPermissions))
         localStorage.setItem('userType', 'team')
 
         // Marquer l'invitation comme utilisée
