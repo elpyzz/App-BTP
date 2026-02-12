@@ -1,9 +1,11 @@
 import { PageWrapper } from '@/components/PageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, Building, Clock, User, Image as ImageIcon, Mail, Phone } from 'lucide-react';
+import { Calendar, Building, Clock, User, Image as ImageIcon, Mail, Phone, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { useChantiers, Chantier } from '@/context/ChantiersContext';
 import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 // Fonction pour parser la durée et calculer la date de fin
 function calculateEndDate(dateDebut: string, duree: string): Date {
@@ -82,11 +84,18 @@ export default function PlanningPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedChantier, setSelectedChantier] = useState<Chantier | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [filterStatut, setFilterStatut] = useState<string>('tous');
   
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   
   const days = useMemo(() => getDaysInMonth(year, month), [year, month]);
+
+  // Filtrer les chantiers selon le filtre de statut
+  const filteredChantiers = useMemo(() => {
+    if (filterStatut === 'tous') return chantiers;
+    return chantiers.filter(c => c.statut === filterStatut);
+  }, [chantiers, filterStatut]);
 
   const handleChantierClick = (chantier: Chantier) => {
     setSelectedChantier(chantier);
@@ -95,7 +104,7 @@ export default function PlanningPage() {
   
   // Fonction pour obtenir les chantiers d'un jour donné
   const getChantiersForDay = (date: Date) => {
-    return chantiers.filter(chantier => {
+    return filteredChantiers.filter(chantier => {
       const startDate = new Date(chantier.dateDebut);
       const endDate = calculateEndDate(chantier.dateDebut, chantier.duree);
       
@@ -132,6 +141,18 @@ export default function PlanningPage() {
   const goToToday = () => {
     setCurrentDate(new Date());
   };
+
+  const handleMonthChange = (newMonth: number) => {
+    setCurrentDate(new Date(year, newMonth, 1));
+  };
+
+  const handleYearChange = (newYear: number) => {
+    setCurrentDate(new Date(newYear, month, 1));
+  };
+
+  // Générer les années disponibles (année actuelle ± 5 ans)
+  const currentYear = new Date().getFullYear();
+  const availableYears = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
   
   return (
     <PageWrapper>
@@ -150,30 +171,104 @@ export default function PlanningPage() {
         {/* Contrôles du calendrier */}
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={goToPreviousMonth}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            <div className="flex flex-col gap-4">
+              {/* Première ligne : Navigation principale */}
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  {/* Bouton Mois précédent */}
+                  <Button
+                    onClick={goToPreviousMonth}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Précédent
+                  </Button>
+                  
+                  {/* Sélecteur de mois/année */}
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={month.toString()}
+                      onValueChange={(value) => handleMonthChange(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[140px] bg-white/10 border-white/20 text-white hover:bg-white/20">
+                        <SelectValue>{monthNames[month]}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 border-white/20 text-white">
+                        {monthNames.map((name, index) => (
+                          <SelectItem key={index} value={index.toString()}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select
+                      value={year.toString()}
+                      onValueChange={(value) => handleYearChange(parseInt(value))}
+                    >
+                      <SelectTrigger className="w-[100px] bg-white/10 border-white/20 text-white hover:bg-white/20">
+                        <SelectValue>{year}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/90 border-white/20 text-white">
+                        {availableYears.map((y) => (
+                          <SelectItem key={y} value={y.toString()}>
+                            {y}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Bouton Mois suivant */}
+                  <Button
+                    onClick={goToNextMonth}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
+                  >
+                    Suivant
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+                
+                {/* Bouton Aujourd'hui */}
+                <Button
+                  onClick={goToToday}
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-500/20 border-blue-500/50 text-blue-200 hover:bg-blue-500/30 hover:border-blue-500/70"
                 >
-                  <Calendar className="h-5 w-5 rotate-180" />
-                </button>
-                <h2 className="text-xl font-semibold">
-                  {monthNames[month]} {year}
-                </h2>
-                <button
-                  onClick={goToNextMonth}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <Calendar className="h-5 w-5" />
-                </button>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Aujourd'hui
+                </Button>
               </div>
-              <button
-                onClick={goToToday}
-                className="px-4 py-2 rounded-lg bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors text-sm"
-              >
-                Aujourd'hui
-              </button>
+
+              {/* Deuxième ligne : Filtres */}
+              <div className="flex items-center gap-4 pt-2 border-t border-white/10">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-white/70" />
+                  <span className="text-sm text-white/70">Filtrer par statut :</span>
+                </div>
+                <div className="flex gap-2">
+                  {['tous', 'planifié', 'en cours', 'terminé'].map((statut) => (
+                    <Button
+                      key={statut}
+                      onClick={() => setFilterStatut(statut)}
+                      variant={filterStatut === statut ? "default" : "outline"}
+                      size="sm"
+                      className={
+                        filterStatut === statut
+                          ? 'bg-blue-500/30 border-blue-500/50 text-blue-200 hover:bg-blue-500/40'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      }
+                    >
+                      {statut === 'tous' ? 'Tous' : statut.charAt(0).toUpperCase() + statut.slice(1)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -199,17 +294,17 @@ export default function PlanningPage() {
                 return (
                   <div
                     key={index}
-                    className={`min-h-[100px] p-2 rounded-lg border ${
+                    className={`min-h-[100px] p-2 rounded-lg border transition-all ${
                       day.isCurrentMonth
                         ? isToday
-                          ? 'bg-white/10 border-white/30 border-2'
-                          : 'bg-black/10 border-white/10'
+                          ? 'bg-blue-500/20 border-blue-500/50 border-2 shadow-lg shadow-blue-500/20'
+                          : 'bg-black/10 border-white/10 hover:bg-black/20'
                         : 'bg-black/5 border-white/5 opacity-50'
                     }`}
                   >
                     <div className={`text-sm font-medium mb-1 ${
                       day.isCurrentMonth ? 'text-white' : 'text-white/50'
-                    } ${isToday ? 'text-white font-bold' : ''}`}>
+                    } ${isToday ? 'text-blue-200 font-bold' : ''}`}>
                       {day.date.getDate()}
                     </div>
                     
@@ -228,7 +323,7 @@ export default function PlanningPage() {
                               e.stopPropagation();
                               handleChantierClick(chantier);
                             }}
-                            className={`text-xs p-1 rounded truncate cursor-pointer transition-all hover:opacity-80 hover:scale-105 ${
+                            className={`text-xs p-1.5 rounded truncate cursor-pointer transition-all hover:opacity-90 hover:scale-105 hover:shadow-md ${
                               chantier.statut === 'planifié'
                                 ? 'bg-blue-500/30 text-blue-200 border border-blue-500/50'
                                 : chantier.statut === 'en cours'
@@ -280,7 +375,7 @@ export default function PlanningPage() {
         </Card>
 
         {/* Liste des chantiers du mois */}
-        {chantiers.length > 0 && (
+        {filteredChantiers.length > 0 && (
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -290,7 +385,7 @@ export default function PlanningPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {chantiers
+                {filteredChantiers
                   .filter(chantier => {
                     const startDate = new Date(chantier.dateDebut);
                     const endDate = calculateEndDate(chantier.dateDebut, chantier.duree);
