@@ -13,16 +13,7 @@ import {
   Plus
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-
-const chartData = [
-  { name: 'Jan', revenus: 120000, depenses: 80000 },
-  { name: 'Fév', revenus: 135000, depenses: 85000 },
-  { name: 'Mar', revenus: 150000, depenses: 90000 },
-  { name: 'Avr', revenus: 165000, depenses: 95000 },
-  { name: 'Mai', revenus: 180000, depenses: 100000 },
-  { name: 'Jun', revenus: 195000, depenses: 105000 },
-]
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
 
 export default function Dashboard() {
   const [location, setLocation] = useLocation();
@@ -77,55 +68,130 @@ export default function Dashboard() {
 function OverviewTab() {
   const [, setLocation] = useLocation();
   const [unsignedQuotesCount, setUnsignedQuotesCount] = useState(0);
+  const [totalQuotes, setTotalQuotes] = useState(0);
+  const [signedQuotesCount, setSignedQuotesCount] = useState(0);
+  const [signedQuotesTotal, setSignedQuotesTotal] = useState(0);
+  const [quotesByMonth, setQuotesByMonth] = useState<any[]>([]);
   
-  // Charger le nombre de devis non signés
+  // Charger les statistiques des devis
   useEffect(() => {
-    const loadUnsignedQuotes = () => {
+    const loadQuotesStats = () => {
       try {
         const quotesData = localStorage.getItem('quotes_data');
         if (quotesData) {
           const quotes = JSON.parse(quotesData);
           const unsigned = quotes.filter((q: any) => !q.isSigned).length;
+          const signed = quotes.filter((q: any) => q.isSigned);
+          const signedTotal = signed.reduce((sum: number, q: any) => sum + (q.total || 0), 0);
+          
           setUnsignedQuotesCount(unsigned);
+          setTotalQuotes(quotes.length);
+          setSignedQuotesCount(signed.length);
+          setSignedQuotesTotal(signedTotal);
+          
+          // Calculer les devis par mois (6 derniers mois)
+          const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+          const now = new Date();
+          const monthData: { [key: string]: { signed: number; unsigned: number; total: number } } = {};
+          
+          // Initialiser les 6 derniers mois
+          for (let i = 5; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthKey = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            monthData[monthKey] = { signed: 0, unsigned: 0, total: 0 };
+          }
+          
+          // Compter les devis par mois
+          quotes.forEach((quote: any) => {
+            if (quote.createdAt) {
+              const quoteDate = new Date(quote.createdAt);
+              const monthKey = `${months[quoteDate.getMonth()]} ${quoteDate.getFullYear()}`;
+              
+              if (monthData[monthKey]) {
+                monthData[monthKey].total++;
+                if (quote.isSigned) {
+                  monthData[monthKey].signed++;
+                } else {
+                  monthData[monthKey].unsigned++;
+                }
+              }
+            }
+          });
+          
+          // Convertir en tableau pour le graphique
+          const chartData = Object.keys(monthData).map(month => ({
+            mois: month,
+            signés: monthData[month].signed,
+            'non signés': monthData[month].unsigned,
+            total: monthData[month].total
+          }));
+          
+          setQuotesByMonth(chartData);
         } else {
           setUnsignedQuotesCount(0);
+          setTotalQuotes(0);
+          setSignedQuotesCount(0);
+          setSignedQuotesTotal(0);
+          setQuotesByMonth([]);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des devis:', error);
         setUnsignedQuotesCount(0);
+        setTotalQuotes(0);
+        setSignedQuotesCount(0);
+        setSignedQuotesTotal(0);
+        setQuotesByMonth([]);
       }
     };
     
-    loadUnsignedQuotes();
+    loadQuotesStats();
     
     // Rafraîchir périodiquement
-    const interval = setInterval(loadUnsignedQuotes, 2000);
+    const interval = setInterval(loadQuotesStats, 2000);
     
     // Écouter les changements de storage
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'quotes_data') {
-        loadUnsignedQuotes();
+        loadQuotesStats();
       }
     };
     
+    // Écouter les événements personnalisés
+    const handleQuotesUpdate = () => {
+      loadQuotesStats();
+    };
+    
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('quotesUpdated', handleQuotesUpdate);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('quotesUpdated', handleQuotesUpdate);
     };
   }, []);
+  
+  // Formater le montant
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
   
   return (
     <div className="space-y-6">
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricCard
-          title="Chiffre d'Affaires"
-          value="€165,000"
-          change="+18.2%"
-          icon={Euro}
+          title="Total des Devis"
+          value={totalQuotes.toString()}
+          change={`${unsignedQuotesCount} en attente`}
+          icon={FileText}
           delay={0.1}
+          onClick={() => setLocation('/dashboard/dossiers')}
         />
         <MetricCard
           title="Chantiers Actifs"
@@ -136,12 +202,12 @@ function OverviewTab() {
           onClick={() => setLocation('/dashboard/projects')}
         />
         <MetricCard
-          title="Devis En Attente"
-          value={unsignedQuotesCount.toString()}
-          change="Réponses attendues"
-          icon={FileText}
+          title="CA des Devis Signés"
+          value={formatAmount(signedQuotesTotal)}
+          change={`${signedQuotesCount} devis signés`}
+          icon={Euro}
           delay={0.3}
-          onClick={() => setLocation('/dashboard/dossiers?tab=unsigned')}
+          onClick={() => setLocation('/dashboard/dossiers?tab=signed')}
         />
       </div>
 
@@ -149,31 +215,49 @@ function OverviewTab() {
       <div className="grid grid-cols-1 gap-6">
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl text-white">
           <CardHeader>
-            <CardTitle className="text-white font-light">Évolution des Revenus</CardTitle>
+            <CardTitle className="text-white font-light">Évolution des Devis (6 derniers mois)</CardTitle>
+            <p className="text-sm text-white/60 mt-1">Répartition des devis signés et non signés par mois</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorRevenus" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.5}/>
-                    <stop offset="95%" stopColor="#a78bfa" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
-                <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.7)" />
-                <YAxis stroke="rgba(255, 255, 255, 0.7)" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '12px',
-                    color: '#fff'
-                  }}
-                />
-                <Area type="monotone" dataKey="revenus" stroke="#a78bfa" fillOpacity={1} fill="url(#colorRevenus)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {quotesByMonth.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={quotesByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                  <XAxis 
+                    dataKey="mois" 
+                    stroke="rgba(255, 255, 255, 0.7)"
+                    tick={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: 12 }}
+                  />
+                  <YAxis 
+                    stroke="rgba(255, 255, 255, 0.7)"
+                    tick={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: 12 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '12px',
+                      color: '#fff'
+                    }}
+                    cursor={{ fill: 'rgba(167, 139, 250, 0.1)' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                    iconType="square"
+                  />
+                  <Bar dataKey="signés" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="non signés" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-white/50">
+                <div className="text-center">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Aucun devis créé</p>
+                  <p className="text-sm mt-2">Les données apparaîtront ici une fois que vous aurez créé des devis</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

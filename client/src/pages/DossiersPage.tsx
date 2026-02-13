@@ -23,7 +23,9 @@ import {
   Building,
   ArrowUpDown,
   CheckCircle,
-  X
+  X,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -67,6 +69,8 @@ export default function DossiersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<Quote | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
 
@@ -253,6 +257,41 @@ export default function DossiersPage() {
       title: 'Export en cours',
       description: `Export du devis ${quote.id}...`,
     });
+  };
+
+  // Supprimer un devis
+  const handleDeleteQuote = (quote: Quote) => {
+    setQuoteToDelete(quote);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteQuote = () => {
+    if (!quoteToDelete) return;
+
+    try {
+      const updatedQuotes = quotes.filter(q => q.id !== quoteToDelete.id);
+      setQuotes(updatedQuotes);
+      previousQuotesLengthRef.current = updatedQuotes.length;
+      localStorage.setItem('quotes_data', JSON.stringify(updatedQuotes));
+      
+      // Déclencher un événement personnalisé pour notifier les autres composants
+      window.dispatchEvent(new Event('quotesUpdated'));
+      
+      toast({
+        title: 'Devis supprimé',
+        description: `Le devis "${quoteToDelete.chantierName}" a été supprimé avec succès`,
+      });
+      
+      setIsDeleteDialogOpen(false);
+      setQuoteToDelete(null);
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de supprimer le devis',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -474,6 +513,7 @@ export default function DossiersPage() {
                               size="sm"
                               onClick={() => handleViewDetails(quote)}
                               className="text-white border-white/20 hover:bg-white/10"
+                              title="Voir les détails"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -482,8 +522,18 @@ export default function DossiersPage() {
                               size="sm"
                               onClick={() => handleExportQuote(quote)}
                               className="text-white border-white/20 hover:bg-white/10"
+                              title="Télécharger le devis"
                             >
                               <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteQuote(quote)}
+                              className="text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
+                              title="Supprimer le devis"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </CardContent>
@@ -578,6 +628,70 @@ export default function DossiersPage() {
                   >
                     {selectedQuote.isSigned ? 'Signé' : 'Non signé'}
                   </Badge>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmation de suppression */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="bg-black/20 backdrop-blur-xl border border-red-500/50 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-400" />
+                Confirmer la suppression
+              </DialogTitle>
+            </DialogHeader>
+            {quoteToDelete && (
+              <div className="space-y-4">
+                <p className="text-white/90">
+                  Êtes-vous sûr de vouloir supprimer le devis <strong>"{quoteToDelete.chantierName}"</strong> ?
+                </p>
+                <div className="p-4 bg-black/20 rounded-lg space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/70">Client:</span>
+                    <span className="text-white">{quoteToDelete.clientName}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/70">Montant:</span>
+                    <span className="text-white font-semibold">{quoteToDelete.total.toFixed(2)} €</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/70">Statut:</span>
+                    <Badge
+                      className={
+                        quoteToDelete.isSigned
+                          ? 'bg-green-500/20 text-green-300 border-green-500/50'
+                          : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
+                      }
+                    >
+                      {quoteToDelete.isSigned ? 'Signé' : 'Non signé'}
+                    </Badge>
+                  </div>
+                </div>
+                <p className="text-red-300 text-sm">
+                  ⚠️ Cette action est irréversible. Le devis sera définitivement supprimé.
+                </p>
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDeleteDialogOpen(false);
+                      setQuoteToDelete(null);
+                    }}
+                    className="text-white border-white/20 hover:bg-white/10"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={confirmDeleteQuote}
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border-red-500/50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer définitivement
+                  </Button>
                 </div>
               </div>
             )}
