@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -76,6 +76,45 @@ export default function Dashboard() {
 // Overview Tab Component
 function OverviewTab() {
   const [, setLocation] = useLocation();
+  const [unsignedQuotesCount, setUnsignedQuotesCount] = useState(0);
+  
+  // Charger le nombre de devis non signés
+  useEffect(() => {
+    const loadUnsignedQuotes = () => {
+      try {
+        const quotesData = localStorage.getItem('quotes_data');
+        if (quotesData) {
+          const quotes = JSON.parse(quotesData);
+          const unsigned = quotes.filter((q: any) => !q.isSigned).length;
+          setUnsignedQuotesCount(unsigned);
+        } else {
+          setUnsignedQuotesCount(0);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des devis:', error);
+        setUnsignedQuotesCount(0);
+      }
+    };
+    
+    loadUnsignedQuotes();
+    
+    // Rafraîchir périodiquement
+    const interval = setInterval(loadUnsignedQuotes, 2000);
+    
+    // Écouter les changements de storage
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'quotes_data') {
+        loadUnsignedQuotes();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
   
   return (
     <div className="space-y-6">
@@ -98,11 +137,11 @@ function OverviewTab() {
         />
         <MetricCard
           title="Devis En Attente"
-          value="8"
+          value={unsignedQuotesCount.toString()}
           change="Réponses attendues"
           icon={FileText}
           delay={0.3}
-          onClick={() => setLocation('/dashboard/quotes')}
+          onClick={() => setLocation('/dashboard/dossiers?tab=unsigned')}
         />
       </div>
 

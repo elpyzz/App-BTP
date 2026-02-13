@@ -231,13 +231,17 @@ export default function QuotesPage() {
       tva,
       total,
       validityDays: parseInt(validityDays),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isSigned: false
     };
     
     // Sauvegarder dans localStorage
     const quotes = JSON.parse(localStorage.getItem('quotes_data') || '[]');
     quotes.push(quote);
     localStorage.setItem('quotes_data', JSON.stringify(quotes));
+    
+    // Déclencher un événement personnalisé pour notifier les autres composants
+    window.dispatchEvent(new Event('quotesUpdated'));
     
     console.log('Devis enregistré:', quote);
     // Optionnel: afficher un message de succès
