@@ -1,0 +1,199 @@
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770981435938,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770981435942,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770981435942,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770981435943,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770981435945,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770981435943,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770981435945,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770981435945,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770981435945,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770981436025,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770981436026,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770981436026,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770981436028,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:13","message":"Initializing OpenAI","data":{"hasApiKey":false,"apiKeyLength":0,"apiKeyPrefix":"none"},"timestamp":1770981825118,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:16","message":"OpenAI initialized","data":{},"timestamp":1770981825125,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":false,"apiKeyLength":0},"timestamp":1770981825157,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770981825160,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770981825160,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:5","message":"registerRoutes function entry","data":{},"timestamp":1770981825161,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:275","message":"Registering /api/estimate route","data":{},"timestamp":1770981825161,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770981825162,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770981825162,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770981825163,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770981825164,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770981825165,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770981825165,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770981825225,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770981825226,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770981825225,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":172},"timestamp":1770982903362,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770982903369,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770982903369,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770982903370,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":172,"apiKeyPrefix":"sk-proj"},"timestamp":1770982903370,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770982903371,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770982903372,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770982903372,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770982903372,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770982903374,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770982903375,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770982903375,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770982903375,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770982903416,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770982903416,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770982903417,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":172},"timestamp":1770983268781,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770983268787,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770983268787,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770983268788,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":172,"apiKeyPrefix":"sk-proj"},"timestamp":1770983268788,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770983268789,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770983268789,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770983268790,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770983268790,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770983268792,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770983268792,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770983268793,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770983268793,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770983268828,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770983268829,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770983268829,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770983268832,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770983294349,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770983294356,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770983294357,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundaryGHPFnpQZuPF8FKEj","hasBody":true},"timestamp":1770983294350,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770983294357,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770983294357,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770983294400,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770983294400,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":172},"timestamp":1770983294401,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770983294401,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"401 Incorrect API key provided: sk-proj-****************************************************************************************************************************************************************STIA. You can find your API key at https://platform.openai.com/account/api-keys.","errorStack":"Error: 401 Incorrect API key provided: sk-proj-*********************************************************************************************************************************************************"},"timestamp":1770983294798,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770983422699,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundaryvDisg1L9zJ0g0yor","hasBody":true},"timestamp":1770983422700,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770983422702,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770983422702,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770983422702,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770983422702,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770983422737,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770983422737,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":172},"timestamp":1770983422738,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770983422737,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"401 Incorrect API key provided: sk-proj-****************************************************************************************************************************************************************STIA. You can find your API key at https://platform.openai.com/account/api-keys.","errorStack":"Error: 401 Incorrect API key provided: sk-proj-*********************************************************************************************************************************************************"},"timestamp":1770983423057,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":172},"timestamp":1770983523775,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770983523782,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770983523782,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770983523783,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":172,"apiKeyPrefix":"sk-proj"},"timestamp":1770983523783,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770983523784,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770983523784,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770983523785,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770983523785,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770983523787,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770983523787,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770983523788,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770983523788,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770983523831,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770983523832,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770983523832,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770983523835,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770983576030,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundaryDalDB6eSP0VC4QFQ","hasBody":true},"timestamp":1770983576031,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770983576037,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770983576038,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770983576038,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770983576038,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770983576077,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770983576077,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770983576078,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":172},"timestamp":1770983576078,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"401 Incorrect API key provided: sk-proj-****************************************************************************************************************************************************************pFkA. You can find your API key at https://platform.openai.com/account/api-keys.","errorStack":"Error: 401 Incorrect API key provided: sk-proj-*********************************************************************************************************************************************************"},"timestamp":1770983576425,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":172},"timestamp":1770983776684,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770983776690,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770983776691,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770983776691,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":172,"apiKeyPrefix":"sk-proj"},"timestamp":1770983776691,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:278","message":"Creating OpenAI instance","data":{"apiKeyLength":172,"apiKeyFirst20":"sk-proj-sk-proj-uv-t","apiKeyLast10":"sHEBzepFkA"},"timestamp":1770983776692,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770983776693,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770983776693,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770983776693,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770983776694,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770983776696,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770983776696,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770983776697,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770983776697,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770983776737,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770983776737,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770983776737,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770983776739,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770983846748,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundaryZ2DjA3Iuy5AMgEtA","hasBody":true},"timestamp":1770983846749,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770983846755,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770983846755,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770983846755,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770983846755,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770983846794,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770983846794,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":172,"apiKeyFirst20":"sk-proj-sk-proj-uv-t","apiKeyLast10":"sHEBzepFkA"},"timestamp":1770983846795,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770983846794,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"401 Incorrect API key provided: sk-proj-****************************************************************************************************************************************************************pFkA. You can find your API key at https://platform.openai.com/account/api-keys.","errorStack":"Error: 401 Incorrect API key provided: sk-proj-*********************************************************************************************************************************************************"},"timestamp":1770983847154,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":172},"timestamp":1770983948478,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770983948484,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770983948484,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770983948485,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":172,"apiKeyPrefix":"sk-proj"},"timestamp":1770983948485,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:278","message":"Creating OpenAI instance","data":{"apiKeyLength":172,"apiKeyFirst20":"sk-proj-sk-proj-uv-t","apiKeyLast10":"sHEBzepFkA"},"timestamp":1770983948485,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770983948486,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770983948486,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770983948487,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770983948488,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770983948489,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770983948490,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770983948490,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770983948490,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770983948529,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770983948530,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770983948529,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770983948532,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770984084004,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770984084010,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770984084010,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770984084011,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundary8l4n1TmOz7xYS3cl","hasBody":true},"timestamp":1770984084005,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770984084011,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770984084046,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770984084047,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770984084047,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":172,"apiKeyFirst20":"sk-proj-sk-proj-uv-t","apiKeyLast10":"sHEBzepFkA","envApiKeyLast10":"sHEBzepFkA","openaiApiKeyLast10":"sHEBzepFkA"},"timestamp":1770984084047,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"401 Incorrect API key provided: sk-proj-****************************************************************************************************************************************************************pFkA. You can find your API key at https://platform.openai.com/account/api-keys.","errorStack":"Error: 401 Incorrect API key provided: sk-proj-*********************************************************************************************************************************************************"},"timestamp":1770984084391,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/index.ts:4","message":"Checking OPENAI_API_KEY after dotenv","data":{"hasApiKey":true,"apiKeyLength":164},"timestamp":1770984516536,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:39","message":"Starting server initialization","data":{"nodeEnv":"development","port":"5000","hasDatabaseUrl":false},"timestamp":1770984516542,"runId":"run1","hypothesisId":"A"}
+{"location":"server/index.ts:43","message":"Calling registerRoutes","data":{},"timestamp":1770984516542,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:272","message":"registerRoutes function entry","data":{},"timestamp":1770984516543,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:277","message":"Initializing OpenAI in registerRoutes","data":{"hasApiKey":true,"apiKeyLength":164,"apiKeyPrefix":"sk-proj","apiKeyFirst20":"sk-proj-uv-tzoDpRdjO","apiKeyLast10":"sHEBzepFkA","rawApiKeyLast10":"sHEBzepFkA","hasWhitespace":false},"timestamp":1770984516543,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:282","message":"OpenAI initialized successfully","data":{},"timestamp":1770984516544,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:293","message":"Registering /api/estimate route","data":{},"timestamp":1770984516544,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:13","message":"Creating HTTP server","data":{},"timestamp":1770984516545,"runId":"run1","hypothesisId":"D"}
+{"location":"server/routes.ts:15","message":"HTTP server created successfully","data":{},"timestamp":1770984516545,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:46","message":"registerRoutes completed successfully","data":{},"timestamp":1770984516547,"runId":"run1","hypothesisId":"D"}
+{"location":"server/index.ts:63","message":"Setting up Vite in development mode","data":{},"timestamp":1770984516547,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:22","message":"setupVite function entry","data":{},"timestamp":1770984516548,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:29","message":"Creating Vite server","data":{},"timestamp":1770984516548,"runId":"run1","hypothesisId":"C"}
+{"location":"server/vite.ts:48","message":"Vite server created successfully","data":{},"timestamp":1770984516587,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:66","message":"setupVite completed successfully","data":{},"timestamp":1770984516588,"runId":"run1","hypothesisId":"C"}
+{"location":"server/index.ts:77","message":"Preparing to listen on port","data":{"finalPort":5000,"host":"127.0.0.1","platform":"win32"},"timestamp":1770984516588,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:105","message":"Server listening successfully","data":{"host":"127.0.0.1","finalPort":5000},"timestamp":1770984516589,"runId":"run1","hypothesisId":"B"}
+{"location":"server/index.ts:12","message":"API request received","data":{"method":"POST","path":"/estimate","hasBody":true,"bodyKeys":[]},"timestamp":1770984543375,"runId":"run1","hypothesisId":"ALL"}
+{"location":"server/routes.ts:262","message":"POST /api/estimate called","data":{"hasFiles":true,"filesCount":1,"hasSurface":true,"hasMetier":true,"hasOpenAIKey":true},"timestamp":1770984543382,"runId":"run1","hypothesisId":"A"}
+{"location":"server/routes.ts:276","message":"Before optimizeImages","data":{"filesCount":1},"timestamp":1770984543382,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:297","message":"Before multer middleware","data":{"contentType":"multipart/form-data; boundary=----WebKitFormBoundaryYUGd3LBkXUKm44ih","hasBody":true},"timestamp":1770984543376,"runId":"run1","hypothesisId":"E"}
+{"location":"server/routes.ts:78","message":"optimizeImages called","data":{"filesCount":1},"timestamp":1770984543382,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:86","message":"Before sharp processing","data":{"fileIndex":0,"fileSize":340157,"mimetype":"image/jpeg"},"timestamp":1770984543382,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:90","message":"After sharp processing","data":{"fileIndex":0,"optimizedSize":153365},"timestamp":1770984543425,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:98","message":"optimizeImages completed","data":{"optimizedCount":1},"timestamp":1770984543426,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:291","message":"Before OpenAI API call","data":{"model":"gpt-4o","hasApiKey":true,"apiKeyLength":164,"apiKeyFirst20":"sk-proj-uv-tzoDpRdjO","apiKeyLast10":"sHEBzepFkA"},"timestamp":1770984543426,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:356","message":"OpenAI instance recreated with env key","data":{"newApiKeyLast10":"sHEBzepFkA"},"timestamp":1770984543427,"runId":"run1","hypothesisId":"C"}
+{"location":"server/routes.ts:278","message":"After optimizeImages","data":{"optimizedCount":1},"timestamp":1770984543426,"runId":"run1","hypothesisId":"B"}
+{"location":"server/routes.ts:395","message":"Error caught in /api/estimate","data":{"errorName":"Error","errorMessage":"429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.","errorStack":"Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-error"},"timestamp":1770984546683,"runId":"run1","hypothesisId":"ALL"}

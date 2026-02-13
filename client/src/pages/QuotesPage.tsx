@@ -29,6 +29,8 @@ import {
   Clock
 } from 'lucide-react';
 import { useChantiers, Client, Chantier } from '@/context/ChantiersContext';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
 
 interface QuoteItem {
   id: string;
@@ -40,6 +42,7 @@ interface QuoteItem {
 
 export default function QuotesPage() {
   const { clients, chantiers, addClient, addChantier, updateChantier } = useChantiers();
+  const { toast } = useToast();
   
   // États de navigation
   const [currentStep, setCurrentStep] = useState(1);
@@ -213,12 +216,53 @@ export default function QuotesPage() {
 
   // Actions du devis
   const handleGenerateWithAI = () => {
-    // Placeholder pour la génération IA
-    console.log('Génération avec IA...');
+    toast({
+      title: 'Fonctionnalité en développement',
+      description: 'La génération automatique avec IA sera disponible prochainement',
+    });
   };
 
   const handleSaveQuote = () => {
-    if (!selectedClient || !selectedChantier) return;
+    // Validations
+    if (!selectedClient || !selectedChantier) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un client et un chantier',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Vérifier qu'il y a au moins une ligne avec des informations
+    const validItems = items.filter(item => 
+      item.description.trim() !== '' && 
+      item.quantity > 0 && 
+      item.unitPrice > 0
+    );
+    
+    if (validItems.length === 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez ajouter au moins une prestation au devis',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Vérifier la validité
+    if (!validityDays || parseInt(validityDays) <= 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez indiquer une validité en jours valide',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Calculer les totaux avec les items valides uniquement
+    const validSubtotal = validItems.reduce((sum, item) => sum + item.total, 0);
+    const validTva = validSubtotal * 0.2;
+    const validTotal = validSubtotal + validTva;
     
     const quote = {
       id: Date.now().toString(),
@@ -226,10 +270,10 @@ export default function QuotesPage() {
       clientName: selectedClient.name,
       chantierId: selectedChantier.id,
       chantierName: selectedChantier.nom,
-      items,
-      subtotal,
-      tva,
-      total,
+      items: validItems,
+      subtotal: validSubtotal,
+      tva: validTva,
+      total: validTotal,
       validityDays: parseInt(validityDays),
       createdAt: new Date().toISOString(),
       isSigned: false
@@ -243,13 +287,157 @@ export default function QuotesPage() {
     // Déclencher un événement personnalisé pour notifier les autres composants
     window.dispatchEvent(new Event('quotesUpdated'));
     
-    console.log('Devis enregistré:', quote);
-    // Optionnel: afficher un message de succès
+    toast({
+      title: 'Devis enregistré',
+      description: `Le devis pour ${selectedClient.name} a été enregistré avec succès`,
+    });
+  };
+
+  const handleDownloadPDF = () => {
+    // Validations
+    if (!selectedClient || !selectedChantier) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez compléter toutes les informations du devis',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Filtrer les items valides
+    const validItems = items.filter(item => 
+      item.description.trim() !== '' && 
+      item.quantity > 0 && 
+      item.unitPrice > 0
+    );
+    
+    if (validItems.length === 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez ajouter au moins une prestation au devis',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Calculer les totaux
+    const validSubtotal = validItems.reduce((sum, item) => sum + item.total, 0);
+    const validTva = validSubtotal * 0.2;
+    const validTotal = validSubtotal + validTva;
+    
+    // Créer le document PDF
+    const doc = new jsPDF();
+    
+    // En-tête
+    doc.setFontSize(20);
+    doc.text('DEVIS', 105, 20, { align: 'center' });
+    
+    // Informations entreprise
+    doc.setFontSize(12);
+    doc.text('Aos Renov', 20, 35);
+    doc.setFontSize(10);
+    doc.text('Construire pour durer', 20, 42);
+    doc.text('contact@aosrenov.fr', 20, 49);
+    doc.text('+33 X XX XX XX XX', 20, 56);
+    
+    // Informations client
+    doc.setFontSize(14);
+    doc.text('Client:', 20, 70);
+    doc.setFontSize(12);
+    doc.text(selectedClient.name, 20, 77);
+    doc.text(selectedClient.email, 20, 84);
+    if (selectedClient.phone) {
+      doc.text(selectedClient.phone, 20, 91);
+    }
+    if (newClient.address) {
+      doc.text(newClient.address, 20, 98);
+    }
+    
+    // Informations chantier
+    doc.setFontSize(14);
+    doc.text('Chantier:', 120, 70);
+    doc.setFontSize(12);
+    doc.text(selectedChantier.nom, 120, 77);
+    doc.text(`Date de début: ${new Date(selectedChantier.dateDebut).toLocaleDateString('fr-FR')}`, 120, 84);
+    doc.text(`Durée: ${selectedChantier.duree}`, 120, 91);
+    
+    // Date du devis et validité
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, 20, 105);
+    doc.text(`Validité: ${validityDays} jours`, 20, 112);
+    doc.text(`N° ${Date.now().toString().slice(-6)}`, 170, 105, { align: 'right' });
+    
+    // Tableau des prestations
+    let yPos = 125;
+    doc.setFontSize(12);
+    doc.text('Description', 20, yPos);
+    doc.text('Qté', 120, yPos);
+    doc.text('Prix U.', 140, yPos);
+    doc.text('Total', 170, yPos);
+    
+    // Ligne de séparation
+    doc.line(20, yPos + 2, 190, yPos + 2);
+    
+    yPos += 10;
+    doc.setFontSize(10);
+    validItems.forEach((item) => {
+      // Description (tronquée si trop longue)
+      const description = item.description.length > 50 
+        ? item.description.substring(0, 47) + '...' 
+        : item.description;
+      doc.text(description, 20, yPos);
+      doc.text(item.quantity.toString(), 120, yPos);
+      doc.text(`${item.unitPrice.toFixed(2)} €`, 140, yPos);
+      doc.text(`${item.total.toFixed(2)} €`, 170, yPos);
+      yPos += 7;
+      
+      // Nouvelle page si nécessaire
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+    });
+    
+    // Totaux
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.text('Sous-total HT:', 140, yPos);
+    doc.text(`${validSubtotal.toFixed(2)} €`, 170, yPos);
+    yPos += 7;
+    doc.text('TVA (20%):', 140, yPos);
+    doc.text(`${validTva.toFixed(2)} €`, 170, yPos);
+    yPos += 7;
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Total TTC:', 140, yPos);
+    doc.text(`${validTotal.toFixed(2)} €`, 170, yPos);
+    
+    // Footer avec conditions
+    yPos = 280;
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text(
+      `Ce devis est valable ${validityDays} jours à compter de sa date d'émission. Les prix sont exprimés en euros TTC.`,
+      20,
+      yPos,
+      { maxWidth: 170, align: 'justify' }
+    );
+    
+    // Télécharger le PDF
+    const fileName = `Devis_${selectedClient.name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
+    doc.save(fileName);
+    
+    toast({
+      title: 'Succès',
+      description: 'Le devis a été téléchargé en PDF',
+    });
   };
 
   const handleSendEmail = () => {
-    // Placeholder pour l'envoi par email
-    console.log('Envoi par email...');
+    toast({
+      title: 'Fonctionnalité en développement',
+      description: 'L\'envoi par email sera disponible prochainement',
+    });
   };
 
   return (
@@ -810,39 +998,186 @@ export default function QuotesPage() {
                       Prévisualiser
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-white">Aperçu du Devis</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="font-semibold text-white mb-2">Client</h3>
-                        <p className="text-white/70">{selectedClient?.name}</p>
-                        <p className="text-white/70">{selectedClient?.email}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-white mb-2">Chantier</h3>
-                        <p className="text-white/70">{selectedChantier?.nom}</p>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-white mb-2">Détail</h3>
-                        <div className="space-y-2">
-                          {items.map((item) => (
-                            <div key={item.id} className="flex justify-between text-white/70">
-                              <span>{item.description} (x{item.quantity})</span>
-                              <span>{item.total.toFixed(2)} €</span>
+                  <DialogContent className="bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 backdrop-blur-xl border border-white/10 text-white max-w-5xl max-h-[95vh] overflow-y-auto p-0">
+                    {/* En-tête avec gradient */}
+                    <div className="relative bg-gradient-to-r from-violet-600/30 via-purple-600/30 to-violet-500/30 border-b border-white/10">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-violet-500/20 via-transparent to-transparent"></div>
+                      <div className="relative p-8">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
+                              DEVIS
+                            </h1>
+                            <div className="flex items-center gap-4 text-sm text-white/80">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                <span>{new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                              </div>
+                              <div className="w-1 h-1 rounded-full bg-white/40"></div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                <span>Validité: {validityDays} jours</span>
+                              </div>
                             </div>
-                          ))}
+                          </div>
+                          <div className="text-right">
+                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500/30 to-purple-600/30 border border-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
+                              <Building className="h-10 w-10 text-violet-200" />
+                            </div>
+                            <p className="text-xs text-white/60">N° {Date.now().toString().slice(-6)}</p>
+                          </div>
                         </div>
                       </div>
-                      <Separator className="bg-white/10" />
-                      <div className="flex justify-between text-white">
-                        <span>Total TTC</span>
-                        <span className="font-bold">{total.toFixed(2)} €</span>
+                    </div>
+
+                    <div className="p-8 space-y-8">
+                      {/* Informations entreprise et client */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Entreprise */}
+                        <div className="p-6 rounded-xl bg-gradient-to-br from-black/40 via-black/20 to-black/40 border border-white/10 backdrop-blur-sm">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                              <Building className="h-5 w-5 text-violet-300" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">Votre Entreprise</h3>
+                          </div>
+                          <div className="space-y-1 text-sm text-white/70">
+                            <p>Aos Renov</p>
+                            <p>Construire pour durer</p>
+                            <p className="pt-2 text-white/50">contact@aosrenov.fr</p>
+                            <p className="text-white/50">+33 X XX XX XX XX</p>
+                          </div>
+                        </div>
+
+                        {/* Client */}
+                        <div className="p-6 rounded-xl bg-gradient-to-br from-black/40 via-black/20 to-black/40 border border-white/10 backdrop-blur-sm">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                              <User className="h-5 w-5 text-purple-300" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">Client</h3>
+                          </div>
+                          <div className="space-y-1 text-sm text-white/70">
+                            <p className="font-medium text-white">{selectedClient?.name}</p>
+                            <p>{selectedClient?.email}</p>
+                            <p>{selectedClient?.phone}</p>
+                            {newClient.address && (
+                              <p className="pt-2 text-white/60">{newClient.address}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informations chantier */}
+                      <div className="p-6 rounded-xl bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-violet-500/10 border border-violet-500/20">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-violet-500/30 flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-violet-200" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-white">Projet</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-xs text-white/50 mb-1">Nom du chantier</p>
+                            <p className="text-white font-medium">{selectedChantier?.nom}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-white/50 mb-1">Date de début</p>
+                            <p className="text-white font-medium">
+                              {selectedChantier && new Date(selectedChantier.dateDebut).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-white/50 mb-1">Durée estimée</p>
+                            <p className="text-white font-medium">{selectedChantier?.duree}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tableau des prestations */}
+                      <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm">
+                        <div className="bg-gradient-to-r from-violet-600/20 to-purple-600/20 border-b border-white/10 p-4">
+                          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <Calculator className="h-5 w-5" />
+                            Détail des prestations
+                          </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-black/30 border-b border-white/10">
+                                <th className="text-left p-4 text-sm font-semibold text-white/90">Description</th>
+                                <th className="text-center p-4 text-sm font-semibold text-white/90">Quantité</th>
+                                <th className="text-right p-4 text-sm font-semibold text-white/90">Prix unitaire</th>
+                                <th className="text-right p-4 text-sm font-semibold text-white/90">Total HT</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {items.filter(item => item.description.trim() !== '').map((item, index) => (
+                                <tr 
+                                  key={item.id || index} 
+                                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                >
+                                  <td className="p-4 text-white/80">{item.description}</td>
+                                  <td className="p-4 text-center text-white/70">{item.quantity}</td>
+                                  <td className="p-4 text-right text-white/70">{item.unitPrice.toFixed(2)} €</td>
+                                  <td className="p-4 text-right text-white font-medium">{item.total.toFixed(2)} €</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Totaux */}
+                      <div className="flex justify-end">
+                        <div className="w-full md:w-96 space-y-3">
+                          <div className="p-6 rounded-xl bg-gradient-to-br from-black/40 to-black/20 border border-white/10 backdrop-blur-sm">
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-center text-white/80">
+                                <span className="text-sm">Sous-total HT</span>
+                                <span className="font-medium">{subtotal.toFixed(2)} €</span>
+                              </div>
+                              <div className="flex justify-between items-center text-white/80">
+                                <span className="text-sm">TVA (20%)</span>
+                                <span className="font-medium">{tva.toFixed(2)} €</span>
+                              </div>
+                              <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent my-2"></div>
+                              <div className="flex justify-between items-center pt-2">
+                                <span className="text-lg font-bold text-white">Total TTC</span>
+                                <span className="text-2xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
+                                  {total.toFixed(2)} €
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer avec conditions */}
+                      <div className="pt-6 border-t border-white/10">
+                        <div className="p-4 rounded-lg bg-black/20 border border-white/5">
+                          <p className="text-xs text-white/50 leading-relaxed">
+                            Ce devis est valable {validityDays} jours à compter de sa date d'émission. 
+                            Les prix sont exprimés en euros TTC. Les conditions générales de vente s'appliquent.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </DialogContent>
                 </Dialog>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadPDF}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Télécharger PDF
+                </Button>
                 <Button
                   onClick={handleSaveQuote}
                   className="bg-violet-500 hover:bg-violet-600 text-white"

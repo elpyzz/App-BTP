@@ -1,10 +1,22 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4',message:'Checking OPENAI_API_KEY after dotenv',data:{hasApiKey:!!process.env.OPENAI_API_KEY,apiKeyLength:process.env.OPENAI_API_KEY?.length||0},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Middleware pour logger toutes les requêtes API
+app.use('/api', (req, res, next) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:12',message:'API request received',data:{method:req.method,path:req.path,hasBody:!!req.body,bodyKeys:req.body?Object.keys(req.body):[]},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+  // #endregion
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

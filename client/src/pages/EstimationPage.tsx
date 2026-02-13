@@ -2,11 +2,17 @@ import { PageWrapper } from '@/components/PageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, Wand2, Plus, Calculator, User, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Upload, Wand2, Plus, Calculator, User, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChantiers, type Client } from '@/context/ChantiersContext';
-import { getMaterials } from '@/lib/materials';
+import { getMaterials, addMaterial, updateMaterial, type Material, MATERIAL_CATEGORIES, MATERIAL_UNITS } from '@/lib/materials';
+import { useEstimation } from '@/hooks/useEstimation';
+import { MaterialEstimationCard } from '@/components/MaterialEstimationCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadedImage {
   file: File;
@@ -15,6 +21,8 @@ interface UploadedImage {
 
 export default function EstimationPage() {
   const { clients, addClient } = useChantiers();
+  const { toast } = useToast();
+  const { analyzeChantier, isLoading: isLoadingEstimation, result: estimationResult } = useEstimation();
   const [step, setStep] = useState(1);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,6 +37,36 @@ export default function EstimationPage() {
     metier: ''
   });
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [isAddMaterialDialogOpen, setIsAddMaterialDialogOpen] = useState(false);
+  const [materialToAdd, setMaterialToAdd] = useState<{
+    nom: string;
+    quantite: number;
+    prixUnitaire: number;
+    unite: string;
+    category: string;
+  } | null>(null);
+  
+  // Charger les matériaux au montage
+  useEffect(() => {
+    loadMaterials();
+  }, []);
+  
+  // Mettre à jour analysisResults quand estimationResult change
+  useEffect(() => {
+    if (estimationResult) {
+      setAnalysisResults(estimationResult);
+    }
+  }, [estimationResult]);
+  
+  const loadMaterials = async () => {
+    try {
+      const mats = await getMaterials();
+      setMaterials(mats);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+    }
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -78,106 +116,180 @@ export default function EstimationPage() {
   };
 
   const handleLaunchAnalysis = async () => {
-    // TODO: Implement AI analysis API call
-    // Simulate analysis results
-    const defaultResults = {
-      tempsRealisation: '3 semaines',
-      materiaux: [
-        { nom: 'Carrelage', quantite: '50m²', prix: 800 },
-        { nom: 'Colle carrelage', quantite: '5 sacs', prix: 150 },
-        { nom: 'Joint carrelage', quantite: '3kg', prix: 50 }
-      ],
-      nombreOuvriers: 2,
-      coutTotal: 2500,
-      marge: 500,
-      benefice: 300,
-      repartitionCouts: {
-        transport: 100,
-        mainOeuvre: 1200,
-        materiaux: 1000,
-        autres: 200
-      },
-      recommandations: [
-        'Prévoir un échafaudage pour les travaux en hauteur',
-        'Outil spécifique nécessaire : coupe-carrelage électrique',
-        'Vérifier l\'état des murs avant pose du carrelage'
-      ]
-    };
-
-    // Récupérer les matériaux du membre connecté (si connecté en tant que membre d'équipe)
     try {
-      const materials = await getMaterials();
-      
-      if (materials.length > 0) {
-        // Remplacer les prix par les prix réels des matériaux
-        const estimatedMaterials = defaultResults.materiaux.map((mat: any) => {
-          // Extraire la quantité et l'unité
-          const quantityMatch = mat.quantite.match(/(\d+(?:[.,]\d+)?)\s*(m²|m|kg|L|unité|sac|rouleau)/i);
-          const quantity = quantityMatch ? parseFloat(quantityMatch[1].replace(',', '.')) : 0;
-          const unit = quantityMatch ? quantityMatch[2] : '';
-
-          // Chercher un matériau correspondant par nom ou catégorie
-          const matchingMaterial = materials.find(m => {
-            const matNameLower = mat.nom.toLowerCase();
-            const materialNameLower = m.name.toLowerCase();
-            
-            // Correspondance exacte ou partielle du nom
-            if (materialNameLower.includes(matNameLower) || matNameLower.includes(materialNameLower)) {
-              // Vérifier aussi que l'unité correspond si disponible
-              if (unit && m.unit.toLowerCase() !== unit.toLowerCase()) {
-                return false;
-              }
-              return true;
-            }
-            return false;
-          });
-
-          if (matchingMaterial && quantity > 0) {
-            // Calculer le prix basé sur la quantité et le prix unitaire
-            const calculatedPrice = quantity * matchingMaterial.unitPrice;
-            return {
-              ...mat,
-              prix: Math.round(calculatedPrice * 100) / 100, // Arrondir à 2 décimales
-              prixReel: true // Indicateur que le prix vient de la base de données
-            };
-          }
-          
-          return {
-            ...mat,
-            prixReel: false // Prix par défaut
-          };
-        });
-
-        // Recalculer le coût total des matériaux
-        const totalMateriaux = estimatedMaterials.reduce((sum: number, mat: any) => sum + mat.prix, 0);
-        
-        // Recalculer le coût total
-        const newCoutTotal = defaultResults.repartitionCouts.transport + 
-                             defaultResults.repartitionCouts.mainOeuvre + 
-                             totalMateriaux + 
-                             defaultResults.repartitionCouts.autres;
-
-        setAnalysisResults({
-          ...defaultResults,
-          materiaux: estimatedMaterials,
-          repartitionCouts: {
-            ...defaultResults.repartitionCouts,
-            materiaux: totalMateriaux
-          },
-          coutTotal: newCoutTotal,
-          benefice: newCoutTotal - (newCoutTotal - defaultResults.marge)
-        });
-      } else {
-        // Aucun matériau enregistré, utiliser les prix par défaut
-        setAnalysisResults(defaultResults);
+      const imageFiles = images.map(img => img.file);
+      const result = await analyzeChantier(imageFiles, chantierInfo);
+      if (result) {
+        setStep(3);
       }
     } catch (error) {
-      console.error('Error loading materials for estimation:', error);
-      // En cas d'erreur, utiliser les prix par défaut
-      setAnalysisResults(defaultResults);
+      console.error('Error in analysis:', error);
+    }
+  };
+  
+  // Recalculer l'estimation après modification
+  const recalculateEstimation = () => {
+    if (!analysisResults) return;
+    
+    // Recalculer le coût total des matériaux
+    const totalMateriaux = analysisResults.materiaux.reduce((sum: number, mat: any) => sum + (mat.prixTotal || 0), 0);
+    
+    // Recalculer le coût total
+    const detailsCouts = analysisResults.detailsCouts || {
+      mainOeuvre: 0,
+      transport: 0,
+      outillage: 0,
+      gestionDechets: 0
+    };
+    
+    const newCoutTotal = detailsCouts.mainOeuvre + 
+                         totalMateriaux + 
+                         detailsCouts.transport + 
+                         detailsCouts.outillage + 
+                         detailsCouts.gestionDechets;
+    
+    const marge = analysisResults.marge || 0;
+    const benefice = newCoutTotal - (newCoutTotal - marge);
+    
+    setAnalysisResults({
+      ...analysisResults,
+      detailsCouts: {
+        ...detailsCouts,
+        materiaux: totalMateriaux
+      },
+      coutTotal: newCoutTotal,
+      benefice: benefice
+    });
+  };
+  
+  // Ajouter un matériau depuis l'estimation
+  const handleAddMaterialFromEstimation = async (materialIndex: number) => {
+    if (!analysisResults || !analysisResults.materiaux[materialIndex]) return;
+    
+    const mat = analysisResults.materiaux[materialIndex];
+    const quantite = typeof mat.quantite === 'number' ? mat.quantite : parseFloat(mat.quantite.toString().replace(',', '.')) || 0;
+    const prixUnitaire = mat.prixTotal / quantite || mat.prixUnitaire || 0;
+    
+    setMaterialToAdd({
+      nom: mat.nom,
+      quantite: quantite,
+      prixUnitaire: prixUnitaire,
+      unite: mat.unite || 'unité',
+      category: ''
+    });
+    setIsAddMaterialDialogOpen(true);
+  };
+  
+  // Sauvegarder le matériau depuis le dialog
+  const handleSaveMaterialFromDialog = async () => {
+    if (!materialToAdd || !materialToAdd.nom || !materialToAdd.category || !materialToAdd.unite) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs obligatoires',
+        variant: 'destructive',
+      });
+      return;
     }
     
-    setStep(3);
+    try {
+      const newMaterial = await addMaterial({
+        name: materialToAdd.nom,
+        category: materialToAdd.category,
+        unitPrice: materialToAdd.prixUnitaire,
+        unit: materialToAdd.unite
+      });
+      
+      if (newMaterial) {
+        await loadMaterials();
+        
+        // Mettre à jour le matériau dans l'estimation
+        if (analysisResults) {
+          const updatedMateriaux = analysisResults.materiaux.map((mat: any, index: number) => {
+            if (mat.nom === materialToAdd.nom) {
+              return {
+                ...mat,
+                prixReel: true,
+                materialId: newMaterial.id,
+                prixUnitaire: newMaterial.unitPrice,
+                prixTotal: materialToAdd.quantite * newMaterial.unitPrice
+              };
+            }
+            return mat;
+          });
+          
+          setAnalysisResults({
+            ...analysisResults,
+            materiaux: updatedMateriaux
+          });
+          
+          recalculateEstimation();
+        }
+        
+        toast({
+          title: 'Succès',
+          description: 'Matériau ajouté avec succès',
+        });
+        
+        setIsAddMaterialDialogOpen(false);
+        setMaterialToAdd(null);
+      }
+    } catch (error) {
+      console.error('Error adding material:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible d\'ajouter le matériau',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Modifier le prix d'un matériau
+  const handleUpdateMaterialPrice = async (materialIndex: number, newPrice: number) => {
+    if (!analysisResults || !analysisResults.materiaux[materialIndex]) return;
+    
+    const mat = analysisResults.materiaux[materialIndex];
+    
+    try {
+      if (mat.materialId) {
+        // Matériau existe, mettre à jour
+        const quantite = typeof mat.quantite === 'number' ? mat.quantite : parseFloat(mat.quantite.toString().replace(',', '.')) || 0;
+        await updateMaterial(mat.materialId, {
+          unitPrice: newPrice
+        });
+        
+        await loadMaterials();
+        
+        // Mettre à jour dans l'estimation
+        const updatedMateriaux = [...analysisResults.materiaux];
+        updatedMateriaux[materialIndex] = {
+          ...mat,
+          prixUnitaire: newPrice,
+          prixTotal: quantite * newPrice
+        };
+        
+        setAnalysisResults({
+          ...analysisResults,
+          materiaux: updatedMateriaux
+        });
+        
+        recalculateEstimation();
+        
+        toast({
+          title: 'Succès',
+          description: 'Prix mis à jour avec succès',
+        });
+      } else {
+        // Matériau n'existe pas, proposer de l'ajouter
+        handleAddMaterialFromEstimation(materialIndex);
+      }
+    } catch (error) {
+      console.error('Error updating material:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de mettre à jour le prix',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCreateClient = () => {
@@ -521,11 +633,20 @@ export default function EstimationPage() {
                     </Button>
                     <Button
                       onClick={handleLaunchAnalysis}
-                      disabled={!selectedClient || !chantierInfo.surface || !chantierInfo.metier}
+                      disabled={!selectedClient || !chantierInfo.surface || !chantierInfo.metier || isLoadingEstimation || images.length === 0}
                       className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30 disabled:opacity-50"
                     >
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Lancer l'analyse
+                      {isLoadingEstimation ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Analyse en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          Lancer l'analyse
+                        </>
+                      )}
                     </Button>
                   </div>
                 </CardContent>
@@ -564,22 +685,26 @@ export default function EstimationPage() {
                       <CheckCircle2 className="h-5 w-5 text-green-400" />
                       Liste des matériaux nécessaires
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {analysisResults.materiaux.map((mat: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-black/10 rounded">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-white font-medium">{mat.nom}</p>
-                              {mat.prixReel && (
-                                <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30">
-                                  Prix réel
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-white/70">{mat.quantite}</p>
-                          </div>
-                          <p className="text-white font-semibold">{mat.prix.toFixed(2)} €</p>
-                        </div>
+                        <MaterialEstimationCard
+                          key={index}
+                          material={{
+                            nom: mat.nom,
+                            quantite: mat.quantite,
+                            quantiteAvecPerte: mat.quantiteAvecPerte,
+                            unite: mat.unite || 'unité',
+                            prixUnitaire: mat.prixUnitaire || (mat.prixTotal / (typeof mat.quantite === 'number' ? mat.quantite : parseFloat(mat.quantite.toString().replace(',', '.')) || 1)) || 0,
+                            prixTotal: mat.prixTotal || mat.prix || 0,
+                            coefficientPerte: mat.coefficientPerte,
+                            prixReel: mat.prixReel,
+                            needsAdding: mat.needsAdding,
+                            materialId: mat.materialId,
+                            confidence: mat.confidence
+                          }}
+                          onUpdatePrice={(newPrice) => handleUpdateMaterialPrice(index, newPrice)}
+                          onAddToLibrary={() => handleAddMaterialFromEstimation(index)}
+                        />
                       ))}
                     </div>
                   </div>
@@ -602,15 +727,15 @@ export default function EstimationPage() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-white/70">Coût de base</span>
-                        <span className="text-white font-semibold">{analysisResults.coutTotal} €</span>
+                        <span className="text-white font-semibold">{typeof analysisResults.coutTotal === 'number' ? analysisResults.coutTotal.toFixed(2) : analysisResults.coutTotal} €</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-white/70">Marge</span>
-                        <span className="text-white font-semibold">{analysisResults.marge} €</span>
+                        <span className="text-white font-semibold">{typeof analysisResults.marge === 'number' ? analysisResults.marge.toFixed(2) : analysisResults.marge} €</span>
                       </div>
                       <div className="flex justify-between border-t border-white/10 pt-2">
                         <span className="text-white font-semibold">Bénéfice estimé</span>
-                        <span className="text-green-400 font-bold text-xl">{analysisResults.benefice} €</span>
+                        <span className="text-green-400 font-bold text-xl">{typeof analysisResults.benefice === 'number' ? analysisResults.benefice.toFixed(2) : analysisResults.benefice} €</span>
                       </div>
                     </div>
                   </div>
@@ -622,20 +747,36 @@ export default function EstimationPage() {
                       Répartition des coûts
                     </h3>
                     <div className="space-y-3">
-                      {Object.entries(analysisResults.repartitionCouts).map(([key, value]: [string, any]) => (
+                      {analysisResults.detailsCouts ? Object.entries(analysisResults.detailsCouts).map(([key, value]: [string, any]) => (
                         <div key={key} className="space-y-1">
                           <div className="flex justify-between text-sm">
-                            <span className="text-white/70 capitalize">{key === 'mainOeuvre' ? 'Main-d\'œuvre' : key}</span>
-                            <span className="text-white font-semibold">{value} €</span>
+                            <span className="text-white/70 capitalize">
+                              {key === 'mainOeuvre' ? 'Main-d\'œuvre' : 
+                               key === 'gestionDechets' ? 'Gestion déchets' : key}
+                            </span>
+                            <span className="text-white font-semibold">{typeof value === 'number' ? value.toFixed(2) : value} €</span>
                           </div>
                           <div className="w-full bg-black/20 rounded-full h-2">
                             <div
                               className="bg-white/30 h-2 rounded-full"
-                              style={{ width: `${(value / analysisResults.coutTotal) * 100}%` }}
+                              style={{ width: `${analysisResults.coutTotal > 0 ? ((value / analysisResults.coutTotal) * 100) : 0}%` }}
                             />
                           </div>
                         </div>
-                      ))}
+                      )) : analysisResults.repartitionCouts ? Object.entries(analysisResults.repartitionCouts).map(([key, value]: [string, any]) => (
+                        <div key={key} className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-white/70 capitalize">{key === 'mainOeuvre' ? 'Main-d\'œuvre' : key}</span>
+                            <span className="text-white font-semibold">{typeof value === 'number' ? value.toFixed(2) : value} €</span>
+                          </div>
+                          <div className="w-full bg-black/20 rounded-full h-2">
+                            <div
+                              className="bg-white/30 h-2 rounded-full"
+                              style={{ width: `${analysisResults.coutTotal > 0 ? ((value / analysisResults.coutTotal) * 100) : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      )) : null}
                     </div>
                   </div>
 
@@ -674,6 +815,99 @@ export default function EstimationPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Dialog pour ajouter un matériau */}
+        <Dialog open={isAddMaterialDialogOpen} onOpenChange={setIsAddMaterialDialogOpen}>
+          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Ajouter un matériau à ma bibliothèque</DialogTitle>
+            </DialogHeader>
+            {materialToAdd && (
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="material-name" className="text-white">Nom du matériau *</Label>
+                  <Input
+                    id="material-name"
+                    value={materialToAdd.nom}
+                    onChange={(e) => setMaterialToAdd({ ...materialToAdd, nom: e.target.value })}
+                    className="bg-black/20 border-white/10 text-white"
+                    placeholder="Ex: Carrelage céramique"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="material-category" className="text-white">Catégorie *</Label>
+                  <Select 
+                    value={materialToAdd.category} 
+                    onValueChange={(value) => setMaterialToAdd({ ...materialToAdd, category: value })}
+                  >
+                    <SelectTrigger className="bg-black/20 border-white/10 text-white">
+                      <SelectValue placeholder="Sélectionner une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black/30 backdrop-blur-lg border-white/10 text-white">
+                      {MATERIAL_CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="material-price" className="text-white">Prix unitaire (€) *</Label>
+                    <Input
+                      id="material-price"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={materialToAdd.prixUnitaire}
+                      onChange={(e) => setMaterialToAdd({ ...materialToAdd, prixUnitaire: parseFloat(e.target.value) || 0 })}
+                      className="bg-black/20 border-white/10 text-white"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="material-unit" className="text-white">Unité *</Label>
+                    <Select 
+                      value={materialToAdd.unite} 
+                      onValueChange={(value) => setMaterialToAdd({ ...materialToAdd, unite: value })}
+                    >
+                      <SelectTrigger className="bg-black/20 border-white/10 text-white">
+                        <SelectValue placeholder="Sélectionner une unité" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black/30 backdrop-blur-lg border-white/10 text-white">
+                        {MATERIAL_UNITS.map(unit => (
+                          <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">Quantité estimée: {materialToAdd.quantite} {materialToAdd.unite}</Label>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsAddMaterialDialogOpen(false);
+                  setMaterialToAdd(null);
+                }} 
+                className="text-white border-white/20 hover:bg-white/10"
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={handleSaveMaterialFromDialog}
+                className="bg-white/20 backdrop-blur-md text-white border border-white/10 hover:bg-white/30"
+              >
+                Ajouter
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </PageWrapper>
   );
