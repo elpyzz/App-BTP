@@ -194,10 +194,18 @@ export default function QuotesPage() {
     }));
   };
 
-  // Calculs
-  const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-  const tva = subtotal * 0.2;
-  const total = subtotal + tva;
+  // Calculs mémorisés pour améliorer les performances
+  const subtotal = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.total, 0);
+  }, [items]);
+
+  const tva = useMemo(() => {
+    return subtotal * 0.2;
+  }, [subtotal]);
+
+  const total = useMemo(() => {
+    return subtotal + tva;
+  }, [subtotal, tva]);
 
   // Navigation
   const handleNext = () => {

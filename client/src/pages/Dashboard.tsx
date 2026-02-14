@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,7 +41,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-7xl mx-auto"
           >
             {/* Header */}
@@ -146,8 +146,8 @@ function OverviewTab() {
     
     loadQuotesStats();
     
-    // Rafraîchir périodiquement
-    const interval = setInterval(loadQuotesStats, 2000);
+    // Rafraîchir périodiquement (réduit de 2s à 10s pour améliorer les performances)
+    const interval = setInterval(loadQuotesStats, 10000);
     
     // Écouter les changements de storage
     const handleStorageChange = (e: StorageEvent) => {
@@ -309,7 +309,7 @@ function MetricCard({ title, value, change, icon: Icon, delay, onClick }: { titl
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4 }}
+      transition={{ delay, duration: 0.3 }}
     >
       <Card 
         className={`bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl hover:shadow-2xl transition-all text-white ${

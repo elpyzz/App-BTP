@@ -104,27 +104,9 @@ export default function DossiersPage() {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('quotesUpdated', handleQuotesUpdate);
     
-    // Écouter les changements depuis le même onglet avec un interval
-    const interval = setInterval(() => {
-      const currentData = localStorage.getItem('quotes_data');
-      if (currentData) {
-        try {
-          const currentQuotes = JSON.parse(currentData);
-          // Vérifier si le nombre de devis a changé
-          if (currentQuotes.length !== previousQuotesLengthRef.current) {
-            previousQuotesLengthRef.current = currentQuotes.length;
-            loadQuotes();
-          }
-        } catch (error) {
-          // Ignorer les erreurs de parsing
-        }
-      }
-    }, 1000); // Vérifier toutes les secondes
-    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('quotesUpdated', handleQuotesUpdate);
-      clearInterval(interval);
     };
   }, []);
 
@@ -429,7 +411,7 @@ export default function DossiersPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.15 }}
                     >
                       <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:border-violet-500/50 transition-all">
                         <CardHeader>

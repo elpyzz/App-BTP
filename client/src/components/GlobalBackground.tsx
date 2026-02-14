@@ -9,14 +9,25 @@ export function GlobalBackground() {
 
   useEffect(() => {
     setMounted(true)
-    const update = () =>
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
+    
+    let timeoutId: NodeJS.Timeout
+    const update = () => {
+      clearTimeout(timeoutId)
+      // Debounce de 150ms pour réduire les recalculs fréquents
+      timeoutId = setTimeout(() => {
+        setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        })
+      }, 150)
+    }
+    
     update()
     window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
+    return () => {
+      window.removeEventListener("resize", update)
+      clearTimeout(timeoutId)
+    }
   }, [])
 
   return (
@@ -26,11 +37,11 @@ export function GlobalBackground() {
           width={dimensions.width}
           height={dimensions.height}
           colors={colors}
-          distortion={0.8}
-          swirl={0.1}
+          distortion={0.5}
+          swirl={0.05}
           grainMixer={0}
           grainOverlay={0}
-          speed={1}
+          speed={0.5}
           offsetX={0}
           offsetY={0}
           scale={1}
