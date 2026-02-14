@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalBackground } from "@/components/GlobalBackground";
 import { ChantiersProvider } from "@/context/ChantiersContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { CompanyProvider } from "@/context/CompanyContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AnimatePresence, motion } from "framer-motion";
 import Home from "@/pages/Home";
@@ -132,11 +133,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ChantiersProvider>
-          <TooltipProvider>
-            <GlobalBackground />
-            <Toaster />
-            <Router />
-          </TooltipProvider>
+          <CompanyProvider>
+            <TooltipProvider>
+              <GlobalBackground />
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </CompanyProvider>
         </ChantiersProvider>
       </AuthProvider>
     </QueryClientProvider>
