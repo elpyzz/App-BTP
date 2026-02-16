@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { DEFAULT_CONDITIONS } from "@/lib/quotes/defaults";
 import { useState, useRef, useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface StepConditionsProps {
   conditions: QuoteConditions;
@@ -128,6 +129,39 @@ export function StepConditions({
                 rows={3}
                 placeholder={DEFAULT_CONDITIONS.paymentTerms}
               />
+            </div>
+            <div>
+              <Label className="text-white mb-2 block">Moyens de paiement acceptés</Label>
+              <div className="space-y-2">
+                {["Virement bancaire", "Chèque", "Espèces"].map((method) => {
+                  const isChecked = conditions.paymentMethods?.includes(method) || false;
+                  return (
+                    <div key={method} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`paymentMethod-${method}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => {
+                          const currentMethods = conditions.paymentMethods || [];
+                          const newMethods = checked
+                            ? [...currentMethods, method]
+                            : currentMethods.filter((m) => m !== method);
+                          onConditionsChange({
+                            ...conditions,
+                            paymentMethods: newMethods,
+                          });
+                        }}
+                        className="border-white/30 data-[state=checked]:bg-primary"
+                      />
+                      <Label
+                        htmlFor={`paymentMethod-${method}`}
+                        className="text-white cursor-pointer"
+                      >
+                        {method}
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <Label htmlFor="depositTerms" className="text-white">Modalités d'acompte</Label>

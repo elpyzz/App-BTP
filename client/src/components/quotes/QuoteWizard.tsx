@@ -39,7 +39,9 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
   const [saving, setSaving] = useState(false);
 
   // États du devis
-  const [quoteCompany, setQuoteCompany] = useState<Company | null>(initialQuote?.company || company || null);
+  // Créer une copie de company pour éviter les mutations
+  const initialCompany = initialQuote?.company || (company ? { ...company } : null);
+  const [quoteCompany, setQuoteCompany] = useState<Company | null>(initialCompany);
   const [client, setClient] = useState<QuoteClient | null>(initialQuote?.client || null);
   const [chantier, setChantier] = useState<ChantierInfo | null>(initialQuote?.chantier || null);
   const [lots, setLots] = useState<QuoteLot[]>(initialQuote?.lots || []);
@@ -53,10 +55,10 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
   const [salesPerson, setSalesPerson] = useState(initialQuote?.salesPerson || "");
   const [notes, setNotes] = useState(initialQuote?.notes || "");
 
-  // Charger l'entreprise depuis le contexte si disponible
+  // Charger l'entreprise depuis le contexte si disponible (créer une copie)
   useEffect(() => {
     if (company && !quoteCompany) {
-      setQuoteCompany(company);
+      setQuoteCompany({ ...company });
     }
   }, [company, quoteCompany]);
 
@@ -97,7 +99,17 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
 
   // Sauvegarde
   const handleSave = async (status: "draft" | "sent" = "draft") => {
-    if (!quoteCompany || !client || !chantier || lines.length === 0) {
+    // Validation stricte de l'entreprise
+    if (!quoteCompany || !quoteCompany.name || !quoteCompany.siret || !quoteCompany.address) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir toutes les informations obligatoires de l'entreprise (nom, SIRET, adresse)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!client || !chantier || lines.length === 0) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires",
@@ -111,6 +123,13 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
       const issueDate = new Date().toISOString().split("T")[0];
       const expirationDate = calculateExpirationDate(issueDate, validityDays);
       
+      // Créer une copie complète de quoteCompany pour éviter les mutations
+      const companyToSave: Company = { ...quoteCompany };
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuoteWizard.tsx:127',message:'AVANT SAUVEGARDE - quoteCompany state',data:{quoteCompanyName:quoteCompany.name,quoteCompanyAddress:quoteCompany.address,quoteCompanyPostalCode:quoteCompany.postalCode,quoteCompanyCity:quoteCompany.city,quoteCompanyPhone:quoteCompany.phone,quoteCompanyEmail:quoteCompany.email,quoteCompanySiret:quoteCompany.siret},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
+      // #endregion
+      
       const quoteData: Quote = {
         id: initialQuote?.id || generateId(),
         quoteNumber: initialQuote?.quoteNumber || generateQuoteNumber([]),
@@ -120,7 +139,7 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
         expirationDate,
         dossierId,
         salesPerson,
-        company: quoteCompany,
+        company: companyToSave,
         client,
         chantier,
         lots,
@@ -135,6 +154,10 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
         createdAt: initialQuote?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuoteWizard.tsx:150',message:'AVANT SAUVEGARDE - quoteData.company',data:{companyName:quoteData.company.name,companyAddress:quoteData.company.address,companyPostalCode:quoteData.company.postalCode,companyCity:quoteData.company.city,companyPhone:quoteData.company.phone,companyEmail:quoteData.company.email,companySiret:quoteData.company.siret,quoteId:quoteData.id},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
 
       const savedQuote = await saveQuote(quoteData);
       

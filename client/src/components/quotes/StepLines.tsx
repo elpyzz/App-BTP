@@ -39,6 +39,9 @@ export function StepLines({ lots, lines, onLotsChange, onLinesChange }: StepLine
   };
 
   const addLine = (lotId?: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepLines.tsx:41',message:'addLine appelé',data:{lotId:lotId,lotIdType:typeof lotId,lotIdIsUndefined:lotId===undefined,lotIdIsEmpty:lotId===''},timestamp:Date.now(),runId:'run1',hypothesisId:'B,C'})}).catch(()=>{});
+    // #endregion
     const newLine: QuoteLine = {
       id: generateId(),
       lotId,
@@ -53,6 +56,9 @@ export function StepLines({ lots, lines, onLotsChange, onLinesChange }: StepLine
       totalTTC: 0,
       order: lines.length,
     };
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepLines.tsx:56',message:'newLine créé',data:{newLineLotId:newLine.lotId,newLineLotIdType:typeof newLine.lotId,newLineLotIdIsUndefined:newLine.lotId===undefined},timestamp:Date.now(),runId:'run1',hypothesisId:'B,C'})}).catch(()=>{});
+    // #endregion
     onLinesChange([...lines, newLine]);
   };
 
@@ -288,22 +294,31 @@ function LineRow({
       </div>
       <div className="col-span-4 md:col-span-1 flex gap-1">
         {lots && onAssignToLot && (
-          <Select
-            value={line.lotId || ""}
-            onValueChange={(v) => onAssignToLot(v === "" ? undefined : v)}
-          >
-            <SelectTrigger className="bg-black/20 border-white/10 text-white text-xs h-9 w-20">
-              <SelectValue placeholder="Lot" />
-            </SelectTrigger>
-            <SelectContent className="bg-black/20 border-white/10">
-              <SelectItem value="">Aucun</SelectItem>
-              {lots.map((lot) => (
-                <SelectItem key={lot.id} value={lot.id}>
-                  {lot.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <>
+            {/* #region agent log */}
+            {(() => {
+              const selectValue = line.lotId || "__none__";
+              fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepLines.tsx:292',message:'Select rendu avec valeur (post-fix)',data:{lineLotId:line.lotId,lineLotIdType:typeof line.lotId,selectValue:selectValue,selectValueIsEmpty:selectValue==='',hasEmptySelectItem:false},timestamp:Date.now(),runId:'post-fix',hypothesisId:'A,B,C,D'})}).catch(()=>{});
+              return null;
+            })()}
+            {/* #endregion */}
+            <Select
+              value={line.lotId || "__none__"}
+              onValueChange={(v) => onAssignToLot(v === "__none__" ? undefined : v)}
+            >
+              <SelectTrigger className="bg-black/20 border-white/10 text-white text-xs h-9 w-20">
+                <SelectValue placeholder="Lot" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/20 border-white/10">
+                <SelectItem value="__none__">Aucun</SelectItem>
+                {lots.map((lot) => (
+                  <SelectItem key={lot.id} value={lot.id}>
+                    {lot.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
         )}
         <Button
           variant="outline"

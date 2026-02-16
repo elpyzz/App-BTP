@@ -16,25 +16,28 @@ interface StepCompanyProps {
 export function StepCompany({ company, onCompanyChange }: StepCompanyProps) {
   const { company: contextCompany } = useCompany();
 
-  // Utiliser le contexte si disponible, sinon les props
-  const currentCompany = company || contextCompany;
+  // Toujours utiliser company des props en priorité, sinon contextCompany comme valeur d'affichage
+  // Mais on doit toujours créer un nouvel objet pour éviter les mutations
+  const currentCompany = company || (contextCompany ? { ...contextCompany } : null);
 
   const handleChange = (field: keyof Company, value: any) => {
-    if (!currentCompany) {
-      // Créer une entreprise vide
-      const newCompany: Company = {
-        name: "",
-        siret: "",
-        address: "",
-        postalCode: "",
-        city: "",
-        phone: "",
-        email: "",
-      };
-      onCompanyChange({ ...newCompany, [field]: value });
-    } else {
-      onCompanyChange({ ...currentCompany, [field]: value });
-    }
+    // Toujours créer un nouvel objet basé sur company (props) ou un objet vide
+    // Ne jamais utiliser contextCompany directement pour les modifications
+    const baseCompany = company || {
+      name: "",
+      siret: "",
+      address: "",
+      postalCode: "",
+      city: "",
+      phone: "",
+      email: "",
+    };
+    
+    const newCompany = { ...baseCompany, [field]: value };
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepCompany.tsx:36',message:'handleChange - Modification entreprise',data:{field:field,value:value,baseCompanyName:baseCompany.name,newCompanyName:newCompany.name,newCompanyAddress:newCompany.address,newCompanyPhone:newCompany.phone,newCompanyEmail:newCompany.email},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    onCompanyChange(newCompany);
   };
 
   return (

@@ -222,6 +222,7 @@ export const QuoteConditionsSchema = z.object({
   generalConditionsUrl: z.string().optional(),
   rgpdMention: z.string().optional(),
   materialsOwnership: z.string().optional(),
+  paymentMethods: z.array(z.string()).optional(), // Moyens de paiement sélectionnés
 });
 
 export type QuoteConditions = z.infer<typeof QuoteConditionsSchema>;
