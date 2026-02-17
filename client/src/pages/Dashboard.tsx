@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
+import { loadQuotes } from '@/lib/storage/quotes'
 
 export default function Dashboard() {
   const [location, setLocation] = useLocation();
@@ -75,65 +76,57 @@ function OverviewTab() {
   
   // Charger les statistiques des devis
   useEffect(() => {
-    const loadQuotesStats = () => {
+    const loadQuotesStats = async () => {
       try {
-        const quotesData = localStorage.getItem('quotes_data');
-        if (quotesData) {
-          const quotes = JSON.parse(quotesData);
-          const unsigned = quotes.filter((q: any) => !q.isSigned).length;
-          const signed = quotes.filter((q: any) => q.isSigned);
-          const signedTotal = signed.reduce((sum: number, q: any) => sum + (q.total || 0), 0);
-          
-          setUnsignedQuotesCount(unsigned);
-          setTotalQuotes(quotes.length);
-          setSignedQuotesCount(signed.length);
-          setSignedQuotesTotal(signedTotal);
-          
-          // Calculer les devis par mois (6 derniers mois)
-          const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-          const now = new Date();
-          const monthData: { [key: string]: { signed: number; unsigned: number; total: number } } = {};
-          
-          // Initialiser les 6 derniers mois
-          for (let i = 5; i >= 0; i--) {
-            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const monthKey = `${months[date.getMonth()]} ${date.getFullYear()}`;
-            monthData[monthKey] = { signed: 0, unsigned: 0, total: 0 };
-          }
-          
-          // Compter les devis par mois
-          quotes.forEach((quote: any) => {
-            if (quote.createdAt) {
-              const quoteDate = new Date(quote.createdAt);
-              const monthKey = `${months[quoteDate.getMonth()]} ${quoteDate.getFullYear()}`;
-              
-              if (monthData[monthKey]) {
-                monthData[monthKey].total++;
-                if (quote.isSigned) {
-                  monthData[monthKey].signed++;
-                } else {
-                  monthData[monthKey].unsigned++;
-                }
+        const quotes = await loadQuotes();
+        const unsigned = quotes.filter(q => !q.isSigned).length;
+        const signed = quotes.filter(q => q.isSigned);
+        const signedTotal = signed.reduce((sum, q) => sum + (q.totalTTC || 0), 0);
+        
+        setUnsignedQuotesCount(unsigned);
+        setTotalQuotes(quotes.length);
+        setSignedQuotesCount(signed.length);
+        setSignedQuotesTotal(signedTotal);
+        
+        // Calculer les devis par mois (6 derniers mois)
+        const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        const now = new Date();
+        const monthData: { [key: string]: { signed: number; unsigned: number; total: number } } = {};
+        
+        // Initialiser les 6 derniers mois
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthKey = `${months[date.getMonth()]} ${date.getFullYear()}`;
+          monthData[monthKey] = { signed: 0, unsigned: 0, total: 0 };
+        }
+        
+        // Compter les devis par mois
+        quotes.forEach(quote => {
+          const createdAt = quote.createdAt || quote.issueDate;
+          if (createdAt) {
+            const quoteDate = new Date(createdAt);
+            const monthKey = `${months[quoteDate.getMonth()]} ${quoteDate.getFullYear()}`;
+            
+            if (monthData[monthKey]) {
+              monthData[monthKey].total++;
+              if (quote.isSigned) {
+                monthData[monthKey].signed++;
+              } else {
+                monthData[monthKey].unsigned++;
               }
             }
-          });
-          
-          // Convertir en tableau pour le graphique
-          const chartData = Object.keys(monthData).map(month => ({
-            mois: month,
-            signés: monthData[month].signed,
-            'non signés': monthData[month].unsigned,
-            total: monthData[month].total
-          }));
-          
-          setQuotesByMonth(chartData);
-        } else {
-          setUnsignedQuotesCount(0);
-          setTotalQuotes(0);
-          setSignedQuotesCount(0);
-          setSignedQuotesTotal(0);
-          setQuotesByMonth([]);
-        }
+          }
+        });
+        
+        // Convertir en tableau pour le graphique
+        const chartData = Object.keys(monthData).map(month => ({
+          mois: month,
+          signés: monthData[month].signed,
+          'non signés': monthData[month].unsigned,
+          total: monthData[month].total
+        }));
+        
+        setQuotesByMonth(chartData);
       } catch (error) {
         console.error('Erreur lors du chargement des devis:', error);
         setUnsignedQuotesCount(0);
@@ -146,27 +139,18 @@ function OverviewTab() {
     
     loadQuotesStats();
     
-    // Rafraîchir périodiquement (réduit de 2s à 10s pour améliorer les performances)
+    // Rafraîchir périodiquement (toutes les 10 secondes)
     const interval = setInterval(loadQuotesStats, 10000);
-    
-    // Écouter les changements de storage
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'quotes_data') {
-        loadQuotesStats();
-      }
-    };
     
     // Écouter les événements personnalisés
     const handleQuotesUpdate = () => {
       loadQuotesStats();
     };
     
-    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('quotesUpdated', handleQuotesUpdate);
     
     return () => {
       clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('quotesUpdated', handleQuotesUpdate);
     };
   }, []);

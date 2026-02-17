@@ -1,9 +1,13 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mail, User, Phone, Calendar, FileText } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Mail, User, Phone, Calendar, FileText, Plus } from "lucide-react"
 import { motion } from "framer-motion"
+import { useAuth } from '@/context/AuthContext'
+import { loadProspects, createProspect, updateProspectColumn, deleteProspect } from '@/lib/supabase/prospects'
 
 interface Prospect {
   id: string
@@ -13,6 +17,8 @@ interface Prospect {
   company?: string
   notes?: string
   createdAt: string
+  columnId?: string
+  status?: string
 }
 
 interface Column {
@@ -21,21 +27,23 @@ interface Column {
   items: Prospect[]
 }
 
+// Mapping des colonnes vers les statuts
+const COLUMN_STATUS_MAP: Record<string, string> = {
+  'all': 'nouveau',
+  'quote': 'devis_envoye',
+  'followup1': 'relance_1',
+  'followup2': 'relance_2',
+  'followup3': 'relance_3',
+  'followup4': 'relance_4',
+}
+
 export function CRMPipeline() {
+  const { user } = useAuth()
   const [columns, setColumns] = useState<Column[]>([
     {
       id: 'all',
       name: 'Tous les prospects',
-      items: [
-        {
-          id: '1',
-          name: 'Jean Dupont',
-          email: 'jean.dupont@example.com',
-          phone: '06 12 34 56 78',
-          company: 'Entreprise ABC',
-          createdAt: '2024-01-15'
-        }
-      ]
+      items: []
     },
     {
       id: 'quote',
@@ -69,6 +77,102 @@ export function CRMPipeline() {
   const [showFollowupModal, setShowFollowupModal] = useState(false)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
   const [selectedColumn, setSelectedColumn] = useState<string>("")
+  const [loading, setLoading] = useState(true)
+
+  // Charger les prospects depuis Supabase
+  const loadProspectsFromSupabase = async () => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setLoading(true)
+      const prospects = await loadProspects()
+      
+      // Définir les colonnes de base
+      const baseColumns: Column[] = [
+        {
+          id: 'all',
+          name: 'Tous les prospects',
+          items: []
+        },
+        {
+          id: 'quote',
+          name: 'Envoi du devis',
+          items: []
+        },
+        {
+          id: 'followup1',
+          name: 'Relance 1',
+          items: []
+        },
+        {
+          id: 'followup2',
+          name: 'Relance 2',
+          items: []
+        },
+        {
+          id: 'followup3',
+          name: 'Relance 3',
+          items: []
+        },
+        {
+          id: 'followup4',
+          name: 'Relance 4',
+          items: []
+        },
+      ]
+      
+      // Organiser les prospects par colonne
+      const newColumns = baseColumns.map(col => ({
+        ...col,
+        items: prospects
+          .filter(p => p.column_id === col.id)
+          .map(p => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            phone: p.phone,
+            company: p.company,
+            notes: p.notes,
+            createdAt: p.created_at || new Date().toISOString(),
+            columnId: p.column_id,
+            status: p.status
+          }))
+      }))
+
+      setColumns(newColumns)
+    } catch (error) {
+      console.error('Error loading prospects:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Charger les prospects au montage et quand l'utilisateur change
+  useEffect(() => {
+    if (user?.id) {
+      loadProspectsFromSupabase()
+    } else {
+      setColumns(prev => prev.map(col => ({ ...col, items: [] })))
+      setLoading(false)
+    }
+  }, [user?.id])
+
+  // Écouter les événements de rechargement
+  useEffect(() => {
+    if (!user?.id) return
+
+    const handleReload = () => {
+      loadProspectsFromSupabase()
+    }
+
+    window.addEventListener('prospectsUpdated', handleReload)
+    return () => {
+      window.removeEventListener('prospectsUpdated', handleReload)
+    }
+  }, [user?.id])
 
   const handleDragStart = (prospect: Prospect, columnId: string) => {
     setDraggedItem({ prospect, columnId })
@@ -78,7 +182,7 @@ export function CRMPipeline() {
     e.preventDefault()
   }
 
-  const handleDrop = (targetColumnId: string) => {
+  const handleDrop = async (targetColumnId: string) => {
     if (!draggedItem) return
 
     const { prospect, columnId: sourceColumnId } = draggedItem
@@ -99,88 +203,123 @@ export function CRMPipeline() {
       return
     }
 
-    // Déplacer l'élément
-    setColumns(prev => {
-      const newColumns = prev.map(col => {
-        if (col.id === sourceColumnId) {
-          return {
-            ...col,
-            items: col.items.filter(item => item.id !== prospect.id)
-          }
-        }
-        if (col.id === targetColumnId) {
-          return {
-            ...col,
-            items: [...col.items, prospect]
-          }
-        }
-        return col
-      })
-      return newColumns
-    })
+    // Déplacer l'élément et sauvegarder dans Supabase
+    try {
+      const status = COLUMN_STATUS_MAP[targetColumnId] || 'nouveau'
+      await updateProspectColumn(prospect.id, targetColumnId, status)
 
-    setDraggedItem(null)
+      // Mettre à jour l'état local
+      setColumns(prev => {
+        const newColumns = prev.map(col => {
+          if (col.id === sourceColumnId) {
+            return {
+              ...col,
+              items: col.items.filter(item => item.id !== prospect.id)
+            }
+          }
+          if (col.id === targetColumnId) {
+            return {
+              ...col,
+              items: [...col.items, { ...prospect, columnId: targetColumnId, status }]
+            }
+          }
+          return col
+        })
+        return newColumns
+      })
+
+      setDraggedItem(null)
+    } catch (error) {
+      console.error('Error updating prospect column:', error)
+      alert('Erreur lors du déplacement du prospect')
+    }
   }
 
-  const handleQuoteConfirm = () => {
+  const handleQuoteConfirm = async () => {
     if (!draggedItem || !selectedProspect) return
 
-    setColumns(prev => {
-      const newColumns = prev.map(col => {
-        if (col.id === draggedItem.columnId) {
-          return {
-            ...col,
-            items: col.items.filter(item => item.id !== selectedProspect.id)
+    try {
+      const status = COLUMN_STATUS_MAP['quote'] || 'devis_envoye'
+      await updateProspectColumn(selectedProspect.id, 'quote', status)
+
+      // Mettre à jour l'état local
+      setColumns(prev => {
+        const newColumns = prev.map(col => {
+          if (col.id === draggedItem.columnId) {
+            return {
+              ...col,
+              items: col.items.filter(item => item.id !== selectedProspect.id)
+            }
           }
-        }
-        if (col.id === 'quote') {
-          return {
-            ...col,
-            items: [...col.items, selectedProspect]
+          if (col.id === 'quote') {
+            return {
+              ...col,
+              items: [...col.items, { ...selectedProspect, columnId: 'quote', status }]
+            }
           }
-        }
-        return col
+          return col
+        })
+        return newColumns
       })
-      return newColumns
-    })
 
-    // Ici, on déclencherait le webhook pour envoyer le devis
-    console.log("Devis envoyé à:", selectedProspect.email)
+      // Ici, on déclencherait le webhook pour envoyer le devis
+      console.log("Devis envoyé à:", selectedProspect.email)
 
-    setShowQuoteModal(false)
-    setSelectedProspect(null)
-    setDraggedItem(null)
+      setShowQuoteModal(false)
+      setSelectedProspect(null)
+      setDraggedItem(null)
+    } catch (error) {
+      console.error('Error updating prospect:', error)
+      alert('Erreur lors de l\'envoi du devis')
+    }
   }
 
-  const handleFollowupConfirm = () => {
+  const handleFollowupConfirm = async () => {
     if (!draggedItem || !selectedProspect) return
 
-    setColumns(prev => {
-      const newColumns = prev.map(col => {
-        if (col.id === draggedItem.columnId) {
-          return {
-            ...col,
-            items: col.items.filter(item => item.id !== selectedProspect.id)
+    try {
+      const status = COLUMN_STATUS_MAP[selectedColumn] || 'relance_1'
+      await updateProspectColumn(selectedProspect.id, selectedColumn, status)
+
+      // Mettre à jour l'état local
+      setColumns(prev => {
+        const newColumns = prev.map(col => {
+          if (col.id === draggedItem.columnId) {
+            return {
+              ...col,
+              items: col.items.filter(item => item.id !== selectedProspect.id)
+            }
           }
-        }
-        if (col.id === selectedColumn) {
-          return {
-            ...col,
-            items: [...col.items, selectedProspect]
+          if (col.id === selectedColumn) {
+            return {
+              ...col,
+              items: [...col.items, { ...selectedProspect, columnId: selectedColumn, status }]
+            }
           }
-        }
-        return col
+          return col
+        })
+        return newColumns
       })
-      return newColumns
-    })
 
-    // Ici, on déclencherait le webhook pour envoyer la relance
-    console.log("Relance envoyée à:", selectedProspect.email)
+      // Ici, on déclencherait le webhook pour envoyer la relance
+      console.log("Relance envoyée à:", selectedProspect.email)
 
-    setShowFollowupModal(false)
-    setSelectedProspect(null)
-    setSelectedColumn("")
-    setDraggedItem(null)
+      setShowFollowupModal(false)
+      setSelectedProspect(null)
+      setSelectedColumn("")
+      setDraggedItem(null)
+    } catch (error) {
+      console.error('Error updating prospect:', error)
+      alert('Erreur lors de l\'envoi de la relance')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-white">Chargement des prospects...</div>
+      </div>
+    )
   }
 
   return (
@@ -318,4 +457,3 @@ export function CRMPipeline() {
     </div>
   )
 }
-
