@@ -1,14 +1,4 @@
-// Mock Supabase functions - Supabase désactivé, utilisation de localStorage
-
-// Helper function to get current user ID
-async function getCurrentUserId(): Promise<string | null> {
-  const userStr = localStorage.getItem('mock_user');
-  if (userStr) {
-    const user = JSON.parse(userStr);
-    return user.id || null;
-  }
-  return null;
-}
+import { supabase } from './supabaseClient';
 
 // Permission interface and constants
 export interface Permission {
@@ -46,7 +36,18 @@ export interface TeamMember {
   user_id: string | null;
   created_at: string;
   updated_at: string;
-  permissions: string[]; // Obligatoire
+  permissions: string[];
+}
+
+// Helper function to get current user ID
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
 }
 
 // Helper functions for permissions
@@ -62,33 +63,28 @@ export function getAuthorizedRoutes(member: TeamMember | null): string[] {
     .filter(route => route !== undefined);
 }
 
-// Helper functions pour gérer les données mock
-function getMockData(table: string): any[] {
-  const key = `mock_${table}`;
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : [];
-}
-
-function saveMockData(table: string, data: any[]): void {
-  const key = `mock_${table}`;
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
+// Team Members functions
 export async function fetchTeamMembers(): Promise<TeamMember[]> {
   try {
     const userId = await getCurrentUserId();
     if (!userId) return [];
 
-    const data = getMockData('team_members');
-    return data
-      .filter((member: TeamMember) => member.user_id === userId && member.status === 'actif')
-      .map((member: TeamMember) => ({
-        ...member,
-        permissions: member.permissions || [] // Rétrocompatibilité
-      }))
-      .sort((a: TeamMember, b: TeamMember) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'actif')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching team members:', error);
+      return [];
+    }
+
+    return (data || []).map((member: any) => ({
+      ...member,
+      permissions: member.permissions || []
+    }));
   } catch (error) {
     console.error('Error fetching team members:', error);
     return [];
@@ -102,21 +98,26 @@ export async function createTeamMember(member: Omit<TeamMember, 'id' | 'created_
 
     const loginCode = member.login_code || Math.floor(100000 + Math.random() * 900000).toString();
     
-    const newMember: TeamMember = {
-      ...member,
-      id: crypto.randomUUID(),
-      login_code: loginCode,
-      user_id: userId,
-      permissions: member.permissions || [], // S'assurer que permissions existe
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    const { data, error } = await supabase
+      .from('team_members')
+      .insert({
+        ...member,
+        login_code: loginCode,
+        user_id: userId,
+        permissions: member.permissions || [],
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating team member:', error);
+      return null;
+    }
+
+    return {
+      ...data,
+      permissions: data.permissions || []
     };
-
-    const data = getMockData('team_members');
-    data.push(newMember);
-    saveMockData('team_members', data);
-
-    return newMember;
   } catch (error) {
     console.error('Error creating team member:', error);
     return null;
@@ -128,20 +129,26 @@ export async function updateTeamMember(id: string, updates: Partial<TeamMember>)
     const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
-    const data = getMockData('team_members');
-    const index = data.findIndex((member: TeamMember) => member.id === id && member.user_id === userId);
-    
-    if (index === -1) return null;
+    const { data, error } = await supabase
+      .from('team_members')
+      .update({
+        ...updates,
+        permissions: updates.permissions !== undefined ? updates.permissions : undefined,
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-    data[index] = {
-      ...data[index],
-      ...updates,
-      permissions: updates.permissions !== undefined ? updates.permissions : (data[index].permissions || []), // Préserver les permissions
-      updated_at: new Date().toISOString(),
+    if (error) {
+      console.error('Error updating team member:', error);
+      return null;
+    }
+
+    return {
+      ...data,
+      permissions: data.permissions || []
     };
-    saveMockData('team_members', data);
-
-    return data[index];
   } catch (error) {
     console.error('Error updating team member:', error);
     return null;
@@ -153,9 +160,16 @@ export async function deleteTeamMember(id: string): Promise<boolean> {
     const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
-    const data = getMockData('team_members');
-    const filtered = data.filter((member: TeamMember) => !(member.id === id && member.user_id === userId));
-    saveMockData('team_members', filtered);
+    const { error } = await supabase
+      .from('team_members')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting team member:', error);
+      return false;
+    }
 
     return true;
   } catch (error) {
@@ -168,119 +182,47 @@ export async function verifyTeamMemberCode(code: string, invitationToken?: strin
   try {
     if (invitationToken) {
       const invitation = await getInvitationByToken(invitationToken);
-      if (!invitation) return null;
+      if (!invitation || !invitation.team_member_id) return null;
 
-      const data = getMockData('team_members');
-      const member = data.find(
-        (m: TeamMember) => m.id === invitation.team_member_id && m.login_code === code && m.status === 'actif'
-      );
-      if (member) {
-        return {
-          ...member,
-          permissions: member.permissions || [] // Rétrocompatibilité
-        };
-      }
-      return null;
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('id', invitation.team_member_id)
+        .eq('login_code', code)
+        .eq('status', 'actif')
+        .single();
+
+      if (error || !data) return null;
+
+      return {
+        ...data,
+        permissions: data.permissions || []
+      };
     }
 
     const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
-    const data = getMockData('team_members');
-    const member = data.find(
-      (m: TeamMember) => m.login_code === code && m.status === 'actif' && m.user_id === userId
-    );
-    if (member) {
-      return {
-        ...member,
-        permissions: member.permissions || [] // Rétrocompatibilité
-      };
-    }
-    return null;
+    const { data, error } = await supabase
+      .from('team_members')
+      .select('*')
+      .eq('login_code', code)
+      .eq('status', 'actif')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      ...data,
+      permissions: data.permissions || []
+    };
   } catch (error) {
     console.error('Error verifying code:', error);
     return null;
   }
 }
 
-// Admin code functions
-export interface AdminCode {
-  id: string;
-  code: string;
-  user_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export async function verifyAdminCode(code: string): Promise<boolean> {
-  try {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-
-    const data = getMockData('admin_codes');
-    const adminCode = data.find((ac: AdminCode) => ac.code === code && ac.user_id === userId);
-    return !!adminCode;
-  } catch (error) {
-    console.error('Error verifying admin code:', error);
-    return false;
-  }
-}
-
-export async function getAdminCode(): Promise<AdminCode | null> {
-  try {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-
-    const data = getMockData('admin_codes');
-    const adminCode = data
-      .filter((ac: AdminCode) => ac.user_id === userId)
-      .sort((a: AdminCode, b: AdminCode) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0];
-    return adminCode || null;
-  } catch (error) {
-    console.error('Error getting admin code:', error);
-    return null;
-  }
-}
-
-export async function updateAdminCode(newCode: string): Promise<AdminCode | null> {
-  try {
-    const userId = await getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-
-    const existing = await getAdminCode();
-    const data = getMockData('admin_codes');
-    
-    if (existing) {
-      const index = data.findIndex((ac: AdminCode) => ac.id === existing.id);
-      if (index !== -1) {
-        data[index] = {
-          ...data[index],
-          code: newCode,
-          updated_at: new Date().toISOString(),
-        };
-        saveMockData('admin_codes', data);
-        return data[index];
-      }
-    }
-
-    const newAdminCode: AdminCode = {
-      id: crypto.randomUUID(),
-      code: newCode,
-      user_id: userId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    data.push(newAdminCode);
-    saveMockData('admin_codes', data);
-
-    return newAdminCode;
-  } catch (error) {
-    console.error('Error updating admin code:', error);
-    return null;
-  }
-}
 
 // Team Invitation functions
 export interface TeamInvitation {
@@ -311,25 +253,26 @@ export async function createTeamInvitation(
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const invitation: TeamInvitation = {
-      id: crypto.randomUUID(),
-      user_id: userId,
-      team_member_id: teamMemberId,
-      email: email,
-      token: token,
-      expires_at: expiresAt.toISOString(),
-      used: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const { data, error } = await supabase
+      .from('team_invitations')
+      .insert({
+        user_id: userId,
+        team_member_id: teamMemberId,
+        email: email,
+        token: token,
+        expires_at: expiresAt.toISOString(),
+        used: false,
+      })
+      .select()
+      .single();
 
-    const data = getMockData('team_invitations');
-    data.push(invitation);
-    saveMockData('team_invitations', data);
+    if (error) {
+      console.error('Error creating invitation:', error);
+      return { invitation: null, inviteLink: null };
+    }
 
     const inviteLink = `${window.location.origin}/invite/${token}`;
-
-    return { invitation, inviteLink };
+    return { invitation: data, inviteLink };
   } catch (error) {
     console.error('Error creating invitation:', error);
     return { invitation: null, inviteLink: null };
@@ -340,19 +283,22 @@ export async function getInvitationByToken(
   token: string
 ): Promise<TeamInvitation | null> {
   try {
-    const data = getMockData('team_invitations');
-    const invitation = data.find(
-      (inv: TeamInvitation) => inv.token === token && !inv.used
-    );
+    const { data, error } = await supabase
+      .from('team_invitations')
+      .select('*')
+      .eq('token', token)
+      .eq('used', false)
+      .single();
 
-    if (!invitation) return null;
+    if (error || !data) return null;
 
-    const expiresAt = new Date(invitation.expires_at);
+    // Vérifier si l'invitation a expiré
+    const expiresAt = new Date(data.expires_at);
     if (expiresAt < new Date()) {
       return null;
     }
 
-    return invitation;
+    return data;
   } catch (error) {
     console.error('Error getting invitation:', error);
     return null;
@@ -361,18 +307,14 @@ export async function getInvitationByToken(
 
 export async function markInvitationAsUsed(token: string): Promise<boolean> {
   try {
-    const data = getMockData('team_invitations');
-    const index = data.findIndex((inv: TeamInvitation) => inv.token === token);
-    
-    if (index === -1) return false;
+    const { data, error } = await supabase
+      .from('team_invitations')
+      .update({ used: true })
+      .eq('token', token)
+      .select()
+      .single();
 
-    data[index] = {
-      ...data[index],
-      used: true,
-      updated_at: new Date().toISOString(),
-    };
-    saveMockData('team_invitations', data);
-
+    if (error || !data) return false;
     return true;
   } catch (error) {
     console.error('Error marking invitation as used:', error);

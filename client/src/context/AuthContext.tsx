@@ -1,20 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-
-// Types mock pour remplacer les types Supabase
-interface User {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    full_name?: string;
-  };
-  created_at?: string;
-}
-
-interface Session {
-  user: User;
-  access_token?: string;
-}
+import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -33,64 +19,153 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Récupérer la session initiale depuis localStorage
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:21',message:'Initializing auth',data:{},timestamp:Date.now(),runId:'run9',hypothesisId:"H"})}).catch(()=>{});
+    // #endregion
+    
+    // Récupérer la session initiale de manière asynchrone
+    const initializeAuth = async () => {
+      try {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:26',message:'Calling getSession',data:{},timestamp:Date.now(),runId:'run15',hypothesisId:"AX"})}).catch(()=>{});
+        // #endregion
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:30',message:'getSession result',data:{hasSession:!!session,hasUser:!!session?.user,userId:session?.user?.id,hasError:!!error,errorMessage:error?.message},timestamp:Date.now(),runId:'run15',hypothesisId:"AY"})}).catch(()=>{});
+        // #endregion
+        
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:60',message:'Session and user set, loading false',data:{},timestamp:Date.now(),runId:'run15',hypothesisId:"BB"})}).catch(()=>{});
+        // #endregion
+      } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:65',message:'initializeAuth exception',data:{error:String(error)},timestamp:Date.now(),runId:'run15',hypothesisId:"BC"})}).catch(()=>{});
+        // #endregion
+        console.error('Error initializing auth:', error);
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Écouter les changements d'authentification
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignorer les événements SIGNED_OUT si une session existe toujours
+      if (event === 'SIGNED_OUT') {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          setLoading(false);
+          return; // Sortir de la fonction pour éviter d'exécuter le code ci-dessous
+        } else {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return; // Sortir de la fonction pour éviter d'exécuter le code ci-dessous
+        }
+      }
+      
+      // Mettre à jour normalement pour tous les autres cas
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Pas de subscription pour le mock, juste charger depuis localStorage
-    setLoading(false);
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      // Créer le compte utilisateur
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    });
+      });
 
-    if (!error && data.user) {
-      // Créer le profil utilisateur dans localStorage
-      const profile = {
-        id: data.user.id,
-        email: email,
-        full_name: fullName,
-      };
-      const profiles = JSON.parse(localStorage.getItem('mock_user_profiles') || '[]');
-      profiles.push(profile);
-      localStorage.setItem('mock_user_profiles', JSON.stringify(profiles));
-      
+      if (error) {
+        console.error('SignUp error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          code: error.code
+        });
+        
+        // Si l'erreur est "user_already_exists", améliorer le message d'erreur
+        if (error.code === 'user_already_exists') {
+          return { 
+            error: { 
+              ...error, 
+              message: 'Cet email est déjà enregistré. Veuillez vous connecter à la place.',
+            } 
+          };
+        }
+        
+        return { error };
+      }
+
+      // La session peut être null si l'email nécessite une confirmation
       setUser(data.user);
       setSession(data.session || null);
-    }
 
-    return { error };
+      return { error: null };
+    } catch (err: any) {
+      console.error('Error in signUp:', err);
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (!error && data.user) {
-      setUser(data.user);
-      setSession(data.session || null);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (!error && data.user) {
+        setUser(data.user);
+        setSession(data.session || null);
+      }
+      
+      return { error };
+    } catch (err: any) {
+      console.error('Error in signIn:', err);
+      return { error: err };
     }
-    
-    return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      // Nettoyer le localStorage
+      localStorage.removeItem('userType');
+      localStorage.removeItem('teamMember');
+    } catch (err) {
+      console.error('Error in signOut:', err);
+    }
   };
 
   return (
@@ -107,4 +182,3 @@ export function useAuth() {
   }
   return context;
 }
-

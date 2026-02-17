@@ -20,26 +20,39 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
+        // Création de compte
         if (!email || !password || !fullName) {
           setError("Veuillez remplir tous les champs obligatoires")
           return
         }
-        const { error } = await signUp(email, password, fullName)
-        if (error) {
-          setError(error.message || "Erreur lors de la création du compte")
+        
+        const { error: signUpError } = await signUp(email, password, fullName)
+        
+        if (signUpError) {
+          if (signUpError.code === 'user_already_exists') {
+            setError("Cet email est déjà enregistré. Veuillez vous connecter à la place.")
+            setTimeout(() => setIsSignUp(false), 2000)
+          } else {
+            setError(signUpError.message || "Erreur lors de la création du compte")
+          }
         } else {
-          setLocation("/login")
+          // Rediriger directement vers le dashboard après création réussie
+          setLocation("/dashboard")
         }
       } else {
+        // Connexion
         if (!email || !password) {
           setError("Veuillez remplir tous les champs")
           return
         }
-        const { error } = await signIn(email, password)
-        if (error) {
-          setError(error.message || "Email ou mot de passe incorrect")
+        
+        const { error: signInError } = await signIn(email, password)
+        
+        if (signInError) {
+          setError(signInError.message || "Email ou mot de passe incorrect")
         } else {
-          setLocation("/login")
+          // Rediriger directement vers le dashboard après connexion réussie
+          setLocation("/dashboard")
         }
       }
     } catch (err: any) {

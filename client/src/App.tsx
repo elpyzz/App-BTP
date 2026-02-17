@@ -11,7 +11,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AnimatePresence, motion } from "framer-motion";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/AuthPage";
-import LoginPage from "@/pages/LoginPage";
 import LoadingRedirectPage from "@/pages/LoadingRedirectPage";
 import InvitePage from "@/pages/InvitePage";
 import TeamDashboard from "@/pages/TeamDashboard";
@@ -69,8 +68,6 @@ function Router() {
         return <Home />;
       case "/auth":
         return <AuthPage />;
-      case "/login":
-        return <LoginPage />;
       case "/loading":
         return <LoadingRedirectPage />;
       case "/team-dashboard":
@@ -104,8 +101,8 @@ function Router() {
     }
   };
 
-  // Pages without sidebar (Home, Auth, Login, Loading, Invite) get full page animation
-  const isFullPage = location === "/" || location === "/auth" || location === "/login" || location === "/loading" || location.startsWith("/invite/");
+  // Pages without sidebar (Home, Auth, Loading, Invite) get full page animation
+  const isFullPage = location === "/" || location === "/auth" || location === "/loading" || location.startsWith("/invite/");
 
   if (isFullPage) {
     return (
