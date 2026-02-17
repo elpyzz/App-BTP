@@ -1,10 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from './AuthContext';
 
 export interface Client {
   id: string;
   name: string;
   email: string;
   phone: string;
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Chantier {
@@ -16,101 +21,227 @@ export interface Chantier {
   duree: string;
   images: string[];
   statut: 'planifié' | 'en cours' | 'terminé';
+  user_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ChantiersContextType {
   clients: Client[];
   chantiers: Chantier[];
-  addClient: (client: Client) => void;
-  updateClient: (id: string, updates: Partial<Client>) => void;
-  deleteClient: (id: string) => void;
-  addChantier: (chantier: Chantier) => void;
-  updateChantier: (id: string, updates: Partial<Chantier>) => void;
-  deleteChantier: (id: string) => void;
+  loading: boolean;
+  addClient: (client: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateClient: (id: string, updates: Partial<Client>) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
+  addChantier: (chantier: Omit<Chantier, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateChantier: (id: string, updates: Partial<Chantier>) => Promise<void>;
+  deleteChantier: (id: string) => Promise<void>;
 }
 
 const ChantiersContext = createContext<ChantiersContextType | undefined>(undefined);
 
-// Fonction helper pour charger les clients depuis localStorage
-const loadClientsFromStorage = (): Client[] => {
-  try {
-    const stored = localStorage.getItem('clients_data');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Error loading clients from localStorage:', error);
-  }
-  // Valeurs par défaut si aucune donnée n'est trouvée
-  return [
-    { id: '1', name: 'Jean Dupont', email: 'jean.dupont@email.com', phone: '06 12 34 56 78' },
-    { id: '2', name: 'Marie Martin', email: 'marie.martin@email.com', phone: '06 98 76 54 32' }
-  ];
-};
-
-// Fonction helper pour charger les chantiers depuis localStorage
-const loadChantiersFromStorage = (): Chantier[] => {
-  try {
-    const stored = localStorage.getItem('chantiers_data');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Error loading chantiers from localStorage:', error);
-  }
-  return [];
-};
-
 export function ChantiersProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useState<Client[]>(loadClientsFromStorage);
-  const [chantiers, setChantiers] = useState<Chantier[]>(loadChantiersFromStorage);
+  const { user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [chantiers, setChantiers] = useState<Chantier[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addClient = (client: Client) => {
-    setClients(prev => [...prev, client]);
-  };
-
-  const updateClient = (id: string, updates: Partial<Client>) => {
-    setClients(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-  };
-
-  const deleteClient = (id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
-    // Supprimer aussi les chantiers associés à ce client
-    setChantiers(prev => prev.filter(c => c.clientId !== id));
-  };
-
-  const addChantier = (chantier: Chantier) => {
-    setChantiers(prev => [...prev, chantier]);
-  };
-
-  const updateChantier = (id: string, updates: Partial<Chantier>) => {
-    setChantiers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-  };
-
-  const deleteChantier = (id: string) => {
-    setChantiers(prev => prev.filter(c => c.id !== id));
-  };
-
-  // Synchroniser les clients avec localStorage à chaque changement
-  useEffect(() => {
-    try {
-      localStorage.setItem('clients_data', JSON.stringify(clients));
-    } catch (error) {
-      console.error('Error saving clients to localStorage:', error);
+  // Charger les clients depuis Supabase
+  const loadClients = async () => {
+    if (!user?.id) {
+      setClients([]);
+      setLoading(false);
+      return;
     }
-  }, [clients]);
 
-  // Synchroniser les chantiers avec localStorage à chaque changement
-  useEffect(() => {
     try {
-      localStorage.setItem('chantiers_data', JSON.stringify(chantiers));
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
     } catch (error) {
-      console.error('Error saving chantiers to localStorage:', error);
+      console.error('Error loading clients:', error);
+      setClients([]);
+    } finally {
+      setLoading(false);
     }
-  }, [chantiers]);
+  };
+
+  // Charger les chantiers depuis Supabase
+  const loadChantiers = async () => {
+    if (!user?.id) {
+      setChantiers([]);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setChantiers(data || []);
+    } catch (error) {
+      console.error('Error loading chantiers:', error);
+      setChantiers([]);
+    }
+  };
+
+  // Charger les données au montage et quand l'utilisateur change
+  useEffect(() => {
+    if (user?.id) {
+      loadClients();
+      loadChantiers();
+    } else {
+      setClients([]);
+      setChantiers([]);
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  const addClient = async (client: Omit<Client, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert({
+          ...client,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setClients(prev => [...prev, data]);
+    } catch (error) {
+      console.error('Error adding client:', error);
+      throw error;
+    }
+  };
+
+  const updateClient = async (id: string, updates: Partial<Client>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setClients(prev => prev.map(c => c.id === id ? data : c));
+    } catch (error) {
+      console.error('Error updating client:', error);
+      throw error;
+    }
+  };
+
+  const deleteClient = async (id: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setClients(prev => prev.filter(c => c.id !== id));
+      // Supprimer aussi les chantiers associés
+      await supabase
+        .from('chantiers')
+        .delete()
+        .eq('client_id', id)
+        .eq('user_id', user.id);
+      await loadChantiers();
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      throw error;
+    }
+  };
+
+  const addChantier = async (chantier: Omit<Chantier, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .insert({
+          ...chantier,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setChantiers(prev => [...prev, data]);
+    } catch (error) {
+      console.error('Error adding chantier:', error);
+      throw error;
+    }
+  };
+
+  const updateChantier = async (id: string, updates: Partial<Chantier>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { data, error } = await supabase
+        .from('chantiers')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      setChantiers(prev => prev.map(c => c.id === id ? data : c));
+    } catch (error) {
+      console.error('Error updating chantier:', error);
+      throw error;
+    }
+  };
+
+  const deleteChantier = async (id: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
+    try {
+      const { error } = await supabase
+        .from('chantiers')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setChantiers(prev => prev.filter(c => c.id !== id));
+    } catch (error) {
+      console.error('Error deleting chantier:', error);
+      throw error;
+    }
+  };
 
   return (
-    <ChantiersContext.Provider value={{ clients, chantiers, addClient, updateClient, deleteClient, addChantier, updateChantier, deleteChantier }}>
+    <ChantiersContext.Provider value={{ 
+      clients, 
+      chantiers, 
+      loading,
+      addClient, 
+      updateClient, 
+      deleteClient, 
+      addChantier, 
+      updateChantier, 
+      deleteChantier
+    }}>
       {children}
     </ChantiersContext.Provider>
   );
@@ -123,4 +254,3 @@ export function useChantiers() {
   }
   return context;
 }
-

@@ -26,17 +26,17 @@ export default function ClientsPage() {
     ? chantiers.filter(c => c.clientId === selectedClient.id)
     : [];
 
-  const handleAddClient = () => {
+  const handleAddClient = async () => {
     if (!newClient.name || !newClient.email || !newClient.phone) return;
 
-    const client: Client = {
-      id: Date.now().toString(),
-      ...newClient
-    };
-
-    addClient(client);
-    setNewClient({ name: '', email: '', phone: '' });
-    setIsDialogOpen(false);
+    try {
+      await addClient(newClient);
+      setNewClient({ name: '', email: '', phone: '' });
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding client:', error);
+      alert('Erreur lors de l\'ajout du client');
+    }
   };
 
   const handleEditClient = (client: Client) => {
@@ -45,17 +45,22 @@ export default function ClientsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateClient = () => {
+  const handleUpdateClient = async () => {
     if (!editingClient || !editedClient.name || !editedClient.email || !editedClient.phone) return;
 
-    updateClient(editingClient.id, editedClient);
-    setIsEditDialogOpen(false);
-    setEditingClient(null);
-    setEditedClient({ name: '', email: '', phone: '' });
-    
-    // Mettre à jour le client sélectionné si c'est celui qui a été modifié
-    if (selectedClient && selectedClient.id === editingClient.id) {
-      setSelectedClient({ ...selectedClient, ...editedClient });
+    try {
+      await updateClient(editingClient.id, editedClient);
+      setIsEditDialogOpen(false);
+      setEditingClient(null);
+      setEditedClient({ name: '', email: '', phone: '' });
+      
+      // Mettre à jour le client sélectionné si c'est celui qui a été modifié
+      if (selectedClient && selectedClient.id === editingClient.id) {
+        setSelectedClient({ ...selectedClient, ...editedClient });
+      }
+    } catch (error) {
+      console.error('Error updating client:', error);
+      alert('Erreur lors de la mise à jour du client');
     }
   };
 
@@ -64,15 +69,20 @@ export default function ClientsPage() {
     setDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (clientToDelete) {
-      deleteClient(clientToDelete);
-      setClientToDelete(null);
-      setDeleteConfirmOpen(false);
-      
-      // Si le client supprimé était sélectionné, revenir à la liste
-      if (selectedClient && selectedClient.id === clientToDelete) {
-        setSelectedClient(null);
+      try {
+        await deleteClient(clientToDelete);
+        setClientToDelete(null);
+        setDeleteConfirmOpen(false);
+        
+        // Si le client supprimé était sélectionné, revenir à la liste
+        if (selectedClient && selectedClient.id === clientToDelete) {
+          setSelectedClient(null);
+        }
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Erreur lors de la suppression du client');
       }
     }
   };

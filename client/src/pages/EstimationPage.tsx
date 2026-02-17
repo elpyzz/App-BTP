@@ -292,15 +292,23 @@ export default function EstimationPage() {
     }
   };
 
-  const handleCreateClient = () => {
-    const client: Client = {
-      id: Date.now().toString(),
-      ...newClient
-    };
-    addClient(client);
-    setSelectedClient(client);
-    setNewClient({ name: '', email: '', phone: '' });
-    setClientMode('select');
+  const handleCreateClient = async () => {
+    try {
+      await addClient(newClient);
+      // Le client sera ajouté avec un ID généré par Supabase
+      // On doit attendre qu'il soit ajouté pour obtenir son ID
+      // Pour l'instant, on utilise un ID temporaire
+      const tempClient: Client = {
+        id: Date.now().toString(),
+        ...newClient
+      };
+      setSelectedClient(tempClient);
+      setNewClient({ name: '', email: '', phone: '' });
+      setClientMode('select');
+    } catch (error) {
+      console.error('Error adding client:', error);
+      alert('Erreur lors de l\'ajout du client');
+    }
   };
 
   const handleSelectClient = (clientId: string) => {

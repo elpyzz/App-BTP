@@ -57,28 +57,32 @@ export default function ProjectsPage() {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleAddChantier = () => {
+  const handleAddChantier = async () => {
     if (!newChantier.nom || !newChantier.clientId || !newChantier.dateDebut || !newChantier.duree) {
       return;
     }
 
     const client = clients.find(c => c.id === newChantier.clientId);
-    const chantier: Chantier = {
-      id: Date.now().toString(),
+    const chantier = {
       nom: newChantier.nom,
       clientId: newChantier.clientId,
       clientName: client?.name || 'Client inconnu',
       dateDebut: newChantier.dateDebut,
       duree: newChantier.duree,
       images: newChantier.images,
-      statut: 'planifié'
+      statut: 'planifié' as const
     };
 
-    addChantier(chantier);
-    setNewChantier({ nom: '', clientId: '', dateDebut: '', duree: '', images: [] });
-    setUploadedImages([]);
-    setClientSearchQuery('');
-    setIsDialogOpen(false);
+    try {
+      await addChantier(chantier);
+      setNewChantier({ nom: '', clientId: '', dateDebut: '', duree: '', images: [] });
+      setUploadedImages([]);
+      setClientSearchQuery('');
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding chantier:', error);
+      alert('Erreur lors de l\'ajout du chantier');
+    }
   };
 
   const handleEditChantier = (chantier: Chantier) => {
@@ -95,26 +99,31 @@ export default function ProjectsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateChantier = () => {
+  const handleUpdateChantier = async () => {
     if (!editingChantier || !newChantier.nom || !newChantier.clientId || !newChantier.dateDebut || !newChantier.duree) {
       return;
     }
 
     const client = clients.find(c => c.id === newChantier.clientId);
-    updateChantier(editingChantier.id, {
-      nom: newChantier.nom,
-      clientId: newChantier.clientId,
-      clientName: client?.name || 'Client inconnu',
-      dateDebut: newChantier.dateDebut,
-      duree: newChantier.duree,
-      images: newChantier.images
-    });
+    try {
+      await updateChantier(editingChantier.id, {
+        nom: newChantier.nom,
+        clientId: newChantier.clientId,
+        clientName: client?.name || 'Client inconnu',
+        dateDebut: newChantier.dateDebut,
+        duree: newChantier.duree,
+        images: newChantier.images
+      });
 
-    setEditingChantier(null);
-    setNewChantier({ nom: '', clientId: '', dateDebut: '', duree: '', images: [] });
-    setUploadedImages([]);
-    setClientSearchQuery('');
-    setIsEditDialogOpen(false);
+      setEditingChantier(null);
+      setNewChantier({ nom: '', clientId: '', dateDebut: '', duree: '', images: [] });
+      setUploadedImages([]);
+      setClientSearchQuery('');
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating chantier:', error);
+      alert('Erreur lors de la mise à jour du chantier');
+    }
   };
 
   const handleDeleteClick = (chantierId: string) => {
@@ -122,11 +131,16 @@ export default function ProjectsPage() {
     setDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (chantierToDelete) {
-      deleteChantier(chantierToDelete);
-      setChantierToDelete(null);
-      setDeleteConfirmOpen(false);
+      try {
+        await deleteChantier(chantierToDelete);
+        setChantierToDelete(null);
+        setDeleteConfirmOpen(false);
+      } catch (error) {
+        console.error('Error deleting chantier:', error);
+        alert('Erreur lors de la suppression du chantier');
+      }
     }
   };
 
@@ -137,15 +151,23 @@ export default function ProjectsPage() {
       )
     : clients;
 
-  const handleAddClient = () => {
-    const newClient: Client = {
-      id: Date.now().toString(),
+  const handleAddClient = async () => {
+    const newClient = {
       name: `Client ${clients.length + 1}`,
       email: '',
       phone: ''
     };
-    addClient(newClient);
-    setNewChantier(prev => ({ ...prev, clientId: newClient.id }));
+    try {
+      await addClient(newClient);
+      // Le client sera ajouté avec un ID généré par Supabase
+      // On doit attendre qu'il soit ajouté pour obtenir son ID
+      // Pour l'instant, on utilise un ID temporaire
+      const tempId = Date.now().toString();
+      setNewChantier(prev => ({ ...prev, clientId: tempId }));
+    } catch (error) {
+      console.error('Error adding client:', error);
+      alert('Erreur lors de l\'ajout du client');
+    }
   };
 
   // Ouvrir la popup si le paramètre openDialog est présent dans l'URL

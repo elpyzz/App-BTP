@@ -1,76 +1,99 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Company, CompanySchema } from '@/lib/quotes/types';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from './AuthContext';
 
 interface CompanyContextType {
   company: Company | null;
-  setCompany: (company: Company) => void;
-  loadCompany: () => void;
-  saveCompany: (company: Company) => void;
+  setCompany: (company: Company) => Promise<void>;
+  loadCompany: () => Promise<void>;
+  saveCompany: (company: Company) => Promise<void>;
   isLoading: boolean;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
-// Fonction helper pour charger les infos entreprise depuis localStorage
-const loadCompanyFromStorage = (): Company | null => {
-  try {
-    const stored = localStorage.getItem('company_data');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Valider avec Zod
-      const result = CompanySchema.safeParse(parsed);
-      if (result.success) {
-        return result.data;
-      } else {
-        console.error('Erreur de validation des données entreprise:', result.error);
-        return null;
-      }
-    }
-  } catch (error) {
-    console.error('Error loading company from localStorage:', error);
-  }
-  return null;
-};
-
-// Fonction helper pour sauvegarder
-const saveCompanyToStorage = (company: Company): void => {
-  try {
-    localStorage.setItem('company_data', JSON.stringify(company));
-  } catch (error) {
-    console.error('Error saving company to localStorage:', error);
-  }
-};
-
 export function CompanyProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [company, setCompanyState] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadCompany = () => {
+  const loadCompany = async () => {
+    if (!user?.id) {
+      setCompanyState(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
-    const loaded = loadCompanyFromStorage();
-    setCompanyState(loaded);
-    setIsLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw error;
+      }
+
+      if (data) {
+        const result = CompanySchema.safeParse(data);
+        if (result.success) {
+          setCompanyState(result.data);
+        } else {
+          console.error('Erreur de validation des données entreprise:', result.error);
+        }
+      } else {
+        setCompanyState(null);
+      }
+    } catch (error) {
+      console.error('Error loading company:', error);
+      setCompanyState(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const saveCompany = (newCompany: Company) => {
-    // Valider avec Zod
+  const saveCompany = async (newCompany: Company) => {
+    if (!user?.id) throw new Error('User not authenticated');
+
     const result = CompanySchema.safeParse(newCompany);
     if (!result.success) {
       console.error('Erreur de validation:', result.error);
       throw new Error('Données entreprise invalides');
     }
-    
-    setCompanyState(result.data);
-    saveCompanyToStorage(result.data);
+
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .upsert({
+          ...result.data,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setCompanyState(result.data);
+    } catch (error) {
+      console.error('Error saving company:', error);
+      throw error;
+    }
   };
 
-  const setCompany = (newCompany: Company) => {
-    saveCompany(newCompany);
+  const setCompany = async (newCompany: Company) => {
+    await saveCompany(newCompany);
   };
 
   useEffect(() => {
-    loadCompany();
-  }, []);
+    if (user?.id) {
+      loadCompany();
+    } else {
+      setCompanyState(null);
+      setIsLoading(false);
+    }
+  }, [user?.id]);
 
   return (
     <CompanyContext.Provider

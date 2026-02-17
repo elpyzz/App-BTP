@@ -1,259 +1,266 @@
 import { Quote, QuoteSchema, generateId, generateQuoteNumber, calculateExpirationDate } from '@/lib/quotes/types';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
- * Charge les devis depuis localStorage
+ * Helper pour obtenir l'ID de l'utilisateur actuel
  */
-export async function loadQuotesFromLocalStorage(): Promise<Quote[]> {
+async function getCurrentUserId(): Promise<string | null> {
   try {
-    const stored = localStorage.getItem('quotes_data');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:9',message:'loadQuotesFromLocalStorage - devis parsés',data:{parsedCount:parsed.length,firstQuoteId:parsed[0]?.id,firstQuoteHasClient:parsed[0]?.client!==undefined,firstQuoteHasTotalTTC:parsed[0]?.totalTTC!==undefined},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-      // #endregion
-      // Valider chaque devis avec Zod
-      const quotes: Quote[] = [];
-      for (const item of parsed) {
-        const result = QuoteSchema.safeParse(item);
-        if (result.success) {
-          quotes.push(result.data);
-        } else {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:18',message:'Devis invalide ignoré',data:{itemId:item.id,error:result.error.errors.map((e:any)=>e.path.join('.')+': '+e.message).join(', ')},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
-          console.warn('Devis invalide ignoré:', result.error);
-        }
-      }
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:21',message:'loadQuotesFromLocalStorage - validation terminée',data:{validQuotesCount:quotes.length,invalidQuotesCount:parsed.length-quotes.length},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      return quotes;
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || null;
   } catch (error) {
-    console.error('Error loading quotes from localStorage:', error);
-  }
-  return [];
-}
-
-/**
- * Sauvegarde les devis dans localStorage
- */
-export async function saveQuotesToLocalStorage(quotes: Quote[]): Promise<void> {
-  try {
-    localStorage.setItem('quotes_data', JSON.stringify(quotes));
-    // Déclencher événement pour notifier les autres composants
-    window.dispatchEvent(new Event('quotesUpdated'));
-  } catch (error) {
-    console.error('Error saving quotes to localStorage:', error);
-    throw error;
+    console.error('Error getting current user:', error);
+    return null;
   }
 }
 
 /**
- * Charge un devis par ID depuis localStorage
- */
-export async function loadQuoteFromLocalStorage(id: string): Promise<Quote | null> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:46',message:'loadQuoteFromLocalStorage appelé',data:{searchId:id},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
-  // #endregion
-  const quotes = await loadQuotesFromLocalStorage();
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:49',message:'loadQuoteFromLocalStorage - quotes chargés',data:{quotesCount:quotes.length,quoteIds:quotes.map(q=>q.id),matchingQuote:quotes.find(q=>q.id===id)?'trouvé':'non trouvé'},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-  // #endregion
-  return quotes.find(q => q.id === id) || null;
-}
-
-/**
- * Sauvegarde un devis (création ou mise à jour) dans localStorage
- */
-export async function saveQuoteToLocalStorage(quote: Quote): Promise<Quote> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:69',message:'saveQuoteToLocalStorage - Données reçues',data:{quoteId:quote.id,companyName:quote.company?.name,companyAddress:quote.company?.address,companyPhone:quote.company?.phone,companyEmail:quote.company?.email,companySiret:quote.company?.siret,clientName:quote.client?.name,chantierName:quote.chantier?.name,linesCount:quote.lines?.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  
-  // Charger directement depuis localStorage SANS validation Zod pour préserver toutes les données
-  let quotes: any[] = [];
-  try {
-    const stored = localStorage.getItem('quotes_data');
-    if (stored) {
-      quotes = JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Error loading quotes from localStorage for save:', error);
-  }
-  
-  const index = quotes.findIndex((q: any) => q.id === quote.id);
-  
-  if (index >= 0) {
-    // Mise à jour
-    quotes[index] = quote;
-  } else {
-    // Création
-    quotes.push(quote);
-  }
-  
-  // #region agent log
-  const quoteToSave = quotes[index >= 0 ? index : quotes.length - 1];
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:78',message:'saveQuoteToLocalStorage - Avant écriture localStorage',data:{quoteId:quoteToSave.id,companyName:quoteToSave.company?.name,companyAddress:quoteToSave.company?.address,companyPhone:quoteToSave.company?.phone,companyEmail:quoteToSave.company?.email,companySiret:quoteToSave.company?.siret,quotesCount:quotes.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  
-  await saveQuotesToLocalStorage(quotes);
-  
-  // #region agent log
-  const savedData = localStorage.getItem('quotes_data');
-  const parsedSaved = savedData ? JSON.parse(savedData) : [];
-  const savedQuote = parsedSaved.find((q: any) => q.id === quote.id);
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:92',message:'saveQuoteToLocalStorage - Après écriture localStorage',data:{quoteId:savedQuote?.id,companyName:savedQuote?.company?.name,companyAddress:savedQuote?.company?.address,companyPhone:savedQuote?.company?.phone,companyEmail:savedQuote?.company?.email,companySiret:savedQuote?.company?.siret,hasCompany:!!savedQuote?.company,allKeys:Object.keys(savedQuote||{}).join(','),quotesInStorage:parsedSaved.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
-  
-  return quote;
-}
-
-/**
- * Supprime un devis depuis localStorage
- */
-export async function deleteQuoteFromLocalStorage(id: string): Promise<void> {
-  const quotes = await loadQuotesFromLocalStorage();
-  const filtered = quotes.filter(q => q.id !== id);
-  await saveQuotesToLocalStorage(filtered);
-}
-
-/**
- * Charge les devis depuis Supabase (si configuré)
+ * Charge les devis depuis Supabase (filtrés par user_id)
  */
 export async function loadQuotesFromSupabase(filters?: {
   dossierId?: string;
   status?: string;
 }): Promise<Quote[]> {
   try {
-    const response = await fetch(
-      `/api/quotes${filters ? '?' + new URLSearchParams(filters as any).toString() : ''}`
-    );
-    const result = await response.json();
-    
-    if (result.success) {
-      return result.quotes || [];
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.warn('No user ID, returning empty quotes');
+      return [];
     }
-    throw new Error(result.error || 'Erreur lors du chargement');
+
+    let query = supabase
+      .from('quotes')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (filters?.dossierId) {
+      query = query.eq('dossier_id', filters.dossierId);
+    }
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Valider chaque devis avec Zod
+    const quotes: Quote[] = [];
+    for (const item of data || []) {
+      const result = QuoteSchema.safeParse(item);
+      if (result.success) {
+        quotes.push(result.data);
+      } else {
+        console.warn('Devis invalide ignoré:', result.error);
+      }
+    }
+
+    return quotes;
   } catch (error) {
     console.error('Error loading quotes from Supabase:', error);
-    // Fallback sur localStorage
-    return loadQuotesFromLocalStorage();
+    return [];
   }
 }
 
 /**
- * Sauvegarde un devis dans Supabase (si configuré)
+ * Sauvegarde un devis dans Supabase (avec user_id)
  */
 export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
   try {
-    const method = quote.id ? 'PUT' : 'POST';
-    const url = quote.id ? `/api/quotes/${quote.id}` : '/api/quotes';
-    
-    const response = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(quote),
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      return result.quote;
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
     }
-    throw new Error(result.error || 'Erreur lors de la sauvegarde');
+
+    // Générer numéro et dates si nouveau devis
+    if (!quote.quoteNumber) {
+      const existing = await loadQuotesFromSupabase();
+      quote.quoteNumber = generateQuoteNumber(existing);
+    }
+
+    if (!quote.id) {
+      quote.id = generateId();
+    }
+
+    if (!quote.expirationDate && quote.issueDate) {
+      quote.expirationDate = calculateExpirationDate(quote.issueDate, quote.validityDays || 30);
+    }
+
+    // Préparer les données pour Supabase (inclure user_id)
+    const quoteData = {
+      ...quote,
+      user_id: userId,
+    };
+
+    // Vérifier si le devis existe déjà
+    const { data: existing } = await supabase
+      .from('quotes')
+      .select('id')
+      .eq('id', quote.id)
+      .eq('user_id', userId)
+      .single();
+
+    let result;
+    if (existing) {
+      // Mise à jour
+      const { data, error } = await supabase
+        .from('quotes')
+        .update(quoteData)
+        .eq('id', quote.id)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Création
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert(quoteData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    }
+
+    // Valider le résultat
+    const validated = QuoteSchema.safeParse(result);
+    if (!validated.success) {
+      console.error('Erreur de validation après sauvegarde:', validated.error);
+      throw new Error('Données invalides après sauvegarde');
+    }
+
+    // Déclencher événement pour notifier les autres composants
+    window.dispatchEvent(new Event('quotesUpdated'));
+
+    return validated.data;
   } catch (error) {
     console.error('Error saving quote to Supabase:', error);
-    // Fallback sur localStorage
-    return saveQuoteToLocalStorage(quote);
+    throw error;
   }
 }
 
 /**
- * Supprime un devis depuis Supabase (si configuré)
+ * Supprime un devis depuis Supabase (avec vérification user_id)
  */
 export async function deleteQuoteFromSupabase(id: string): Promise<void> {
   try {
-    const response = await fetch(`/api/quotes/${id}`, {
-      method: 'DELETE',
-    });
-    
-    const result = await response.json();
-    
-    if (!result.success) {
-      throw new Error(result.error || 'Erreur lors de la suppression');
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
     }
+
+    const { error } = await supabase
+      .from('quotes')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    // Déclencher événement pour notifier les autres composants
+    window.dispatchEvent(new Event('quotesUpdated'));
   } catch (error) {
     console.error('Error deleting quote from Supabase:', error);
-    // Fallback sur localStorage
-    await deleteQuoteFromLocalStorage(id);
+    throw error;
   }
 }
 
 /**
- * Fonctions unifiées avec fallback automatique
+ * Charge un devis par ID depuis Supabase (avec vérification user_id)
+ */
+export async function loadQuoteFromSupabase(id: string): Promise<Quote | null> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') { // No rows returned
+        return null;
+      }
+      throw error;
+    }
+
+    if (!data) return null;
+
+    const result = QuoteSchema.safeParse(data);
+    if (result.success) {
+      return result.data;
+    } else {
+      console.warn('Devis invalide:', result.error);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error loading quote from Supabase:', error);
+    return null;
+  }
+}
+
+/**
+ * Fonctions unifiées - utilisent maintenant Supabase directement
  */
 export async function loadQuotes(filters?: {
   dossierId?: string;
   status?: string;
 }): Promise<Quote[]> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:159',message:'loadQuotes appelé',data:{hasProcessEnv:typeof process!=='undefined',hasProcessEnvNextPublic:typeof process!=='undefined'&&typeof process.env!=='undefined'?typeof process.env.NEXT_PUBLIC_SUPABASE_URL:'N/A'},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
-  // #endregion
-  // Essayer Supabase d'abord, fallback localStorage
-  // Note: Supabase est désactivé (mock), donc on utilise toujours localStorage
-  // if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  //   return loadQuotesFromSupabase(filters);
-  // }
-  return loadQuotesFromLocalStorage();
+  return loadQuotesFromSupabase(filters);
 }
 
 export async function saveQuote(quote: Quote): Promise<Quote> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:181',message:'saveQuote appelé',data:{hasProcessEnv:typeof process!=='undefined',hasProcessEnvNextPublic:typeof process!=='undefined'&&typeof process.env!=='undefined'?typeof process.env.NEXT_PUBLIC_SUPABASE_URL:'N/A',quoteId:quote.id},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
-  // #endregion
-  // Générer numéro et dates si nouveau devis
-  if (!quote.quoteNumber) {
-    const existing = await loadQuotes();
-    quote.quoteNumber = generateQuoteNumber(existing);
-  }
-  
-  if (!quote.id) {
-    quote.id = generateId();
-  }
-  
-  if (!quote.expirationDate && quote.issueDate) {
-    quote.expirationDate = calculateExpirationDate(quote.issueDate, quote.validityDays || 30);
-  }
-  
-  // Essayer Supabase d'abord, fallback localStorage
-  // Note: Supabase est désactivé (mock), donc on utilise toujours localStorage
-  // if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  //   return saveQuoteToSupabase(quote);
-  // }
-  return saveQuoteToLocalStorage(quote);
+  return saveQuoteToSupabase(quote);
 }
 
 export async function loadQuote(id: string): Promise<Quote | null> {
-  // Note: Supabase est désactivé (mock), donc on utilise toujours localStorage
-  // if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  //   try {
-  //     const response = await fetch(`/api/quotes/${id}`);
-  //     const result = await response.json();
-  //     if (result.success) {
-  //       return result.quote;
-  //     }
-  //   } catch (error) {
-  //     console.error('Error loading quote from Supabase:', error);
-  //   }
-  // }
-  return loadQuoteFromLocalStorage(id);
+  return loadQuoteFromSupabase(id);
 }
 
 export async function deleteQuote(id: string): Promise<void> {
-  // Note: Supabase est désactivé (mock), donc on utilise toujours localStorage
-  // if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  //   return deleteQuoteFromSupabase(id);
-  // }
-  return deleteQuoteFromLocalStorage(id);
+  return deleteQuoteFromSupabase(id);
+}
+
+/**
+ * Fonctions de compatibilité avec localStorage (dépréciées, conservées pour migration)
+ * @deprecated Utiliser les fonctions Supabase directement
+ */
+export async function loadQuotesFromLocalStorage(): Promise<Quote[]> {
+  console.warn('loadQuotesFromLocalStorage is deprecated, use loadQuotesFromSupabase');
+  return loadQuotesFromSupabase();
+}
+
+export async function saveQuotesToLocalStorage(quotes: Quote[]): Promise<void> {
+  console.warn('saveQuotesToLocalStorage is deprecated, use saveQuoteToSupabase for each quote');
+  // Migrer tous les quotes vers Supabase
+  for (const quote of quotes) {
+    try {
+      await saveQuoteToSupabase(quote);
+    } catch (error) {
+      console.error(`Error migrating quote ${quote.id}:`, error);
+    }
+  }
+}
+
+export async function loadQuoteFromLocalStorage(id: string): Promise<Quote | null> {
+  console.warn('loadQuoteFromLocalStorage is deprecated, use loadQuoteFromSupabase');
+  return loadQuoteFromSupabase(id);
+}
+
+export async function saveQuoteToLocalStorage(quote: Quote): Promise<Quote> {
+  console.warn('saveQuoteToLocalStorage is deprecated, use saveQuoteToSupabase');
+  return saveQuoteToSupabase(quote);
+}
+
+export async function deleteQuoteFromLocalStorage(id: string): Promise<void> {
+  console.warn('deleteQuoteFromLocalStorage is deprecated, use deleteQuoteFromSupabase');
+  return deleteQuoteFromSupabase(id);
 }
