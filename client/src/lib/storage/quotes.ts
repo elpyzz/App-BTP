@@ -15,6 +15,119 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 /**
+ * Convertit un objet Quote (camelCase) vers le format Supabase (snake_case)
+ * Exclut created_at et updated_at car Supabase les gère automatiquement
+ * Filtre les valeurs undefined/null pour éviter les erreurs Supabase
+ */
+function quoteToSupabase(quote: Quote): any {
+  const data: any = {
+    quote_number: quote.quoteNumber,
+    status: quote.status,
+    issue_date: quote.issueDate,
+    validity_days: quote.validityDays ?? 30,
+    expiration_date: quote.expirationDate,
+    client: quote.client,
+    company: quote.company,
+    chantier: quote.chantier,
+    lots: quote.lots || [],
+    lines: quote.lines || [],
+  };
+
+  // Ajouter l'ID seulement s'il est un UUID valide
+  if (quote.id && quote.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    data.id = quote.id;
+  }
+
+  // Ajouter les champs optionnels seulement s'ils sont définis
+  if (quote.dossierId) data.dossier_id = quote.dossierId;
+  if (quote.salesPerson) data.sales_person = quote.salesPerson;
+  if (quote.clientReference) data.client_reference = quote.clientReference;
+  if (quote.discount) data.discount = quote.discount;
+  if (quote.deposit) data.deposit = quote.deposit;
+  if (quote.paymentSchedule) data.payment_schedule = quote.paymentSchedule;
+  if (quote.travelCosts !== undefined && quote.travelCosts !== null && quote.travelCosts !== 0) {
+    data.travel_costs = Number(quote.travelCosts);
+  }
+  if (quote.conditions) data.conditions = quote.conditions;
+  if (quote.signature) data.signature = quote.signature;
+  if (quote.notes) data.notes = quote.notes;
+
+  // Ajouter les colonnes numériques seulement si elles ont une valeur non-nulle
+  // Les colonnes avec DEFAULT 0 seront gérées par Supabase si on ne les envoie pas
+  const subtotalHT = Number(quote.subtotalHT ?? 0);
+  if (subtotalHT !== 0) data.subtotal_ht = subtotalHT;
+
+  const discountAmount = Number(quote.discountAmount ?? 0);
+  if (discountAmount !== 0) data.discount_amount = discountAmount;
+
+  const totalHT = Number(quote.totalHT ?? 0);
+  if (totalHT !== 0) data.total_ht = totalHT;
+
+  const vatBreakdown = quote.vatBreakdown || [];
+  if (vatBreakdown.length > 0) data.vat_breakdown = vatBreakdown;
+
+  const totalTVA = Number(quote.totalTVA ?? 0);
+  if (totalTVA !== 0) data.total_tva = totalTVA;
+
+  const totalTTC = Number(quote.totalTTC ?? 0);
+  if (totalTTC !== 0) data.total_ttc = totalTTC;
+
+  // Envoyer deposit_amount et remaining_amount seulement si elles ont une valeur non-nulle
+  // Si elles valent 0, laisser Supabase utiliser la valeur par défaut (évite le problème de cache)
+  const depositAmount = Number(quote.depositAmount ?? 0);
+  if (depositAmount !== 0) {
+    data.deposit_amount = depositAmount;
+  }
+
+  const remainingAmount = Number(quote.remainingAmount ?? 0);
+  if (remainingAmount !== 0) {
+    data.remaining_amount = remainingAmount;
+  }
+
+  return data;
+}
+
+/**
+ * Convertit un objet Supabase (snake_case) vers le format Quote (camelCase)
+ * Convertit les valeurs null en undefined pour les champs optionnels
+ */
+function supabaseToQuote(data: any): Quote {
+  return {
+    id: data.id,
+    quoteNumber: data.quote_number,
+    status: data.status,
+    issueDate: data.issue_date,
+    validityDays: data.validity_days ?? 30,
+    expirationDate: data.expiration_date,
+    dossierId: data.dossier_id ?? undefined,
+    salesPerson: data.sales_person ?? undefined,
+    clientReference: data.client_reference ?? undefined,
+    client: data.client,
+    company: data.company,
+    chantier: data.chantier,
+    lots: data.lots || [],
+    lines: data.lines || [],
+    discount: data.discount ?? undefined,
+    deposit: data.deposit ?? undefined,
+    paymentSchedule: data.payment_schedule ?? undefined,
+    travelCosts: data.travel_costs ? parseFloat(data.travel_costs) : undefined,
+    subtotalHT: parseFloat(data.subtotal_ht || 0),
+    discountAmount: parseFloat(data.discount_amount || 0),
+    totalHT: parseFloat(data.total_ht || 0),
+    vatBreakdown: data.vat_breakdown || [],
+    totalTVA: parseFloat(data.total_tva || 0),
+    totalTTC: parseFloat(data.total_ttc || 0),
+    depositAmount: parseFloat(data.deposit_amount || 0),
+    remainingAmount: parseFloat(data.remaining_amount || 0),
+    conditions: data.conditions ?? undefined,
+    signature: data.signature ?? undefined,
+    notes: data.notes ?? undefined,
+    createdAt: data.created_at || new Date().toISOString(),
+    updatedAt: data.updated_at || new Date().toISOString(),
+  };
+}
+
+/**
  * Charge les devis depuis Supabase (filtrés par user_id)
  */
 export async function loadQuotesFromSupabase(filters?: {
@@ -44,14 +157,24 @@ export async function loadQuotesFromSupabase(filters?: {
 
     if (error) throw error;
 
-    // Valider chaque devis avec Zod
+    // Convertir et valider chaque devis
     const quotes: Quote[] = [];
     for (const item of data || []) {
-      const result = QuoteSchema.safeParse(item);
-      if (result.success) {
-        quotes.push(result.data);
-      } else {
-        console.warn('Devis invalide ignoré:', result.error);
+      // #region agent log
+      if (data && data.length > 0) {
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:49',message:'DONNEES RECUES DE SUPABASE',data:{keys:Object.keys(item),hasCreatedAt:'created_at' in item,hasCreatedAtCamel:'createdAt' in item,hasUpdatedAt:'updated_at' in item,hasUpdatedAtCamel:'updatedAt' in item},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      }
+      // #endregion
+      try {
+        const quote = supabaseToQuote(item);
+        const result = QuoteSchema.safeParse(quote);
+        if (result.success) {
+          quotes.push(result.data);
+        } else {
+          console.warn('Devis invalide ignoré:', result.error);
+        }
+      } catch (err) {
+        console.warn('Erreur lors de la conversion du devis:', err);
       }
     }
 
@@ -78,27 +201,39 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
       quote.quoteNumber = generateQuoteNumber(existing);
     }
 
-    if (!quote.id) {
-      quote.id = generateId();
-    }
-
     if (!quote.expirationDate && quote.issueDate) {
       quote.expirationDate = calculateExpirationDate(quote.issueDate, quote.validityDays || 30);
     }
 
-    // Préparer les données pour Supabase (inclure user_id)
-    const quoteData = {
-      ...quote,
+    // Convertir vers le format Supabase (snake_case)
+    const baseData = quoteToSupabase(quote);
+    const quoteData: any = {
+      ...baseData,
       user_id: userId,
     };
 
-    // Vérifier si le devis existe déjà
-    const { data: existing } = await supabase
-      .from('quotes')
-      .select('id')
-      .eq('id', quote.id)
-      .eq('user_id', userId)
-      .single();
+    // Pour les nouveaux devis, ne pas envoyer l'ID (Supabase le générera automatiquement)
+    // Pour les mises à jour, garder l'ID seulement s'il est un UUID valide
+    const isNewQuote = !quote.id || !quote.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    if (isNewQuote) {
+      delete quoteData.id;
+    }
+
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:195',message:'AVANT ENVOI - quoteData complet',data:{keys:Object.keys(quoteData),hasId:'id' in quoteData,quoteId:quoteData.id,depositAmount:quoteData.deposit_amount,depositAmountType:typeof quoteData.deposit_amount,isNewQuote,quoteDataSample:JSON.stringify(quoteData).substring(0,500)},timestamp:Date.now(),runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+    // #endregion
+
+    // Vérifier si le devis existe déjà (seulement si on a un ID valide)
+    let existing = null;
+    if (quoteData.id) {
+      const { data } = await supabase
+        .from('quotes')
+        .select('id')
+        .eq('id', quoteData.id)
+        .eq('user_id', userId)
+        .single();
+      existing = data;
+    }
 
     let result;
     if (existing) {
@@ -106,12 +241,23 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
       const { data, error } = await supabase
         .from('quotes')
         .update(quoteData)
-        .eq('id', quote.id)
+        .eq('id', quoteData.id)
         .eq('user_id', userId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:114',message:'ERREUR UPDATE',data:{errorCode:error.code,errorMessage:error.message,errorDetails:error.details,errorHint:error.hint},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+        // #endregion
+        
+        // Message d'erreur plus clair pour les problèmes de schéma
+        if (error.code === 'PGRST204') {
+          const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
+          throw new Error(`La colonne "${columnName}" n'existe pas dans la table quotes. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
+        }
+        throw error;
+      }
       result = data;
     } else {
       // Création
@@ -121,12 +267,24 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:124',message:'ERREUR INSERT',data:{errorCode:error.code,errorMessage:error.message,errorDetails:error.details,errorHint:error.hint},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+        // #endregion
+        
+        // Message d'erreur plus clair pour les problèmes de schéma
+        if (error.code === 'PGRST204') {
+          const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
+          throw new Error(`La colonne "${columnName}" n'existe pas dans la table quotes. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
+        }
+        throw error;
+      }
       result = data;
     }
 
-    // Valider le résultat
-    const validated = QuoteSchema.safeParse(result);
+    // Convertir et valider le résultat
+    const convertedQuote = supabaseToQuote(result);
+    const validated = QuoteSchema.safeParse(convertedQuote);
     if (!validated.success) {
       console.error('Erreur de validation après sauvegarde:', validated.error);
       throw new Error('Données invalides après sauvegarde');
@@ -194,7 +352,9 @@ export async function loadQuoteFromSupabase(id: string): Promise<Quote | null> {
 
     if (!data) return null;
 
-    const result = QuoteSchema.safeParse(data);
+    // Convertir et valider
+    const quote = supabaseToQuote(data);
+    const result = QuoteSchema.safeParse(quote);
     if (result.success) {
       return result.data;
     } else {
