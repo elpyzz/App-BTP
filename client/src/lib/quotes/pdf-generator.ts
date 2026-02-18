@@ -26,12 +26,12 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // #endregion
 
   const doc = new jsPDF();
-  let yPos = 25;
+  let yPos = 20; // Réduit de 25 à 20
 
   // Configuration
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 25;
+  const margin = 20; // Réduit de 25 à 20
   const contentWidth = pageWidth - 2 * margin;
   const violetColor = [138, 43, 226]; // Violet RGB
 
@@ -40,7 +40,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // ============================================
   
   // Logo à gauche (carré violet avec initiale)
-  const logoSize = 18;
+  const logoSize = 15; // Réduit de 18 à 15
   const logoX = margin;
   const logoY = yPos;
   
@@ -49,7 +49,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   doc.rect(logoX, logoY, logoSize, logoSize, "F");
   
   // Initiale ou première lettre du nom de l'entreprise
-  doc.setFontSize(14);
+  doc.setFontSize(12); // Réduit de 14 à 12
   doc.setFont(undefined, "bold");
   doc.setTextColor(255, 255, 255);
   const companyInitial = quote.company?.name?.charAt(0).toUpperCase() || "C";
@@ -58,7 +58,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // Nom de l'entreprise à côté du logo (en violet, en minuscules)
   // Limiter la largeur pour éviter le chevauchement avec le numéro de devis
   doc.setTextColor(violetColor[0], violetColor[1], violetColor[2]);
-  doc.setFontSize(16);
+  doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
   const companyName = (quote.company?.name || "VOTRE ENTREPRISE").toLowerCase();
   const maxCompanyNameWidth = pageWidth / 2 - logoX - logoSize - 8;
@@ -67,21 +67,21 @@ export function generateQuotePDF(quote: Quote): jsPDF {
 
   // Numéro de devis à droite (pas centré pour éviter le chevauchement)
   const rightX = pageWidth - margin;
-  doc.setFontSize(18);
+  doc.setFontSize(16); // Réduit de 18 à 16
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(`Devis n° ${quote.quoteNumber || "N/A"}`, rightX, yPos + 5, { align: "right" });
+  doc.text(`Devis n° ${quote.quoteNumber || "N/A"}`, rightX, yPos + 4, { align: "right" });
   
-  yPos += 10;
-  doc.setFontSize(10);
+  yPos += 7; // Réduit de 10 à 7
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "normal");
   doc.text(`Date d'émission : ${new Date(quote.issueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
-  yPos += 5;
+  yPos += 4; // Réduit de 5 à 4
   doc.text(`Date d'expiration : ${new Date(quote.expirationDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
 
   // Nom du client centré (sous le logo et le numéro)
-  yPos += 10;
-  doc.setFontSize(13);
+  yPos += 8; // Réduit de 10 à 8
+  doc.setFontSize(12); // Réduit de 13 à 12
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const centerX = pageWidth / 2;
@@ -90,112 +90,112 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // ============================================
   // SECTION ENTREPRISE / CLIENT (DEUX COLONNES)
   // ============================================
-  yPos += 20;
+  yPos += 12; // Réduit de 20 à 12
   
   // Ligne de séparation
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 12;
+  yPos += 8; // Réduit de 12 à 8
   
   // Colonne gauche - Entreprise
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 15;
   const colWidth = (pageWidth - 2 * margin - 30) / 2;
   
-  doc.setFontSize(11);
+  doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text(quote.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
   
-  let leftY = yPos + 7;
-  doc.setFontSize(9);
+  let leftY = yPos + 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   // Adresse entreprise
   if (quote.company?.address) {
     doc.text("Adresse", leftColX, leftY);
-    doc.text(quote.company.address, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(quote.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Adresse", leftColX, leftY);
-    leftY += 5;
+    leftY += 4; // Réduit de 5 à 4
   }
   
   // Code postal et ville
   if (quote.company?.postalCode && quote.company?.city) {
     doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${quote.company.postalCode} ${quote.company.city}`, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(`${quote.company.postalCode} ${quote.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Code postal, Ville", leftColX, leftY);
-    leftY += 5;
+    leftY += 4; // Réduit de 5 à 4
   }
   
   // Pays
   doc.text("Pays", leftColX, leftY);
-  leftY += 5;
+  leftY += 4; // Réduit de 5 à 4
   
   // Téléphone
   if (quote.company?.phone) {
     doc.text("Téléphone", leftColX, leftY);
-    doc.text(quote.company.phone, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(quote.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Téléphone", leftColX, leftY);
-    leftY += 5;
+    leftY += 4; // Réduit de 5 à 4
   }
   
   // Site internet
   if (quote.company?.website) {
     doc.text("Site internet", leftColX, leftY);
-    doc.text(quote.company.website, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(quote.company.website, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Site internet", leftColX, leftY);
-    leftY += 5;
+    leftY += 4; // Réduit de 5 à 4
   }
   
   // Email
   if (quote.company?.email) {
     doc.text("Email", leftColX, leftY);
-    doc.text(quote.company.email, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(quote.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Email", leftColX, leftY);
-    leftY += 5;
+    leftY += 4; // Réduit de 5 à 4
   }
 
   // Colonne droite - Client
-  let rightY = yPos + 7;
-  doc.setFontSize(11);
+  let rightY = yPos + 5; // Réduit de 7 à 5
+  doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text(quote.client?.name || "Nom du client", rightColX, yPos);
   
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   // Adresse client
   if (quote.client?.billingAddress) {
     doc.text("Adresse", rightColX, rightY);
-    doc.text(quote.client.billingAddress, rightColX, rightY + 4);
-    rightY += 8;
+    doc.text(quote.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
+    rightY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Adresse", rightColX, rightY);
-    rightY += 5;
+    rightY += 4; // Réduit de 5 à 4
   }
   
   // Code postal et ville client
   if (quote.client?.billingPostalCode && quote.client?.billingCity) {
     doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${quote.client.billingPostalCode} ${quote.client.billingCity}`, rightColX, rightY + 4);
-    rightY += 8;
+    doc.text(`${quote.client.billingPostalCode} ${quote.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
+    rightY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Code postal, Ville", rightColX, rightY);
-    rightY += 5;
+    rightY += 4; // Réduit de 5 à 4
   }
   
   // Pays client
@@ -205,32 +205,32 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // INTITULÉ DU DEVIS
   // ============================================
   const maxY = Math.max(leftY, rightY);
-  yPos = maxY + 18;
+  yPos = maxY + 10; // Réduit de 18 à 10
   
   // Ligne de séparation
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
-  doc.line(margin, yPos - 5, pageWidth - margin, yPos - 5);
+  doc.line(margin, yPos - 3, pageWidth - margin, yPos - 3); // Ajusté
   
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "normal");
   doc.setTextColor(0, 0, 0);
   
   // Intitulé avec le nom du chantier
   const intitule = quote.chantier?.name || quote.chantier?.description || quote.notes || "Motif ou présentation du devis";
   doc.text(`Intitulé : ${intitule}`, margin, yPos);
-  yPos += 8;
+  yPos += 5; // Réduit de 8 à 5
 
   // ============================================
   // TABLEAU DES LIGNES
   // ============================================
-  yPos += 5;
+  yPos += 3; // Réduit de 5 à 3
   
   // En-tête du tableau avec fond gris clair
   doc.setFillColor(245, 245, 245);
-  doc.rect(margin, yPos - 5, contentWidth, 8, "F");
+  doc.rect(margin, yPos - 3, contentWidth, 6, "F"); // Réduit de 8 à 6
   
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const tableStartY = yPos;
@@ -257,14 +257,14 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   doc.text("Montant TTC", colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
   
   // Ligne de séparation sous l'en-tête
-  yPos += 3;
+  yPos += 2; // Réduit de 3 à 2
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   doc.setFont(undefined, "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setTextColor(0, 0, 0);
 
   // Grouper par lots
@@ -278,26 +278,16 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   linesByLot.forEach(({ lot, lines }) => {
     if (lines.length === 0) return;
     
-    if (yPos > pageHeight - 100) {
-      doc.addPage();
-      yPos = 25;
-    }
-    
     // En-tête du lot
     doc.setFont(undefined, "bold");
     doc.text(lot.name, colDesignation, yPos);
-    yPos += 6;
+    yPos += 4; // Réduit de 6 à 4
     doc.setFont(undefined, "normal");
 
     lines.forEach((line, index) => {
-      if (yPos > pageHeight - 100) {
-        doc.addPage();
-        yPos = 25;
-      }
-      
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, colDesignationWidth - 5);
-      const lineHeight = Math.max(6, descriptionLines.length * 4.5);
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit de 6 et 4.5 à 4 et 3.5
       
       // Description avec numéro de ligne
       doc.setFont(undefined, "bold");
@@ -326,7 +316,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
       doc.setDrawColor(240, 240, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 4;
+      yPos += 3; // Réduit de 4 à 3
     });
   });
 
@@ -334,15 +324,9 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   if (linesWithoutLot.length > 0) {
     let lineNumber = 1;
     linesWithoutLot.forEach((line) => {
-      if (yPos > pageHeight - 100) {
-        doc.addPage();
-        yPos = 25;
-        lineNumber = 1;
-      }
-      
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, 85);
-      const lineHeight = Math.max(6, descriptionLines.length * 4.5);
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit
       
       // Description avec numéro de ligne
       doc.setFont(undefined, "bold");
@@ -371,7 +355,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
       doc.setDrawColor(240, 240, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 4;
+      yPos += 3; // Réduit de 4 à 3
       
       lineNumber++;
     });
@@ -380,76 +364,68 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // ============================================
   // TOTAUX DANS LE TABLEAU
   // ============================================
-  yPos += 5;
-  if (yPos > pageHeight - 80) {
-    doc.addPage();
-    yPos = 25;
-  }
+  yPos += 3; // Réduit de 5 à 3
   
   // Ligne de séparation avant les totaux
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   // Sous-total HT (dans la colonne Prix HT)
   doc.text("Sous-total HT", colDesignation, yPos);
   doc.text(formatCurrencyForPDF(quote.subtotalHT || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   // Total TVA (dans la colonne Prix HT)
   doc.text("Total TVA", colDesignation, yPos);
   doc.text(formatCurrencyForPDF(quote.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   // Total TTC (en gras et plus grand, dans la colonne Montant TTC)
   // Le label "Total TTC" est légèrement décalé à gauche pour un meilleur alignement visuel
   doc.setFont(undefined, "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.text("Total TTC", colDesignation + 5, yPos);
   doc.text(formatCurrencyForPDF(quote.totalTTC || 0), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
   doc.setFont(undefined, "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
 
   // ============================================
   // CONDITIONS DE PAIEMENT
   // ============================================
-  yPos += 18;
-  if (yPos > pageHeight - 60) {
-    doc.addPage();
-    yPos = 25;
-  }
+  yPos += 10; // Réduit de 18 à 10
   
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text("Conditions de paiement :", margin, yPos);
-  yPos += 7;
-  doc.setFontSize(9);
+  yPos += 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   if (quote.conditions?.paymentTerms) {
     const paymentLines = doc.splitTextToSize(quote.conditions.paymentTerms, contentWidth);
     doc.text(paymentLines, margin, yPos);
-    yPos += paymentLines.length * 4.5;
+    yPos += paymentLines.length * 3.5; // Réduit de 4.5 à 3.5
   } else {
     doc.text("Paiement à réception de facture. Modes de paiement acceptés : virement bancaire, chèque. En cas de retard de paiement, des pénalités de retard seront appliquées au taux de 3 fois le taux d'intérêt légal.", margin, yPos);
-    yPos += 5;
+    yPos += 4; // Réduit de 5 à 4
   }
 
   // ============================================
   // MOYENS DE PAIEMENT
   // ============================================
-  yPos += 5;
-  doc.setFontSize(10);
+  yPos += 3; // Réduit de 5 à 3
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text("Moyens de paiement :", margin, yPos);
-  yPos += 7;
-  doc.setFontSize(9);
+  yPos += 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
@@ -482,15 +458,15 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   // ============================================
   // PIED DE PAGE (INFORMATIONS LÉGALES)
   // ============================================
-  const footerY = pageHeight - 18;
-  doc.setFontSize(7);
+  const footerY = pageHeight - 12; // Réduit de 18 à 12
+  doc.setFontSize(6); // Réduit de 7 à 6
   doc.setFont(undefined, "normal");
   doc.setTextColor(100, 100, 100);
   
   // Ligne de séparation pour le footer
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+  doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5); // Ajusté
   
   const footerLines = [];
   if (quote.company?.name) {
@@ -514,7 +490,7 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   }
   
   footerLines.forEach((line, index) => {
-    doc.text(line, pageWidth / 2, footerY + (index * 3.5), { align: "center" });
+    doc.text(line, pageWidth / 2, footerY + (index * 3), { align: "center" }); // Réduit de 3.5 à 3
   });
 
   return doc;

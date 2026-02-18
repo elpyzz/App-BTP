@@ -19,12 +19,12 @@ function formatCurrencyForPDF(amount: number): string {
  */
 export function generateInvoicePDF(invoice: Invoice): jsPDF {
   const doc = new jsPDF();
-  let yPos = 25;
+  let yPos = 20; // Réduit de 25 à 20
 
   // Configuration
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 25;
+  const margin = 20; // Réduit de 25 à 20
   const contentWidth = pageWidth - 2 * margin;
   const violetColor = [138, 43, 226]; // Violet RGB
 
@@ -33,21 +33,21 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   // ============================================
   
   // Logo à gauche
-  const logoSize = 18;
+  const logoSize = 15; // Réduit de 18 à 15
   const logoX = margin;
   const logoY = yPos;
   
   doc.setFillColor(violetColor[0], violetColor[1], violetColor[2]);
   doc.rect(logoX, logoY, logoSize, logoSize, "F");
   
-  doc.setFontSize(14);
+  doc.setFontSize(12); // Réduit de 14 à 12
   doc.setFont(undefined, "bold");
   doc.setTextColor(255, 255, 255);
   const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
   doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   
   doc.setTextColor(violetColor[0], violetColor[1], violetColor[2]);
-  doc.setFontSize(16);
+  doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
   const companyName = (invoice.company?.name || "VOTRE ENTREPRISE").toLowerCase();
   const maxCompanyNameWidth = pageWidth / 2 - logoX - logoSize - 8;
@@ -56,25 +56,25 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
 
   // Numéro de facture à droite
   const rightX = pageWidth - margin;
-  doc.setFontSize(18);
+  doc.setFontSize(16); // Réduit de 18 à 16
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(`Facture n° ${invoice.invoiceNumber || "N/A"}`, rightX, yPos + 5, { align: "right" });
+  doc.text(`Facture n° ${invoice.invoiceNumber || "N/A"}`, rightX, yPos + 4, { align: "right" });
   
-  yPos += 10;
-  doc.setFontSize(10);
+  yPos += 7; // Réduit de 10 à 7
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "normal");
   doc.text(`Date d'émission : ${new Date(invoice.issueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
-  yPos += 5;
+  yPos += 4; // Réduit de 5 à 4
   if (invoice.saleDate) {
     doc.text(`Date de vente/prestation : ${new Date(invoice.saleDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
-    yPos += 5;
+    yPos += 4; // Réduit de 5 à 4
   }
   doc.text(`Date d'échéance : ${new Date(invoice.dueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
 
   // Nom du client centré
-  yPos += 10;
-  doc.setFontSize(13);
+  yPos += 8; // Réduit de 10 à 8
+  doc.setFontSize(12); // Réduit de 13 à 12
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const centerX = pageWidth / 2;
@@ -83,90 +83,90 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   // ============================================
   // SECTION ENTREPRISE / CLIENT (DEUX COLONNES)
   // ============================================
-  yPos += 20;
+  yPos += 12; // Réduit de 20 à 12
   
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 12;
+  yPos += 8; // Réduit de 12 à 8
   
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 15;
   const colWidth = (pageWidth - 2 * margin - 30) / 2;
   
-  doc.setFontSize(11);
+  doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text(invoice.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
   
-  let leftY = yPos + 7;
-  doc.setFontSize(9);
+  let leftY = yPos + 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   if (invoice.company?.address) {
     doc.text("Adresse", leftColX, leftY);
-    doc.text(invoice.company.address, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(invoice.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   }
   
   if (invoice.company?.postalCode && invoice.company?.city) {
     doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${invoice.company.postalCode} ${invoice.company.city}`, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(`${invoice.company.postalCode} ${invoice.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   }
   
   if (invoice.company?.phone) {
     doc.text("Téléphone", leftColX, leftY);
-    doc.text(invoice.company.phone, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(invoice.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   }
   
   if (invoice.company?.email) {
     doc.text("Email", leftColX, leftY);
-    doc.text(invoice.company.email, leftColX, leftY + 4);
-    leftY += 8;
+    doc.text(invoice.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
+    leftY += 6; // Réduit de 8 à 6
   }
 
   // Colonne droite - Client
-  let rightY = yPos + 7;
-  doc.setFontSize(11);
+  let rightY = yPos + 5; // Réduit de 7 à 5
+  doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text(invoice.client?.name || "Nom du client", rightColX, yPos);
   
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   if (invoice.client?.billingAddress) {
     doc.text("Adresse", rightColX, rightY);
-    doc.text(invoice.client.billingAddress, rightColX, rightY + 4);
-    rightY += 8;
+    doc.text(invoice.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
+    rightY += 6; // Réduit de 8 à 6
   }
   
   if (invoice.client?.billingPostalCode && invoice.client?.billingCity) {
     doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY + 4);
-    rightY += 8;
+    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
+    rightY += 6; // Réduit de 8 à 6
   }
 
   // ============================================
   // INFORMATIONS FACTURE
   // ============================================
   const maxY = Math.max(leftY, rightY);
-  yPos = maxY + 18;
+  yPos = maxY + 10; // Réduit de 18 à 10
   
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
-  doc.line(margin, yPos - 5, pageWidth - margin, yPos - 5);
+  doc.line(margin, yPos - 3, pageWidth - margin, yPos - 3); // Ajusté
   
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text("Informations facture :", margin, yPos);
-  yPos += 7;
-  doc.setFontSize(9);
+  yPos += 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
@@ -190,18 +190,18 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   if (infoLines.length > 0) {
     infoLines.forEach(line => {
       doc.text(line, margin, yPos);
-      yPos += 5;
+      yPos += 4; // Réduit de 5 à 4
     });
   }
-  yPos += 5;
+  yPos += 3; // Réduit de 5 à 3
 
   // ============================================
   // TABLEAU DES LIGNES
   // ============================================
   doc.setFillColor(245, 245, 245);
-  doc.rect(margin, yPos - 5, contentWidth, 8, "F");
+  doc.rect(margin, yPos - 3, contentWidth, 6, "F"); // Réduit de 8 à 6
   
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const tableStartY = yPos;
@@ -223,14 +223,14 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   doc.text("Prix HT", colPrixHT, yPos);
   doc.text("Montant TTC", colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
   
-  yPos += 3;
+  yPos += 2; // Réduit de 3 à 2
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   doc.setFont(undefined, "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setTextColor(0, 0, 0);
 
   // Grouper par lots
@@ -243,25 +243,15 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   linesByLot.forEach(({ lot, lines }) => {
     if (lines.length === 0) return;
     
-    if (yPos > pageHeight - 100) {
-      doc.addPage();
-      yPos = 25;
-    }
-    
     doc.setFont(undefined, "bold");
     doc.text(lot.name, colDesignation, yPos);
-    yPos += 6;
+    yPos += 4; // Réduit de 6 à 4
     doc.setFont(undefined, "normal");
 
     lines.forEach((line, index) => {
-      if (yPos > pageHeight - 100) {
-        doc.addPage();
-        yPos = 25;
-      }
-      
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, colDesignationWidth - 5);
-      const lineHeight = Math.max(6, descriptionLines.length * 4.5);
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit de 6 et 4.5 à 4 et 3.5
       
       doc.setFont(undefined, "bold");
       const fullDescription = `Ligne n°${index + 1}\n${description}`;
@@ -284,22 +274,16 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
       doc.setDrawColor(240, 240, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 4;
+      yPos += 3; // Réduit de 4 à 3
     });
   });
 
   if (linesWithoutLot.length > 0) {
     let lineNumber = 1;
     linesWithoutLot.forEach((line) => {
-      if (yPos > pageHeight - 100) {
-        doc.addPage();
-        yPos = 25;
-        lineNumber = 1;
-      }
-      
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, 85);
-      const lineHeight = Math.max(6, descriptionLines.length * 4.5);
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit
       
       doc.setFont(undefined, "bold");
       const fullDescription = `Ligne n°${lineNumber}\n${description}`;
@@ -322,7 +306,7 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
       doc.setDrawColor(240, 240, 240);
       doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 4;
+      yPos += 3; // Réduit de 4 à 3
       
       lineNumber++;
     });
@@ -331,54 +315,46 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   // ============================================
   // TOTAUX
   // ============================================
-  yPos += 5;
-  if (yPos > pageHeight - 80) {
-    doc.addPage();
-    yPos = 25;
-  }
+  yPos += 3; // Réduit de 5 à 3
   
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   
   doc.text("Sous-total HT", colDesignation, yPos);
   doc.text(formatCurrencyForPDF(invoice.subtotalHT || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   doc.text("Total TVA", colDesignation, yPos);
   doc.text(formatCurrencyForPDF(invoice.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
-  yPos += 6;
+  yPos += 4; // Réduit de 6 à 4
   doc.setFont(undefined, "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.text("Total TTC", colDesignation + 5, yPos);
   doc.text(formatCurrencyForPDF(invoice.totalTTC || 0), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
   doc.setFont(undefined, "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(8); // Réduit de 9 à 8
 
   // ============================================
   // ACOMPTES ET RESTE À PAYER
   // ============================================
   if (invoice.depositsPaid > 0) {
-    yPos += 12;
-    if (yPos > pageHeight - 60) {
-      doc.addPage();
-      yPos = 25;
-    }
+    yPos += 8; // Réduit de 12 à 8
     
-    doc.setFontSize(10);
+    doc.setFontSize(9); // Réduit de 10 à 9
     doc.setFont(undefined, "bold");
     doc.setTextColor(0, 0, 0);
     doc.text("Acomptes et solde :", margin, yPos);
-    yPos += 7;
-    doc.setFontSize(9);
+    yPos += 5; // Réduit de 7 à 5
+    doc.setFontSize(8); // Réduit de 9 à 8
     doc.setFont(undefined, "normal");
     doc.setTextColor(60, 60, 60);
     
     doc.text("Acomptes déjà payés", margin, yPos);
     doc.text(formatCurrencyForPDF(invoice.depositsPaid), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
-    yPos += 6;
+    yPos += 4; // Réduit de 6 à 4
     
     doc.setFont(undefined, "bold");
     doc.text("Reste à payer", margin, yPos);
@@ -389,85 +365,78 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   // ============================================
   // CONDITIONS DE PAIEMENT
   // ============================================
-  yPos += 18;
-  if (yPos > pageHeight - 60) {
-    doc.addPage();
-    yPos = 25;
-  }
+  yPos += 10; // Réduit de 18 à 10
   
-  doc.setFontSize(10);
+  doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   doc.text("Conditions de paiement :", margin, yPos);
-  yPos += 7;
-  doc.setFontSize(9);
+  yPos += 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   if (invoice.paymentTerms) {
     const paymentLines = doc.splitTextToSize(invoice.paymentTerms, contentWidth);
     doc.text(paymentLines, margin, yPos);
-    yPos += paymentLines.length * 4.5;
+    yPos += paymentLines.length * 3.5; // Réduit de 4.5 à 3.5
   }
   
-  yPos += 5;
+  yPos += 3; // Réduit de 5 à 3
   if (invoice.paymentMethods && invoice.paymentMethods.length > 0) {
-    doc.setFontSize(10);
+    doc.setFontSize(9); // Réduit de 10 à 9
     doc.setFont(undefined, "bold");
     doc.text("Moyens de paiement :", margin, yPos);
-    yPos += 7;
-    doc.setFontSize(9);
+    yPos += 5; // Réduit de 7 à 5
+    doc.setFontSize(8); // Réduit de 9 à 8
     doc.setFont(undefined, "normal");
     doc.text(invoice.paymentMethods.join(", "), margin, yPos);
-    yPos += 10;
+    yPos += 6; // Réduit de 10 à 6
   }
 
   // ============================================
   // MENTIONS LÉGALES
   // ============================================
   if (invoice.latePaymentPenalties || invoice.recoveryFee || invoice.specialVatMention) {
-    if (yPos > pageHeight - 80) {
-      doc.addPage();
-      yPos = 25;
-    }
+    yPos += 5; // Réduit l'espacement
     
-    doc.setFontSize(10);
+    doc.setFontSize(9); // Réduit de 10 à 9
     doc.setFont(undefined, "bold");
     doc.setTextColor(0, 0, 0);
     doc.text("Mentions légales :", margin, yPos);
-    yPos += 7;
-    doc.setFontSize(9);
+    yPos += 5; // Réduit de 7 à 5
+    doc.setFontSize(8); // Réduit de 9 à 8
     doc.setFont(undefined, "normal");
     doc.setTextColor(60, 60, 60);
     
     if (invoice.latePaymentPenalties) {
       const penaltyLines = doc.splitTextToSize(invoice.latePaymentPenalties, contentWidth);
       doc.text(penaltyLines, margin, yPos);
-      yPos += penaltyLines.length * 4.5;
+      yPos += penaltyLines.length * 3.5; // Réduit de 4.5 à 3.5
     }
     
     if (invoice.recoveryFee && invoice.recoveryFee > 0) {
       doc.text(`Indemnité forfaitaire pour frais de recouvrement : ${formatCurrencyForPDF(invoice.recoveryFee)}`, margin, yPos);
-      yPos += 6;
+      yPos += 4; // Réduit de 6 à 4
     }
     
     if (invoice.specialVatMention) {
       doc.text(invoice.specialVatMention, margin, yPos);
-      yPos += 6;
+      yPos += 4; // Réduit de 6 à 4
     }
   }
 
   // ============================================
   // PIED DE PAGE
   // ============================================
-  const footerY = pageHeight - 18;
-  doc.setFontSize(7);
+  const footerY = pageHeight - 12; // Réduit de 18 à 12
+  doc.setFontSize(6); // Réduit de 7 à 6
   doc.setFont(undefined, "normal");
   doc.setTextColor(100, 100, 100);
   
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+  doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5); // Ajusté
   
   const footerLines = [];
   if (invoice.company?.name) {
@@ -489,7 +458,7 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   }
   
   footerLines.forEach((line, index) => {
-    doc.text(line, pageWidth / 2, footerY + (index * 3.5), { align: "center" });
+    doc.text(line, pageWidth / 2, footerY + (index * 3), { align: "center" }); // Réduit de 3.5 à 3
   });
 
   return doc;
