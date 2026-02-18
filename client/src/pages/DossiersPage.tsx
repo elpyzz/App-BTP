@@ -12,8 +12,6 @@ import { useLocation } from 'wouter';
 import { 
   Folder, 
   Search, 
-  CheckCircle2, 
-  XCircle, 
   FileText, 
   Download,
   Eye,
@@ -22,8 +20,6 @@ import {
   User,
   Building,
   ArrowUpDown,
-  CheckCircle,
-  X,
   Trash2,
   AlertTriangle
 } from 'lucide-react';
@@ -59,17 +55,9 @@ interface Quote {
 export default function DossiersPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [location] = useLocation();
-  const [activeTab, setActiveTab] = useState(() => {
-    // Vérifier si un paramètre tab est présent dans l'URL
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam === 'unsigned' || tabParam === 'signed') {
-      return tabParam === 'unsigned' ? 'unsigned' : 'signed';
-    }
-    return 'all';
-  });
+  const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'status'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -78,16 +66,6 @@ export default function DossiersPage() {
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
 
-  // Gérer le paramètre d'URL pour l'onglet
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam === 'unsigned' || tabParam === 'signed') {
-      setActiveTab(tabParam === 'unsigned' ? 'unsigned' : 'signed');
-    } else {
-      setActiveTab('all');
-    }
-  }, [location]);
 
   // Charger les devis depuis Supabase avec rafraîchissement automatique
   useEffect(() => {
@@ -143,64 +121,10 @@ export default function DossiersPage() {
     }
   };
 
-  // Toggle du statut signé/non signé
-  const toggleSignedStatus = async (quoteId: string) => {
-    try {
-      // Charger le devis depuis Supabase
-      const originalQuote = await loadQuote(quoteId);
-      if (!originalQuote) {
-        toast({
-          title: 'Erreur',
-          description: 'Devis introuvable',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Mettre à jour isSigned
-      const updatedQuote: NewQuote = {
-        ...originalQuote,
-        isSigned: !originalQuote.isSigned
-      };
-      
-      // Sauvegarder dans Supabase
-      await saveQuote(updatedQuote);
-      
-      // Mettre à jour l'affichage
-      const updatedQuotes = quotes.map(quote => 
-        quote.id === quoteId 
-          ? { ...quote, isSigned: !quote.isSigned }
-          : quote
-      );
-      setQuotes(updatedQuotes);
-      previousQuotesLengthRef.current = updatedQuotes.length;
-      
-      const quote = updatedQuotes.find(q => q.id === quoteId);
-      toast({
-        title: quote?.isSigned ? 'Devis marqué comme signé' : 'Devis marqué comme non signé',
-        description: `Le statut du devis a été mis à jour`,
-      });
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de mettre à jour le statut',
-        variant: 'destructive',
-      });
-    }
-  };
-
   // Filtrer les devis selon l'onglet actif
   const filteredByTab = useMemo(() => {
-    switch (activeTab) {
-      case 'signed':
-        return quotes.filter(q => q.isSigned === true);
-      case 'unsigned':
-        return quotes.filter(q => q.isSigned === false);
-      default:
-        return quotes;
-    }
-  }, [quotes, activeTab]);
+    return quotes;
+  }, [quotes]);
 
   // Recherche et tri
   const filteredAndSortedQuotes = useMemo(() => {
@@ -227,9 +151,6 @@ export default function DossiersPage() {
         case 'amount':
           comparison = (a.total ?? 0) - (b.total ?? 0);
           break;
-        case 'status':
-          comparison = (a.isSigned ? 1 : 0) - (b.isSigned ? 1 : 0);
-          break;
       }
       
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -241,9 +162,7 @@ export default function DossiersPage() {
   // Statistiques
   const stats = useMemo(() => {
     const total = quotes.length;
-    const signed = quotes.filter(q => q.isSigned).length;
-    const unsigned = quotes.filter(q => !q.isSigned).length;
-    return { total, signed, unsigned };
+    return { total };
   }, [quotes]);
 
   // Ouvrir les détails d'un devis
@@ -344,7 +263,7 @@ export default function DossiersPage() {
 
       <main className="flex-1 p-6 ml-20">
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 gap-4 mb-6">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -353,28 +272,6 @@ export default function DossiersPage() {
                   <p className="text-2xl font-bold text-white">{stats.total}</p>
                 </div>
                 <FileText className="h-8 w-8 text-violet-400" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/70">Devis signés</p>
-                  <p className="text-2xl font-bold text-green-300">{stats.signed}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/70">Devis non signés</p>
-                  <p className="text-2xl font-bold text-orange-300">{stats.unsigned}</p>
-                </div>
-                <XCircle className="h-8 w-8 text-orange-400" />
               </div>
             </CardContent>
           </Card>
@@ -394,7 +291,7 @@ export default function DossiersPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Select value={sortBy} onValueChange={(value: 'date' | 'amount' | 'status') => setSortBy(value)}>
+                <Select value={sortBy} onValueChange={(value: 'date' | 'amount') => setSortBy(value)}>
                   <SelectTrigger className="w-[180px] bg-black/20 backdrop-blur-md border-white/10 text-white">
                     <ArrowUpDown className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Trier par" />
@@ -402,7 +299,6 @@ export default function DossiersPage() {
                   <SelectContent className="bg-black/20 backdrop-blur-xl border-white/10">
                     <SelectItem value="date">Date</SelectItem>
                     <SelectItem value="amount">Montant</SelectItem>
-                    <SelectItem value="status">Statut</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -425,18 +321,6 @@ export default function DossiersPage() {
               className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 text-white/70"
             >
               Tous les devis ({quotes.length})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="signed"
-              className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-300 text-white/70"
-            >
-              Signés ({stats.signed})
-            </TabsTrigger>
-            <TabsTrigger 
-              value="unsigned"
-              className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-300 text-white/70"
-            >
-              Non signés ({stats.unsigned})
             </TabsTrigger>
           </TabsList>
 
@@ -475,25 +359,6 @@ export default function DossiersPage() {
                                 <span>{quote.clientName}</span>
                               </div>
                             </div>
-                            <Badge
-                              className={
-                                quote.isSigned
-                                  ? 'bg-green-500/20 text-green-300 border-green-500/50'
-                                  : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
-                              }
-                            >
-                              {quote.isSigned ? (
-                                <>
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  Signé
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle className="h-3 w-3 mr-1" />
-                                  Non signé
-                                </>
-                              )}
-                            </Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -520,28 +385,6 @@ export default function DossiersPage() {
                           </div>
 
                           <div className="flex gap-2 pt-2 border-t border-white/10">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleSignedStatus(quote.id)}
-                              className={`flex-1 text-white border-white/20 hover:bg-white/10 ${
-                                quote.isSigned
-                                  ? 'hover:border-orange-500/50 hover:text-orange-300'
-                                  : 'hover:border-green-500/50 hover:text-green-300'
-                              }`}
-                            >
-                              {quote.isSigned ? (
-                                <>
-                                  <X className="h-4 w-4 mr-1" />
-                                  Marquer non signé
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                                  Marquer signé
-                                </>
-                              )}
-                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -640,7 +483,7 @@ export default function DossiersPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                <div className="pt-4 border-t border-white/10">
                   <div>
                     <p className="text-sm text-white/70">Date de création</p>
                     <p className="text-white">
@@ -653,15 +496,6 @@ export default function DossiersPage() {
                       })}
                     </p>
                   </div>
-                  <Badge
-                    className={
-                      selectedQuote.isSigned
-                        ? 'bg-green-500/20 text-green-300 border-green-500/50'
-                        : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
-                    }
-                  >
-                    {selectedQuote.isSigned ? 'Signé' : 'Non signé'}
-                  </Badge>
                 </div>
               </div>
             )}
@@ -690,18 +524,6 @@ export default function DossiersPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-white/70">Montant:</span>
                     <span className="text-white font-semibold">{(quoteToDelete.total ?? 0).toFixed(2)} €</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/70">Statut:</span>
-                    <Badge
-                      className={
-                        quoteToDelete.isSigned
-                          ? 'bg-green-500/20 text-green-300 border-green-500/50'
-                          : 'bg-orange-500/20 text-orange-300 border-orange-500/50'
-                      }
-                    >
-                      {quoteToDelete.isSigned ? 'Signé' : 'Non signé'}
-                    </Badge>
                   </div>
                 </div>
                 <p className="text-red-300 text-sm">

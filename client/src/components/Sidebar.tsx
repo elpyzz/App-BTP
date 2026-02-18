@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Link, useLocation } from 'wouter';
-import { Menu, X, ChevronLeft, Home, Calculator, Building, Calendar, Workflow, FileText, User, Settings, Folder } from 'lucide-react';
+import { Menu, X, ChevronLeft, Home, Calculator, Building, Calendar, FileText, User, Settings, Folder, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
@@ -15,8 +15,8 @@ export default function Sidebar() {
     { icon: Calculator, label: 'Estimation automatique', path: '/dashboard/estimation' },
     { icon: Building, label: 'Mes Chantiers', path: '/dashboard/projects' },
     { icon: Calendar, label: 'Planning', path: '/dashboard/planning' },
-    { icon: Workflow, label: 'CRM Pipeline', path: '/dashboard/crm' },
     { icon: FileText, label: 'Générateur de Devis', path: '/dashboard/quotes' },
+    { icon: Receipt, label: 'Facturation', path: '/dashboard/invoices' },
     { icon: Folder, label: 'Dossiers', path: '/dashboard/dossiers' },
     { icon: User, label: 'Clients', path: '/dashboard/clients' },
     { icon: Settings, label: 'Paramètres', path: '/dashboard/settings' },

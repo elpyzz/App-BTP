@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Users, Calendar, Euro, Camera } from 'lucide-react';
+import { FileText, Calendar, Euro, Camera } from 'lucide-react';
 import dashboardImage from '@assets/generated_images/Dashboard_interface_mockup_f808bffd.png';
 
 export default function FeaturesSection() {
@@ -8,12 +8,6 @@ export default function FeaturesSection() {
       icon: <FileText className="h-8 w-8 text-white" />,
       title: "Générateur de Devis",
       description: "Créez des devis professionnels en quelques clics. Templates personnalisables pour piscines, paysage, menuiserie et plus.",
-      color: "bg-black/20 backdrop-blur-md border border-white/10",
-    },
-    {
-      icon: <Users className="h-8 w-8 text-white" />,
-      title: "Gestion des Prospects",
-      description: "CRM intégré pour suivre vos leads, organiser vos rendez-vous et transformer vos prospects en clients fidèles.",
       color: "bg-black/20 backdrop-blur-md border border-white/10",
     },
     {

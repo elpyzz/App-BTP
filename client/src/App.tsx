@@ -19,9 +19,9 @@ import ProjectsPage from "@/pages/ProjectsPage";
 import PlanningPage from "@/pages/PlanningPage";
 import EstimationPage from "@/pages/EstimationPage";
 import ClientsPage from "@/pages/ClientsPage";
-import CRMPipelinePage from "@/pages/CRMPipelinePage";
 import SettingsPage from "@/pages/SettingsPage";
 import DossiersPage from "@/pages/DossiersPage";
+import InvoicesPage from "@/pages/InvoicesPage";
 import NotFound from "@/pages/not-found";
 
 const pageVariants = {
@@ -67,6 +67,8 @@ function Router() {
         return <ProtectedRoute><EstimationPage /></ProtectedRoute>;
       case "/dashboard/quotes":
         return <ProtectedRoute><QuotesPage /></ProtectedRoute>;
+      case "/dashboard/invoices":
+        return <ProtectedRoute><InvoicesPage /></ProtectedRoute>;
       case "/dashboard/dossiers":
         return <ProtectedRoute><DossiersPage /></ProtectedRoute>;
       case "/dashboard/prospects":
@@ -77,8 +79,6 @@ function Router() {
         return <ProtectedRoute><ClientsPage /></ProtectedRoute>;
       case "/dashboard/planning":
         return <ProtectedRoute><PlanningPage /></ProtectedRoute>;
-      case "/dashboard/crm":
-        return <ProtectedRoute><CRMPipelinePage /></ProtectedRoute>;
       case "/dashboard/settings":
         return <ProtectedRoute><SettingsPage /></ProtectedRoute>;
       default:
