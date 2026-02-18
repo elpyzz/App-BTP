@@ -22,7 +22,8 @@ import {
   ArrowUpDown,
   Trash2,
   AlertTriangle,
-  Receipt
+  Receipt,
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { downloadQuotePDF } from '@/lib/quotes/pdf-generator';
@@ -32,6 +33,8 @@ import { calculateQuoteTotals } from '@/lib/quotes/calculations';
 import { loadInvoices, loadInvoice, deleteInvoice } from '@/lib/storage/invoices';
 import { Invoice } from '@/lib/invoices/types';
 import { downloadInvoicePDF } from '@/lib/invoices/pdf-generator';
+import { sendQuoteByEmail, sendInvoiceByEmail } from '@/lib/email/send-email';
+import { isResendConfigured } from '@/lib/email/resend';
 
 interface QuoteItem {
   id: string;
@@ -72,6 +75,11 @@ export default function DossiersPage() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isInvoiceDeleteDialogOpen, setIsInvoiceDeleteDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [itemToEmail, setItemToEmail] = useState<{ type: 'quote' | 'invoice'; data: Quote | Invoice } | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
@@ -397,6 +405,69 @@ export default function DossiersPage() {
     }
   };
 
+  // Fonction pour ouvrir le dialogue d'envoi
+  const handleSendByEmail = async (item: Quote | Invoice, type: 'quote' | 'invoice') => {
+    let email = '';
+    
+    if (type === 'quote') {
+      // Charger le devis complet pour obtenir l'email du client
+      try {
+        const fullQuote = await loadQuote((item as Quote).id);
+        email = fullQuote?.client?.email || '';
+      } catch (error) {
+        console.error('Erreur lors du chargement du devis:', error);
+      }
+    } else {
+      email = (item as Invoice).client?.email || '';
+    }
+    
+    setEmailRecipient(email);
+    setEmailMessage('');
+    setItemToEmail({ type, data: item });
+    setEmailDialogOpen(true);
+  };
+
+  // Fonction pour envoyer l'email
+  const confirmSendEmail = async () => {
+    if (!itemToEmail || !emailRecipient) return;
+    
+    setSendingEmail(true);
+    
+    try {
+      let result;
+      if (itemToEmail.type === 'quote') {
+        const fullQuote = await loadQuote((itemToEmail.data as Quote).id);
+        if (!fullQuote) throw new Error('Devis introuvable');
+        result = await sendQuoteByEmail(fullQuote, emailRecipient, emailMessage);
+      } else {
+        const fullInvoice = await loadInvoice((itemToEmail.data as Invoice).id);
+        if (!fullInvoice) throw new Error('Facture introuvable');
+        result = await sendInvoiceByEmail(fullInvoice, emailRecipient, emailMessage);
+      }
+      
+      if (result.success) {
+        toast({
+          title: 'Email envoyé',
+          description: `Le ${itemToEmail.type === 'quote' ? 'devis' : 'facture'} a été envoyé avec succès à ${emailRecipient}`,
+        });
+        setEmailDialogOpen(false);
+        setItemToEmail(null);
+        setEmailRecipient('');
+        setEmailMessage('');
+      } else {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible d\'envoyer l\'email',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <PageWrapper>
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20 mb-6">
@@ -576,6 +647,16 @@ export default function DossiersPage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleSendByEmail(quote, 'quote')}
+                              className="text-white border-white/20 hover:bg-white/10"
+                              title="Envoyer par email"
+                              disabled={!isResendConfigured()}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleDeleteQuote(quote)}
                               className="text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
                               title="Supprimer le devis"
@@ -698,6 +779,16 @@ export default function DossiersPage() {
                               title="Télécharger la facture"
                             >
                               <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendByEmail(invoice, 'invoice')}
+                              className="text-white border-white/20 hover:bg-white/10"
+                              title="Envoyer par email"
+                              disabled={!isResendConfigured()}
+                            >
+                              <Mail className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
@@ -1034,6 +1125,68 @@ export default function DossiersPage() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog pour l'envoi d'email */}
+        <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Envoyer par email
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-white/70 mb-2 block">Destinataire</label>
+                <Input
+                  type="email"
+                  value={emailRecipient}
+                  onChange={(e) => setEmailRecipient(e.target.value)}
+                  placeholder="email@exemple.com"
+                  className="bg-black/20 backdrop-blur-md border-white/10 text-white"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-white/70 mb-2 block">Message (optionnel)</label>
+                <textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  placeholder="Message personnalisé..."
+                  rows={4}
+                  className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-lg p-3 text-white placeholder:text-white/50 resize-none"
+                />
+              </div>
+              {!isResendConfigured() && (
+                <div className="p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+                  <p className="text-sm text-yellow-300">
+                    ⚠️ Resend n'est pas configuré. Veuillez ajouter RESEND_API_KEY dans les variables d'environnement.
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-3 justify-end pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEmailDialogOpen(false);
+                    setItemToEmail(null);
+                    setEmailRecipient('');
+                    setEmailMessage('');
+                  }}
+                  className="text-white border-white/20 hover:bg-white/10"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={confirmSendEmail}
+                  disabled={!emailRecipient || sendingEmail || !isResendConfigured()}
+                  className="bg-violet-600 hover:bg-violet-700"
+                >
+                  {sendingEmail ? 'Envoi...' : 'Envoyer'}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </main>
