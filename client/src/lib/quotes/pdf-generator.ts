@@ -498,12 +498,13 @@ export function generateQuotePDF(quote: Quote): jsPDF {
     footerLines.push(`${quote.company.name} au capital de ${capital}`);
   }
   
+  // Afficher le RCS seulement si la ville RCS est renseignée (pas de valeur par défaut)
   if (quote.company?.rcsCity && quote.company?.siret) {
     const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
     footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted} - Numéro de TVA : ${quote.company.vatNumber || "FR 35 698 745 365"}`);
-  } else if (quote.company?.siret) {
-    const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
-    footerLines.push(`RCS Nantes n° ${siretFormatted} - Numéro de TVA : ${quote.company.vatNumber || "FR 35 698 745 365"}`);
+  } else if (quote.company?.vatNumber) {
+    // Afficher seulement le numéro de TVA si pas de RCS mais qu'on a un numéro de TVA
+    footerLines.push(`Numéro de TVA : ${quote.company.vatNumber}`);
   }
   
   if (quote.company?.insuranceDecennale?.company && quote.company?.insuranceDecennale?.policyNumber) {

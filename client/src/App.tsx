@@ -12,18 +12,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/AuthPage";
 import LoadingRedirectPage from "@/pages/LoadingRedirectPage";
-import InvitePage from "@/pages/InvitePage";
-import TeamDashboard from "@/pages/TeamDashboard";
 import Dashboard from "@/pages/Dashboard";
 import QuotesPage from "@/pages/QuotesPage";
-import AIVisualizationPage from "@/pages/AIVisualizationPage";
 import ProspectsPage from "@/pages/ProspectsPage";
 import ProjectsPage from "@/pages/ProjectsPage";
 import PlanningPage from "@/pages/PlanningPage";
 import EstimationPage from "@/pages/EstimationPage";
 import ClientsPage from "@/pages/ClientsPage";
 import CRMPipelinePage from "@/pages/CRMPipelinePage";
-import TeamPage from "@/pages/TeamPage";
 import SettingsPage from "@/pages/SettingsPage";
 import DossiersPage from "@/pages/DossiersPage";
 import NotFound from "@/pages/not-found";
@@ -58,11 +54,6 @@ function Router() {
   const [location] = useLocation();
 
   const getComponent = () => {
-    // Vérifier si c'est une route d'invitation
-    if (location.startsWith('/invite/')) {
-      return <InvitePage />;
-    }
-
     switch (location) {
       case "/":
         return <Home />;
@@ -70,8 +61,6 @@ function Router() {
         return <AuthPage />;
       case "/loading":
         return <LoadingRedirectPage />;
-      case "/team-dashboard":
-        return <TeamDashboard />;
       case "/dashboard":
         return <ProtectedRoute><Dashboard /></ProtectedRoute>;
       case "/dashboard/estimation":
@@ -80,8 +69,6 @@ function Router() {
         return <ProtectedRoute><QuotesPage /></ProtectedRoute>;
       case "/dashboard/dossiers":
         return <ProtectedRoute><DossiersPage /></ProtectedRoute>;
-      case "/dashboard/ai-visualization":
-        return <ProtectedRoute><AIVisualizationPage /></ProtectedRoute>;
       case "/dashboard/prospects":
         return <ProtectedRoute><ProspectsPage /></ProtectedRoute>;
       case "/dashboard/projects":
@@ -92,8 +79,6 @@ function Router() {
         return <ProtectedRoute><PlanningPage /></ProtectedRoute>;
       case "/dashboard/crm":
         return <ProtectedRoute><CRMPipelinePage /></ProtectedRoute>;
-      case "/dashboard/team":
-        return <ProtectedRoute><TeamPage /></ProtectedRoute>;
       case "/dashboard/settings":
         return <ProtectedRoute><SettingsPage /></ProtectedRoute>;
       default:
@@ -101,8 +86,8 @@ function Router() {
     }
   };
 
-  // Pages without sidebar (Home, Auth, Loading, Invite) get full page animation
-  const isFullPage = location === "/" || location === "/auth" || location === "/loading" || location.startsWith("/invite/");
+  // Pages without sidebar (Home, Auth, Loading) get full page animation
+  const isFullPage = location === "/" || location === "/auth" || location === "/loading";
 
   if (isFullPage) {
     return (

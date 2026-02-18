@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Wand2, Users, Calendar, Euro, Camera } from 'lucide-react';
+import { FileText, Users, Calendar, Euro, Camera } from 'lucide-react';
 import dashboardImage from '@assets/generated_images/Dashboard_interface_mockup_f808bffd.png';
-import photoEnhancementImage from '@assets/generated_images/Photo_enhancement_comparison_c1eb7a8f.png';
 
 export default function FeaturesSection() {
   const features = [
@@ -9,12 +8,6 @@ export default function FeaturesSection() {
       icon: <FileText className="h-8 w-8 text-white" />,
       title: "Générateur de Devis",
       description: "Créez des devis professionnels en quelques clics. Templates personnalisables pour piscines, paysage, menuiserie et plus.",
-      color: "bg-black/20 backdrop-blur-md border border-white/10",
-    },
-    {
-      icon: <Wand2 className="h-8 w-8 text-white" />,
-      title: "Visualisation IA",
-      description: "Uploadez une photo du terrain, sélectionnez votre projet et l'IA génère un rendu professionnel pour impressionner vos clients.",
       color: "bg-black/20 backdrop-blur-md border border-white/10",
     },
     {
@@ -108,40 +101,6 @@ export default function FeaturesSection() {
           </div>
         </div>
 
-        {/* Photo Enhancement Preview */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mt-24">
-          <div className="relative order-2 lg:order-1">
-            <img 
-              src={photoEnhancementImage} 
-              alt="Photo enhancement comparison" 
-              className="rounded-xl shadow-2xl w-full"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent rounded-xl"></div>
-          </div>
-          <div className="space-y-6 order-1 lg:order-2">
-            <h3 className="text-2xl md:text-3xl font-bold text-foreground">
-              Visualisation IA de Projets
-            </h3>
-            <p className="text-lg text-muted-foreground">
-              Impressionnez vos clients avec des rendus professionnels de leurs futurs projets. 
-              Uploadez une photo du terrain et obtenez une visualisation réaliste en quelques minutes.
-            </p>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-muted-foreground">IA spécialisée pour piscines, paysage et menuiserie</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-white/50 rounded-full"></div>
-                <span className="text-muted-foreground">Rendus photoréalistes pour convaincre vos clients</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-muted-foreground">Génération en moins de 5 minutes</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </section>
   );

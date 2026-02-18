@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Link, useLocation } from 'wouter';
-import { Menu, X, ChevronLeft, Home, Calculator, Building, Calendar, Workflow, FileText, Wand2, Users, User, Settings, Folder } from 'lucide-react';
+import { Menu, X, ChevronLeft, Home, Calculator, Building, Calendar, Workflow, FileText, User, Settings, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
@@ -18,8 +18,6 @@ export default function Sidebar() {
     { icon: Workflow, label: 'CRM Pipeline', path: '/dashboard/crm' },
     { icon: FileText, label: 'Générateur de Devis', path: '/dashboard/quotes' },
     { icon: Folder, label: 'Dossiers', path: '/dashboard/dossiers' },
-    { icon: Wand2, label: 'Visualisation IA', path: '/dashboard/ai-visualization' },
-    { icon: Users, label: 'Équipe', path: '/dashboard/team' },
     { icon: User, label: 'Clients', path: '/dashboard/clients' },
     { icon: Settings, label: 'Paramètres', path: '/dashboard/settings' },
   ];

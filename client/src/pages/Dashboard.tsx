@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,6 @@ import { UserAccountButton } from '@/components/UserAccountButton'
 import { 
   Building, 
   FileText, 
-  Wand2, 
   Euro,
   Plus
 } from 'lucide-react'
@@ -17,14 +16,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { loadQuotes } from '@/lib/storage/quotes'
 
 export default function Dashboard() {
-  const [location, setLocation] = useLocation();
-
-  useEffect(() => {
-    const userType = localStorage.getItem('userType')
-    if (userType === 'team') {
-      setLocation('/team-dashboard')
-    }
-  }, [setLocation])
+  const [location] = useLocation();
   
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -251,7 +243,7 @@ function OverviewTab() {
         <CardHeader>
           <CardTitle className="text-white font-light">Actions Rapides</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button 
             className="w-full justify-start h-auto p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800"
             onClick={() => setLocation('/dashboard/projects?openDialog=true')}
@@ -270,16 +262,6 @@ function OverviewTab() {
             <div className="text-left">
               <div className="font-medium">Créer un Devis</div>
               <div className="text-xs opacity-70">Générer un devis</div>
-            </div>
-          </Button>
-          <Button 
-            className="w-full justify-start h-auto p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800"
-            onClick={() => setLocation('/dashboard/ai-visualization')}
-          >
-            <Wand2 className="h-5 w-5 mr-3" />
-            <div className="text-left">
-              <div className="font-medium">Estimation IA</div>
-              <div className="text-xs opacity-70">Analyser un projet</div>
             </div>
           </Button>
         </CardContent>

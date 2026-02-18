@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { LEGAL_FORMS } from '@/lib/quotes/defaults';
-import { Building2, FileText, Shield, CreditCard, Package } from 'lucide-react';
+import { Building2, FileText, Package } from 'lucide-react';
 import MaterialSettings from '@/components/MaterialSettings';
 
 export default function SettingsPage() {
@@ -102,14 +102,6 @@ export default function SettingsPage() {
             <TabsTrigger value="company" className="data-[state=active]:bg-violet-500/20">
               <Building2 className="h-4 w-4 mr-2" />
               Entreprise
-            </TabsTrigger>
-            <TabsTrigger value="insurance" className="data-[state=active]:bg-violet-500/20">
-              <Shield className="h-4 w-4 mr-2" />
-              Assurances
-            </TabsTrigger>
-            <TabsTrigger value="payment" className="data-[state=active]:bg-violet-500/20">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Paiement
             </TabsTrigger>
           </TabsList>
 
@@ -269,90 +261,6 @@ export default function SettingsPage() {
                       placeholder="https://www.entreprise.fr"
                     />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="insurance">
-            <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
-              <CardHeader>
-                <CardTitle className="text-white">Assurances</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Assurance Décennale</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="insuranceCompany" className="text-white">Assureur</Label>
-                      <Input
-                        id="insuranceCompany"
-                        value={formData.insuranceDecennale?.company || ''}
-                        onChange={(e) =>
-                          handleChange('insuranceDecennale', {
-                            ...formData.insuranceDecennale,
-                            company: e.target.value,
-                            policyNumber: formData.insuranceDecennale?.policyNumber || '',
-                            validUntil: formData.insuranceDecennale?.validUntil || '',
-                          })
-                        }
-                        className="bg-black/20 border-white/10 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="policyNumber" className="text-white">N° Police</Label>
-                      <Input
-                        id="policyNumber"
-                        value={formData.insuranceDecennale?.policyNumber || ''}
-                        onChange={(e) =>
-                          handleChange('insuranceDecennale', {
-                            ...formData.insuranceDecennale,
-                            company: formData.insuranceDecennale?.company || '',
-                            policyNumber: e.target.value,
-                            validUntil: formData.insuranceDecennale?.validUntil || '',
-                          })
-                        }
-                        className="bg-black/20 border-white/10 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="validUntil" className="text-white">Valide jusqu'au</Label>
-                      <Input
-                        id="validUntil"
-                        type="date"
-                        value={formData.insuranceDecennale?.validUntil || ''}
-                        onChange={(e) =>
-                          handleChange('insuranceDecennale', {
-                            ...formData.insuranceDecennale,
-                            company: formData.insuranceDecennale?.company || '',
-                            policyNumber: formData.insuranceDecennale?.policyNumber || '',
-                            validUntil: e.target.value,
-                          })
-                        }
-                        className="bg-black/20 border-white/10 text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="payment">
-            <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
-              <CardHeader>
-                <CardTitle className="text-white">Informations de Paiement</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="iban" className="text-white">IBAN / RIB</Label>
-                  <Input
-                    id="iban"
-                    value={formData.iban || ''}
-                    onChange={(e) => handleChange('iban', e.target.value)}
-                    className="bg-black/20 border-white/10 text-white"
-                    placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-                  />
                 </div>
               </CardContent>
             </Card>
