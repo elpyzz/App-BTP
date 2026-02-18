@@ -135,7 +135,8 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   
   // Pays
   doc.text("Pays", leftColX, leftY);
-  leftY += 4; // Réduit de 5 à 4
+  doc.text(quote.company?.country || "France", leftColX, leftY + 3);
+  leftY += 6; // Réduit de 4 à 6 pour avoir la valeur
   
   // Téléphone
   if (quote.company?.phone) {
@@ -165,6 +166,21 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   } else {
     doc.text("Email", leftColX, leftY);
     leftY += 4; // Réduit de 5 à 4
+  }
+
+  // RCS/RM (recommandé pour devis)
+  if (quote.company?.rcsCity && quote.company?.siret) {
+    doc.text("RCS/RM", leftColX, leftY);
+    const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
+    doc.text(`RCS ${quote.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
+    leftY += 6;
+  }
+
+  // Capital social (seulement si > 0)
+  if (quote.company?.capital && quote.company.capital > 0) {
+    doc.text("Capital social", leftColX, leftY);
+    doc.text(formatCurrencyForPDF(quote.company.capital), leftColX, leftY + 3);
+    leftY += 6;
   }
 
   // Colonne droite - Client
@@ -412,8 +428,9 @@ export function generateQuotePDF(quote: Quote): jsPDF {
     doc.text(paymentLines, margin, yPos);
     yPos += paymentLines.length * 3.5; // Réduit de 4.5 à 3.5
   } else {
-    doc.text("Paiement à réception de facture. Modes de paiement acceptés : virement bancaire, chèque. En cas de retard de paiement, des pénalités de retard seront appliquées au taux de 3 fois le taux d'intérêt légal.", margin, yPos);
-    yPos += 4; // Réduit de 5 à 4
+    // Texte par défaut amélioré avec mention d'acompte
+    doc.text("Acompte à la commande (30% recommandé). Solde à réception des travaux. Modes de paiement acceptés : virement bancaire, chèque. En cas de retard de paiement, des pénalités de retard seront appliquées au taux de 3 fois le taux d'intérêt légal.", margin, yPos);
+    yPos += 5; // Ajusté pour le texte plus long
   }
 
   // ============================================
@@ -470,14 +487,23 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   
   const footerLines = [];
   if (quote.company?.name) {
-    const capital = quote.company?.capital ? formatCurrencyForPDF(quote.company.capital) : "0,00 €";
-    footerLines.push(`${quote.company.name} au capital de ${capital}`);
+    // Afficher le capital seulement s'il est > 0
+    if (quote.company?.capital && quote.company.capital > 0) {
+      const capital = formatCurrencyForPDF(quote.company.capital);
+      footerLines.push(`${quote.company.name} au capital de ${capital}`);
+    } else {
+      footerLines.push(quote.company.name);
+    }
   }
   
   // Afficher le RCS seulement si la ville RCS est renseignée (pas de valeur par défaut)
   if (quote.company?.rcsCity && quote.company?.siret) {
     const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
-    footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted} - Numéro de TVA : ${quote.company.vatNumber || "FR 35 698 745 365"}`);
+    if (quote.company?.vatNumber) {
+      footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted} - Numéro de TVA : ${quote.company.vatNumber}`);
+    } else {
+      footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted}`);
+    }
   } else if (quote.company?.vatNumber) {
     // Afficher seulement le numéro de TVA si pas de RCS mais qu'on a un numéro de TVA
     footerLines.push(`Numéro de TVA : ${quote.company.vatNumber}`);

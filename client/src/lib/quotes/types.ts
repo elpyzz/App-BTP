@@ -74,6 +74,7 @@ export const CompanySchema = z.object({
   vatNumber: z.string().optional(), // N° TVA intracommunautaire
   rcsCity: z.string().optional(),   // Ville RCS
   capital: z.number().optional(),   // Capital social
+  country: z.string().optional().default("France"), // Pays
   apeCode: z.string().optional(),   // Code APE/NAF
   
   // Optionnels

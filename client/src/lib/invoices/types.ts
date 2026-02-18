@@ -1,5 +1,21 @@
 import { z } from "zod";
-import { Company, CompanySchema, ChantierInfo, ChantierInfoSchema, VatRate, VatRateEnum, UnitEnum, Discount, DiscountSchema } from "@/lib/quotes/types";
+import { Company, CompanySchema, ChantierInfo, ChantierInfoSchema, VatRate, VatRateEnum, UnitEnum, Discount, DiscountSchema, LegalFormEnum } from "@/lib/quotes/types";
+
+// Schéma Company strict pour les factures (SIRET et RCS obligatoires)
+export const CompanySchemaForInvoice = CompanySchema.extend({
+  siret: z.string().regex(/^\d{14}$/, "SIRET invalide (14 chiffres)").min(1, "SIRET obligatoire sur facture"),
+  rcsCity: z.string().min(1, "Ville RCS obligatoire sur facture B2B"),
+}).refine(
+  (data) => {
+    // Si forme juridique nécessite un capital (SARL, SAS, etc.) et capital = 0, erreur
+    const requiresCapital = ["SARL", "SAS", "SASU", "SA", "EURL"];
+    if (data.legalForm && requiresCapital.includes(data.legalForm)) {
+      return data.capital === undefined || data.capital === null || data.capital > 0;
+    }
+    return true;
+  },
+  { message: "Le capital ne peut pas être 0 pour cette forme juridique", path: ["capital"] }
+);
 
 // ============================================
 // ENUMS
@@ -94,7 +110,7 @@ export const InvoiceSchema = z.object({
   
   // Dates
   issueDate: z.string().min(1, "Date d'émission requise"),
-  saleDate: z.string().optional(), // Date de vente/prestation
+  saleDate: z.string().optional(), // Date de vente/prestation (obligatoire si pas de période d'exécution)
   executionPeriodStart: z.string().optional(), // Période d'exécution début
   executionPeriodEnd: z.string().optional(), // Période d'exécution fin
   dueDate: z.string().min(1, "Date d'échéance requise"),
@@ -107,7 +123,7 @@ export const InvoiceSchema = z.object({
   internalReference: z.string().optional(),
   
   // Entités
-  company: CompanySchema,
+  company: CompanySchemaForInvoice, // Schéma strict pour factures
   client: InvoiceClientSchema,
   chantier: ChantierInfoSchema,
   
@@ -134,11 +150,11 @@ export const InvoiceSchema = z.object({
   remainingAmount: z.number().default(0), // Reste à payer = totalTTC - depositsPaid
   
   // Paiement
-  paymentTerms: z.string().optional(),
+  paymentTerms: z.string().min(1, "Conditions de paiement obligatoires"),
   paymentMethods: z.array(z.string()).optional(),
   
   // Mentions légales
-  latePaymentPenalties: z.string().optional(),
+  latePaymentPenalties: z.string().min(1, "Pénalités de retard obligatoires en B2B"),
   recoveryFee: z.number().default(40), // Indemnité forfaitaire recouvrement (40€ B2B)
   specialVatMention: z.string().optional(), // Mention TVA spéciale
   
@@ -151,6 +167,12 @@ export const InvoiceSchema = z.object({
   { 
     message: "Les acomptes ne peuvent pas dépasser le total TTC",
     path: ["depositsPaid"]
+  }
+).refine(
+  (data) => data.saleDate || (data.executionPeriodStart && data.executionPeriodEnd),
+  {
+    message: "Date de prestation ou période d'exécution requise",
+    path: ["saleDate"]
   }
 );
 

@@ -27,7 +27,7 @@ export function StepLegal({ invoice, onInvoiceChange }: StepLegalProps) {
       <div className="space-y-4">
         <div>
           <Label htmlFor="latePaymentPenalties" className="text-white">
-            Pénalités de retard
+            Pénalités de retard <span className="text-red-400">*</span>
           </Label>
           <Textarea
             id="latePaymentPenalties"
@@ -36,9 +36,10 @@ export function StepLegal({ invoice, onInvoiceChange }: StepLegalProps) {
             className="bg-black/20 border-white/10 text-white"
             rows={4}
             placeholder={DEFAULT_LATE_PAYMENT_PENALTIES}
+            required
           />
-          <p className="text-xs text-white/50 mt-1">
-            Obligatoire en B2B selon l'article L.441-10 du Code de commerce
+          <p className="text-xs text-red-400/70 mt-1">
+            ⚠️ Obligatoire en B2B selon l'article L.441-10 du Code de commerce
           </p>
         </div>
 

@@ -83,18 +83,26 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
         </div>
 
         <div>
-          <Label htmlFor="saleDate" className="text-white">Date de vente/prestation</Label>
+          <Label htmlFor="saleDate" className="text-white">
+            Date de vente/prestation <span className="text-red-400">*</span>
+          </Label>
           <Input
             id="saleDate"
             type="date"
             value={invoice.saleDate || ""}
             onChange={(e) => handleChange("saleDate", e.target.value || undefined)}
             className="bg-black/20 border-white/10 text-white"
+            required
           />
+          <p className="text-xs text-white/50 mt-1">
+            OU remplir la période d'exécution ci-dessous
+          </p>
         </div>
 
         <div>
-          <Label htmlFor="executionPeriodStart" className="text-white">Période d'exécution - Début</Label>
+          <Label htmlFor="executionPeriodStart" className="text-white">
+            Période d'exécution - Début <span className="text-yellow-400">⚠️</span>
+          </Label>
           <Input
             id="executionPeriodStart"
             type="date"
@@ -102,10 +110,15 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
             onChange={(e) => handleChange("executionPeriodStart", e.target.value || undefined)}
             className="bg-black/20 border-white/10 text-white"
           />
+          <p className="text-xs text-white/50 mt-1">
+            Si période d'exécution, remplir début et fin
+          </p>
         </div>
 
         <div>
-          <Label htmlFor="executionPeriodEnd" className="text-white">Période d'exécution - Fin</Label>
+          <Label htmlFor="executionPeriodEnd" className="text-white">
+            Période d'exécution - Fin <span className="text-yellow-400">⚠️</span>
+          </Label>
           <Input
             id="executionPeriodEnd"
             type="date"

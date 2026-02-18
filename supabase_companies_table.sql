@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS companies (
   vat_number TEXT,
   rcs_city TEXT,
   capital NUMERIC(10, 2),
+  country TEXT DEFAULT 'France',
   ape_code TEXT,
   logo TEXT,
   website TEXT,
@@ -58,3 +59,14 @@ CREATE POLICY "Users can update their own companies"
 CREATE POLICY "Users can delete their own companies"
   ON companies FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Migration : Ajouter la colonne country si elle n'existe pas déjà
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'companies' AND column_name = 'country'
+  ) THEN
+    ALTER TABLE companies ADD COLUMN country TEXT DEFAULT 'France';
+  END IF;
+END $$;

@@ -128,6 +128,32 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
     leftY += 6; // Réduit de 8 à 6
   }
 
+  // RCS/RM (obligatoire pour factures B2B)
+  if (invoice.company?.rcsCity && invoice.company?.siret) {
+    doc.text("RCS/RM", leftColX, leftY);
+    const siretFormatted = invoice.company.siret.match(/.{1,3}/g)?.join(' ') || invoice.company.siret;
+    doc.text(`RCS ${invoice.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
+    leftY += 6;
+  } else if (invoice.company?.siret) {
+    // Avertissement si SIRET sans RCS
+    doc.setTextColor(200, 0, 0); // Rouge pour avertissement
+    doc.text("⚠️ RCS manquant (obligatoire B2B)", leftColX, leftY);
+    doc.setTextColor(60, 60, 60);
+    leftY += 6;
+  }
+
+  // Capital social (seulement si > 0 et forme juridique nécessite capital)
+  if (invoice.company?.capital && invoice.company.capital > 0) {
+    doc.text("Capital social", leftColX, leftY);
+    doc.text(formatCurrencyForPDF(invoice.company.capital), leftColX, leftY + 3);
+    leftY += 6;
+  }
+
+  // Pays
+  doc.text("Pays", leftColX, leftY);
+  doc.text(invoice.company?.country || "France", leftColX, leftY + 3);
+  leftY += 6;
+
   // Colonne droite - Client
   let rightY = yPos + 5; // Réduit de 7 à 5
   doc.setFontSize(10); // Réduit de 11 à 10
@@ -174,12 +200,22 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   if (invoice.chantier?.name) {
     infoLines.push(`Chantier : ${invoice.chantier.name}`);
   }
-  if (invoice.executionPeriodStart && invoice.executionPeriodEnd) {
+  
+  // Date de prestation ou période d'exécution (obligatoire)
+  if (invoice.saleDate) {
+    infoLines.push(`Date de prestation : ${new Date(invoice.saleDate).toLocaleDateString("fr-FR")}`);
+  } else if (invoice.executionPeriodStart && invoice.executionPeriodEnd) {
     infoLines.push(`Période d'exécution : ${new Date(invoice.executionPeriodStart).toLocaleDateString("fr-FR")} au ${new Date(invoice.executionPeriodEnd).toLocaleDateString("fr-FR")}`);
+  } else {
+    // Avertissement si manquant
+    infoLines.push(`⚠️ Date de prestation manquante (obligatoire)`);
   }
+  
+  // Référence au devis (recommandé en BTP)
   if (invoice.quoteNumber) {
-    infoLines.push(`Référence devis : ${invoice.quoteNumber}`);
+    infoLines.push(`Facture établie suite au devis n° ${invoice.quoteNumber}`);
   }
+  
   if (invoice.purchaseOrderNumber) {
     infoLines.push(`Bon de commande : ${invoice.purchaseOrderNumber}`);
   }
@@ -376,7 +412,12 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
-  if (invoice.paymentTerms) {
+  if (!invoice.paymentTerms || invoice.paymentTerms.trim() === "") {
+    doc.setTextColor(200, 0, 0); // Rouge
+    doc.text("⚠️ Conditions de paiement manquantes (obligatoire)", margin, yPos);
+    doc.setTextColor(60, 60, 60);
+    yPos += 6;
+  } else {
     const paymentLines = doc.splitTextToSize(invoice.paymentTerms, contentWidth);
     doc.text(paymentLines, margin, yPos);
     yPos += paymentLines.length * 3.5; // Réduit de 4.5 à 3.5
@@ -397,33 +438,37 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   // ============================================
   // MENTIONS LÉGALES
   // ============================================
-  if (invoice.latePaymentPenalties || invoice.recoveryFee || invoice.specialVatMention) {
-    yPos += 5; // Réduit l'espacement
-    
-    doc.setFontSize(9); // Réduit de 10 à 9
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(0, 0, 0);
-    doc.text("Mentions légales :", margin, yPos);
-    yPos += 5; // Réduit de 7 à 5
-    doc.setFontSize(8); // Réduit de 9 à 8
-    doc.setFont(undefined, "normal");
+  yPos += 5; // Réduit l'espacement
+  
+  doc.setFontSize(9); // Réduit de 10 à 9
+  doc.setFont(undefined, "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text("Mentions légales :", margin, yPos);
+  yPos += 5; // Réduit de 7 à 5
+  doc.setFontSize(8); // Réduit de 9 à 8
+  doc.setFont(undefined, "normal");
+  doc.setTextColor(60, 60, 60);
+  
+  // Pénalités de retard (obligatoire B2B)
+  if (!invoice.latePaymentPenalties || invoice.latePaymentPenalties.trim() === "") {
+    doc.setTextColor(200, 0, 0); // Rouge
+    doc.text("⚠️ Pénalités de retard manquantes (obligatoire B2B)", margin, yPos);
     doc.setTextColor(60, 60, 60);
-    
-    if (invoice.latePaymentPenalties) {
-      const penaltyLines = doc.splitTextToSize(invoice.latePaymentPenalties, contentWidth);
-      doc.text(penaltyLines, margin, yPos);
-      yPos += penaltyLines.length * 3.5; // Réduit de 4.5 à 3.5
-    }
-    
-    if (invoice.recoveryFee && invoice.recoveryFee > 0) {
-      doc.text(`Indemnité forfaitaire pour frais de recouvrement : ${formatCurrencyForPDF(invoice.recoveryFee)}`, margin, yPos);
-      yPos += 4; // Réduit de 6 à 4
-    }
-    
-    if (invoice.specialVatMention) {
-      doc.text(invoice.specialVatMention, margin, yPos);
-      yPos += 4; // Réduit de 6 à 4
-    }
+    yPos += 6;
+  } else {
+    const penaltyLines = doc.splitTextToSize(invoice.latePaymentPenalties, contentWidth);
+    doc.text(penaltyLines, margin, yPos);
+    yPos += penaltyLines.length * 3.5; // Réduit de 4.5 à 3.5
+  }
+  
+  if (invoice.recoveryFee && invoice.recoveryFee > 0) {
+    doc.text(`Indemnité forfaitaire pour frais de recouvrement : ${formatCurrencyForPDF(invoice.recoveryFee)}`, margin, yPos);
+    yPos += 4; // Réduit de 6 à 4
+  }
+  
+  if (invoice.specialVatMention) {
+    doc.text(invoice.specialVatMention, margin, yPos);
+    yPos += 4; // Réduit de 6 à 4
   }
 
   // ============================================
@@ -440,13 +485,22 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   
   const footerLines = [];
   if (invoice.company?.name) {
-    const capital = invoice.company?.capital ? formatCurrencyForPDF(invoice.company.capital) : "0,00 €";
-    footerLines.push(`${invoice.company.name} au capital de ${capital}`);
+    // Afficher le capital seulement s'il est > 0
+    if (invoice.company?.capital && invoice.company.capital > 0) {
+      const capital = formatCurrencyForPDF(invoice.company.capital);
+      footerLines.push(`${invoice.company.name} au capital de ${capital}`);
+    } else {
+      footerLines.push(invoice.company.name);
+    }
   }
   
+  // RCS (obligatoire pour factures B2B)
   if (invoice.company?.rcsCity && invoice.company?.siret) {
     const siretFormatted = invoice.company.siret.match(/.{1,3}/g)?.join(' ') || invoice.company.siret;
     footerLines.push(`RCS ${invoice.company.rcsCity} n° ${siretFormatted}`);
+  } else if (invoice.company?.siret) {
+    // Avertissement si SIRET sans RCS
+    footerLines.push(`⚠️ SIRET : ${invoice.company.siret} - RCS manquant (obligatoire B2B)`);
   }
   
   if (invoice.company?.vatNumber) {

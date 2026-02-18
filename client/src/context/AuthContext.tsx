@@ -157,14 +157,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      // Nettoyer le localStorage
+      // Nettoyer le localStorage d'abord
       localStorage.removeItem('userType');
       localStorage.removeItem('teamMember');
+      
+      // Déconnexion Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+      }
+      
+      // Mettre à jour l'état même en cas d'erreur
+      setUser(null);
+      setSession(null);
     } catch (err) {
       console.error('Error in signOut:', err);
+      // Forcer la mise à jour de l'état même en cas d'erreur
+      setUser(null);
+      setSession(null);
     }
   };
 

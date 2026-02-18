@@ -218,10 +218,29 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
       return;
     }
 
+    // Validation SIRET et RCS pour factures
     if (!invoiceCompany || !invoiceCompany.name || !invoiceCompany.siret || !invoiceCompany.address) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir toutes les informations obligatoires de l'entreprise",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!invoiceCompany.siret || invoiceCompany.siret.length !== 14) {
+      toast({
+        title: "Champ obligatoire manquant",
+        description: "Le SIRET (14 chiffres) est obligatoire sur les factures",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!invoiceCompany.rcsCity || invoiceCompany.rcsCity.trim() === "") {
+      toast({
+        title: "Champ obligatoire manquant",
+        description: "La ville RCS est obligatoire sur les factures B2B",
         variant: "destructive",
       });
       return;
@@ -240,6 +259,36 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
       toast({
         title: "Erreur",
         description: "Veuillez renseigner les dates obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validation date de prestation ou période d'exécution
+    if (!saleDate && (!executionPeriodStart || !executionPeriodEnd)) {
+      toast({
+        title: "Champ obligatoire manquant",
+        description: "La date de prestation ou la période d'exécution est obligatoire",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validation conditions de paiement
+    if (!paymentTerms || paymentTerms.trim() === "") {
+      toast({
+        title: "Champ obligatoire manquant",
+        description: "Les conditions de paiement sont obligatoires",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validation pénalités de retard
+    if (!latePaymentPenalties || latePaymentPenalties.trim() === "") {
+      toast({
+        title: "Champ obligatoire manquant",
+        description: "Les pénalités de retard sont obligatoires en B2B",
         variant: "destructive",
       });
       return;

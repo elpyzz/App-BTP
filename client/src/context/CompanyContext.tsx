@@ -35,6 +35,7 @@ function companyToSupabase(company: Company): any {
   if (company.capital !== undefined && company.capital !== null) {
     data.capital = company.capital;
   }
+  if (company.country) data.country = company.country;
   if (company.apeCode) data.ape_code = company.apeCode;
   if (company.logo) data.logo = company.logo;
   if (company.website) data.website = company.website;
@@ -63,6 +64,7 @@ function supabaseToCompany(data: any): Company {
     vatNumber: data.vat_number,
     rcsCity: data.rcs_city,
     capital: data.capital ? parseFloat(data.capital) : undefined,
+    country: data.country || 'France',
     apeCode: data.ape_code,
     logo: data.logo,
     website: data.website,

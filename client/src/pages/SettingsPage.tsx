@@ -74,8 +74,8 @@ export default function SettingsPage() {
   return (
     <PageWrapper>
       <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
               <FileText className="h-6 w-6" />
               Paramètres
@@ -237,6 +237,50 @@ export default function SettingsPage() {
                       onChange={(e) => handleChange('vatNumber', e.target.value)}
                       className="bg-black/20 border-white/10 text-white"
                       placeholder="FR XX XXX XXX XXX"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rcsCity" className="text-white">
+                      Ville RCS/RM <span className="text-yellow-400">⚠️ Recommandé</span>
+                    </Label>
+                    <Input
+                      id="rcsCity"
+                      value={formData.rcsCity || ''}
+                      onChange={(e) => handleChange('rcsCity', e.target.value)}
+                      className="bg-black/20 border-white/10 text-white"
+                      placeholder="Ex: Nantes, Paris, Lyon"
+                    />
+                    <p className="text-xs text-yellow-400/70 mt-1">
+                      Obligatoire pour les factures B2B
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="capital" className="text-white">Capital social (€)</Label>
+                    <Input
+                      id="capital"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.capital || ''}
+                      onChange={(e) => handleChange('capital', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      className="bg-black/20 border-white/10 text-white"
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-white/50 mt-1">
+                      Laisser vide si micro-entreprise
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="country" className="text-white">Pays</Label>
+                    <Input
+                      id="country"
+                      value={formData.country || 'France'}
+                      onChange={(e) => handleChange('country', e.target.value)}
+                      className="bg-black/20 border-white/10 text-white"
+                      placeholder="France"
                     />
                   </div>
 

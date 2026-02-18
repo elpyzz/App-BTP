@@ -11,8 +11,18 @@ export function UserAccountButton() {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    setLocation('/auth');
+    try {
+      setIsOpen(false); // Fermer le menu avant la déconnexion
+      await signOut();
+      // Attendre un peu pour que la déconnexion se termine
+      setTimeout(() => {
+        setLocation('/auth');
+      }, 100);
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      // Forcer la redirection même en cas d'erreur
+      setLocation('/auth');
+    }
   };
 
   const userEmail = user?.email || 'Utilisateur';

@@ -126,7 +126,9 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="paymentTerms" className="text-white">Conditions de paiement</Label>
+          <Label htmlFor="paymentTerms" className="text-white">
+            Conditions de paiement <span className="text-red-400">*</span>
+          </Label>
           <Textarea
             id="paymentTerms"
             value={invoice.paymentTerms || DEFAULT_PAYMENT_TERMS}
@@ -134,7 +136,11 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
             className="bg-black/20 border-white/10 text-white"
             rows={4}
             placeholder={DEFAULT_PAYMENT_TERMS}
+            required
           />
+          <p className="text-xs text-red-400/70 mt-1">
+            ⚠️ Obligatoire sur les factures
+          </p>
         </div>
 
         <div className="md:col-span-2">

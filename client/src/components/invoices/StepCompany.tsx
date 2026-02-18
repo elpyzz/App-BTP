@@ -165,6 +165,51 @@ export function StepCompany({ company, onCompanyChange }: StepCompanyProps) {
         </div>
 
         <div>
+          <Label htmlFor="rcsCity" className="text-white">
+            Ville RCS/RM <span className="text-red-400">*</span>
+          </Label>
+          <Input
+            id="rcsCity"
+            value={currentCompany?.rcsCity || ""}
+            onChange={(e) => handleChange("rcsCity", e.target.value)}
+            className="bg-black/20 border-white/10 text-white"
+            placeholder="Ex: Nantes, Paris, Lyon"
+            required
+          />
+          <p className="text-xs text-red-400/70 mt-1">
+            ⚠️ Obligatoire pour les factures B2B
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="capital" className="text-white">Capital social (€)</Label>
+          <Input
+            id="capital"
+            type="number"
+            step="0.01"
+            min="0"
+            value={currentCompany?.capital || ""}
+            onChange={(e) => handleChange("capital", e.target.value ? parseFloat(e.target.value) : undefined)}
+            className="bg-black/20 border-white/10 text-white"
+            placeholder="0"
+          />
+          <p className="text-xs text-white/50 mt-1">
+            Laisser vide si micro-entreprise
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="country" className="text-white">Pays</Label>
+          <Input
+            id="country"
+            value={currentCompany?.country || "France"}
+            onChange={(e) => handleChange("country", e.target.value)}
+            className="bg-black/20 border-white/10 text-white"
+            placeholder="France"
+          />
+        </div>
+
+        <div>
           <Label htmlFor="apeCode" className="text-white">Code APE/NAF</Label>
           <Input
             id="apeCode"
