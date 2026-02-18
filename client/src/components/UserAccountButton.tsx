@@ -1,27 +1,26 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useLocation } from 'wouter';
 import { User, LogOut, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 
 export function UserAccountButton() {
   const { user, signOut } = useAuth();
-  const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
-      setIsOpen(false); // Fermer le menu avant la déconnexion
+      setIsOpen(false);
+      console.log('Déconnexion en cours...');
+      
+      // Appeler signOut
       await signOut();
-      // Attendre un peu pour que la déconnexion se termine
-      setTimeout(() => {
-        setLocation('/auth');
-      }, 100);
+      
+      // Forcer la redirection avec window.location pour être sûr
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       // Forcer la redirection même en cas d'erreur
-      setLocation('/auth');
+      window.location.href = '/auth';
     }
   };
 
@@ -71,13 +70,18 @@ export function UserAccountButton() {
                 </div>
               </div>
               <div className="p-2">
-                <Button
-                  onClick={handleSignOut}
-                  className="w-full justify-start bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSignOut();
+                  }}
+                  className="w-full flex items-center justify-start px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg transition-colors cursor-pointer"
                 >
                   <LogOut size={16} className="mr-2" />
                   Se déconnecter
-                </Button>
+                </button>
               </div>
             </motion.div>
           </>

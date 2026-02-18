@@ -65,21 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Ignorer les événements SIGNED_OUT si une session existe toujours
+      console.log('Auth state change:', event, session ? 'has session' : 'no session');
+      
+      // Pour SIGNED_OUT, toujours mettre à jour l'état à null
       if (event === 'SIGNED_OUT') {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        if (currentSession) {
-          setSession(currentSession);
-          setUser(currentSession.user);
-          setLoading(false);
-          return; // Sortir de la fonction pour éviter d'exécuter le code ci-dessous
-        } else {
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-          return; // Sortir de la fonction pour éviter d'exécuter le code ci-dessous
-        }
+        console.log('SIGNED_OUT event détecté');
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
       }
       
       // Mettre à jour normalement pour tous les autres cas
@@ -157,25 +151,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      // Nettoyer le localStorage d'abord
+      console.log('Début de la déconnexion...');
+      
+      // Nettoyer le localStorage (seulement les données d'authentification)
       localStorage.removeItem('userType');
       localStorage.removeItem('teamMember');
+      // Note: On ne nettoie pas tout le localStorage pour préserver les autres données
       
       // Déconnexion Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Error signing out:', error);
+      } else {
+        console.log('Déconnexion Supabase réussie');
       }
       
-      // Mettre à jour l'état même en cas d'erreur
+      // Mettre à jour l'état immédiatement
       setUser(null);
       setSession(null);
+      setLoading(false);
+      
+      console.log('État mis à jour, utilisateur déconnecté');
     } catch (err) {
       console.error('Error in signOut:', err);
       // Forcer la mise à jour de l'état même en cas d'erreur
       setUser(null);
       setSession(null);
+      setLoading(false);
     }
   };
 
