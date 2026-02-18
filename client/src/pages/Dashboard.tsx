@@ -14,6 +14,7 @@ import {
 import { Link, useLocation } from 'wouter'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
 import { loadQuotes } from '@/lib/storage/quotes'
+import { loadInvoices } from '@/lib/storage/invoices'
 
 export default function Dashboard() {
   const [location] = useLocation();
@@ -64,6 +65,8 @@ function OverviewTab() {
   const [totalQuotes, setTotalQuotes] = useState(0);
   const [signedQuotesCount, setSignedQuotesCount] = useState(0);
   const [signedQuotesTotal, setSignedQuotesTotal] = useState(0);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [invoicesTotal, setInvoicesTotal] = useState(0);
   const [quotesByMonth, setQuotesByMonth] = useState<any[]>([]);
   
   // Charger les statistiques des devis
@@ -129,21 +132,44 @@ function OverviewTab() {
       }
     };
     
+    const loadInvoicesStats = async () => {
+      try {
+        const invoices = await loadInvoices();
+        const total = invoices.reduce((sum, inv) => sum + (inv.totalTTC || 0), 0);
+        setTotalInvoices(invoices.length);
+        setInvoicesTotal(total);
+      } catch (error) {
+        console.error('Erreur lors du chargement des factures:', error);
+        setTotalInvoices(0);
+        setInvoicesTotal(0);
+      }
+    };
+    
     loadQuotesStats();
+    loadInvoicesStats();
     
     // Rafraîchir périodiquement (toutes les 10 secondes)
-    const interval = setInterval(loadQuotesStats, 10000);
+    const interval = setInterval(() => {
+      loadQuotesStats();
+      loadInvoicesStats();
+    }, 10000);
     
     // Écouter les événements personnalisés
     const handleQuotesUpdate = () => {
       loadQuotesStats();
     };
     
+    const handleInvoicesUpdate = () => {
+      loadInvoicesStats();
+    };
+    
     window.addEventListener('quotesUpdated', handleQuotesUpdate);
+    window.addEventListener('invoicesUpdated', handleInvoicesUpdate);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('quotesUpdated', handleQuotesUpdate);
+      window.removeEventListener('invoicesUpdated', handleInvoicesUpdate);
     };
   }, []);
   
@@ -178,12 +204,12 @@ function OverviewTab() {
           onClick={() => setLocation('/dashboard/projects')}
         />
         <MetricCard
-          title="CA des Devis Signés"
-          value={formatAmount(signedQuotesTotal)}
-          change={`${signedQuotesCount} devis signés`}
+          title="Total de facturation"
+          value={formatAmount(invoicesTotal)}
+          change={`${totalInvoices} factures`}
           icon={Euro}
           delay={0.3}
-          onClick={() => setLocation('/dashboard/dossiers?tab=signed')}
+          onClick={() => setLocation('/dashboard/dossiers?tab=invoices')}
         />
       </div>
 
