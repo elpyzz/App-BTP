@@ -210,12 +210,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // En preview/development, retourner plus de détails pour le debugging
     const isDev = process.env.VERCEL_ENV === 'development' || process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
     
-    res.status(statusCode).json({ 
-      error: errorMessage,
-      message: userFriendlyMessage,
-      details: isDev ? errorMsg : undefined,
-      stack: isDev ? error?.stack?.substring(0, 500) : undefined,
-      helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
-    });
+    // S'assurer que la réponse est toujours du JSON valide
+    try {
+      res.status(statusCode).json({ 
+        error: errorMessage,
+        message: userFriendlyMessage,
+        details: isDev ? errorMsg : undefined,
+        stack: isDev ? error?.stack?.substring(0, 500) : undefined,
+        helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
+      });
+    } catch (jsonError) {
+      // Fallback si même le JSON échoue
+      console.error('Erreur lors de l\'envoi de la réponse JSON:', jsonError);
+      res.status(statusCode).setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ 
+        error: 'Erreur serveur',
+        message: 'Une erreur est survenue lors du traitement de votre requête.'
+      }));
+    }
   }
 }

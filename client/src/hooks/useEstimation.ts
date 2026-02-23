@@ -76,11 +76,28 @@ export const useEstimation = () => {
       console.log('Response status:', response.status, response.statusText);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }));
+        let errorData: any;
+        try {
+          const text = await response.text();
+          console.error('Error response text:', text);
+          errorData = text ? JSON.parse(text) : { error: 'Erreur inconnue' };
+        } catch (parseError) {
+          console.error('Erreur parsing JSON de la réponse d\'erreur:', parseError);
+          errorData = { 
+            error: `Erreur HTTP ${response.status}`,
+            message: `Le serveur a retourné une erreur ${response.status}: ${response.statusText}`,
+            details: `Impossible de parser la réponse: ${parseError instanceof Error ? parseError.message : 'Unknown'}`
+          };
+        }
         console.error('Error response:', errorData);
         
         // Créer un message d'erreur détaillé
         let errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        
+        // Ajouter les détails si disponibles (en dev/preview)
+        if (errorData.details) {
+          errorMessage += `\n\nDétails: ${errorData.details}`;
+        }
         
         // Ajouter un lien d'aide si disponible
         if (errorData.helpUrl) {
