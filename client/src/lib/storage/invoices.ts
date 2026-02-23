@@ -299,12 +299,23 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
           .single();
 
         if (error) {
-          // Si c'est une erreur de doublon de numéro, générer un nouveau numéro et réessayer
-          if (error.code === '23505' && error.message?.includes('invoice_number')) {
+          // Détecter les erreurs de doublon (code 23505 PostgreSQL ou status 409 Supabase)
+          const isDuplicateError = 
+            error.code === '23505' || 
+            error.status === 409 ||
+            (error.message && (
+              error.message.includes('invoice_number') ||
+              error.message.includes('duplicate key') ||
+              error.message.includes('unique constraint')
+            ));
+          
+          if (isDuplicateError) {
             attempts++;
             if (attempts >= maxAttempts) {
               throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
             }
+            // Attendre un peu avant de réessayer pour éviter les collisions simultanées
+            await new Promise(resolve => setTimeout(resolve, 100 * attempts));
             // Charger les factures existantes et générer un nouveau numéro
             const existing = await loadInvoicesFromSupabase();
             invoiceNumber = generateInvoiceNumber(existing);
@@ -334,8 +345,17 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
 
       return validated.data;
     } catch (error: any) {
-      // Si ce n'est pas une erreur de doublon, propager l'erreur
-      if (error.code !== '23505' || !error.message?.includes('invoice_number')) {
+      // Détecter les erreurs de doublon (code 23505 PostgreSQL ou status 409 Supabase)
+      const isDuplicateError = 
+        error.code === '23505' || 
+        error.status === 409 ||
+        (error.message && (
+          error.message.includes('invoice_number') ||
+          error.message.includes('duplicate key') ||
+          error.message.includes('unique constraint')
+        ));
+      
+      if (!isDuplicateError) {
         throw error;
       }
       // Sinon, continuer la boucle de retry
@@ -343,6 +363,8 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
       if (attempts >= maxAttempts) {
         throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
       }
+      // Attendre un peu avant de réessayer
+      await new Promise(resolve => setTimeout(resolve, 100 * attempts));
       const existing = await loadInvoicesFromSupabase();
       invoiceNumber = generateInvoiceNumber(existing);
     }

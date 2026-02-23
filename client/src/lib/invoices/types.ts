@@ -186,12 +186,27 @@ export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
   
   // Trouver le plus grand numéro pour cette année
   const maxNumber = existingInvoices
-    .filter(inv => inv.invoiceNumber.startsWith(prefix))
-    .map(inv => parseInt(inv.invoiceNumber.replace(prefix, "")) || 0)
+    .filter(inv => inv.invoiceNumber && inv.invoiceNumber.startsWith(prefix))
+    .map(inv => {
+      // Extraire seulement la partie numérique (ignorer les suffixes comme -1234)
+      const numStr = inv.invoiceNumber.replace(prefix, "").split("-")[0];
+      return parseInt(numStr) || 0;
+    })
     .reduce((max, n) => Math.max(max, n), 0);
   
   const nextNumber = (maxNumber + 1).toString().padStart(4, "0");
-  return `${prefix}${nextNumber}`;
+  const baseNumber = `${prefix}${nextNumber}`;
+  
+  // Vérifier si le numéro existe déjà (sécurité supplémentaire)
+  const exists = existingInvoices.some(inv => inv.invoiceNumber === baseNumber);
+  
+  if (exists) {
+    // Si collision, utiliser un timestamp pour garantir l'unicité
+    const timestamp = Date.now().toString().slice(-4);
+    return `${baseNumber}-${timestamp}`;
+  }
+  
+  return baseNumber;
 }
 
 /**
