@@ -32,15 +32,31 @@ export const useEstimation = () => {
       // Récupération des matériaux existants
       const existingMaterials = await getMaterials();
       
-      // Préparation FormData
-      const formData = new FormData();
-      validImages.forEach(img => formData.append('images', img));
-      formData.append('surface', chantierInfo.surface);
-      formData.append('metier', chantierInfo.metier);
-      formData.append('materiaux', chantierInfo.materiaux);
-      formData.append('localisation', chantierInfo.localisation);
-      formData.append('delai', chantierInfo.delai);
-      formData.append('existingMaterials', JSON.stringify(existingMaterials));
+      // Convertir les images en base64 pour compatibilité Vercel
+      const imagesBase64 = await Promise.all(
+        validImages.map(async (img) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result); // Format: "data:image/jpeg;base64,..."
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(img);
+          });
+        })
+      );
+      
+      // Préparation du body JSON (compatible Vercel serverless)
+      const requestBody = {
+        surface: chantierInfo.surface,
+        metier: chantierInfo.metier,
+        materiaux: chantierInfo.materiaux,
+        localisation: chantierInfo.localisation,
+        delai: chantierInfo.delai,
+        existingMaterials: JSON.stringify(existingMaterials),
+        images: imagesBase64
+      };
       
       // Appel API
       console.log('Sending request to /api/estimate', {
@@ -51,7 +67,10 @@ export const useEstimation = () => {
       
       const response = await fetch('/api/estimate', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
       });
       
       console.log('Response status:', response.status, response.statusText);
