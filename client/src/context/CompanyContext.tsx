@@ -35,7 +35,8 @@ function companyToSupabase(company: Company): any {
   if (company.capital !== undefined && company.capital !== null) {
     data.capital = company.capital;
   }
-  if (company.country) data.country = company.country;
+  // Ne pas envoyer country - la colonne n'existe pas dans Supabase
+  // if (company.country) data.country = company.country;
   if (company.apeCode) data.ape_code = company.apeCode;
   if (company.logo) data.logo = company.logo;
   if (company.website) data.website = company.website;
