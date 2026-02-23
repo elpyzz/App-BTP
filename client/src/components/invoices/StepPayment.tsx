@@ -19,9 +19,7 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
   };
 
   const handleDepositsPaidChange = (value: number) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepPayment.tsx:21',message:'handleDepositsPaidChange called',data:{newValue:value,currentInvoiceDepositsPaid:invoice.depositsPaid,totalTTC},timestamp:Date.now(),runId:'debug1',hypothesisId:'E,F'})}).catch(()=>{});
-    // #endregion
+    console.log('[DEBUG] handleDepositsPaidChange:', { newValue: value, current: invoice.depositsPaid, totalTTC });
     handleChange("depositsPaid", value);
     // Recalculer le reste à payer
     const remainingAmount = Math.max(0, totalTTC - value);
@@ -82,8 +80,11 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
                 step="0.01"
                 min="0"
                 max={totalTTC}
-                value={invoice.depositsPaid || 0}
-                onChange={(e) => handleDepositsPaidChange(parseFloat(e.target.value) || 0)}
+                value={typeof invoice.depositsPaid === 'number' ? invoice.depositsPaid : 0}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 0;
+                  handleDepositsPaidChange(value);
+                }}
                 className="bg-black/20 border-white/10 text-white"
               />
             </div>
@@ -96,7 +97,7 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
                 step="0.1"
                 min="0"
                 max="100"
-                value={totalTTC > 0 ? ((invoice.depositsPaid || 0) / totalTTC * 100).toFixed(1) : 0}
+                value={totalTTC > 0 ? ((typeof invoice.depositsPaid === 'number' ? invoice.depositsPaid : 0) / totalTTC * 100).toFixed(1) : 0}
                 onChange={(e) => {
                   const percentage = parseFloat(e.target.value) || 0;
                   handleDepositsPercentageChange(percentage);

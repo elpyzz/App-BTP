@@ -299,9 +299,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
           .single();
 
         if (error) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:301',message:'Error object structure',data:{errorCode:error.code,errorStatus:error.status,errorMessage:error.message,errorKeys:Object.keys(error),hasResponse:!!error.response,responseStatus:error.response?.status},timestamp:Date.now(),runId:'debug1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           // Détecter les erreurs de doublon (code 23505 PostgreSQL ou status 409 Supabase)
           const isDuplicateError = 
             error.code === '23505' || 
@@ -310,11 +307,19 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
             (error.message && (
               error.message.includes('invoice_number') ||
               error.message.includes('duplicate key') ||
-              error.message.includes('unique constraint')
+              error.message.includes('unique constraint') ||
+              error.message.includes('409')
             ));
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:312',message:'Duplicate error detection result',data:{isDuplicateError,attempts,currentInvoiceNumber:invoiceNumber},timestamp:Date.now(),runId:'debug1',hypothesisId:'A,C'})}).catch(()=>{});
-          // #endregion
+          
+          console.log('[DEBUG] Invoice save error:', {
+            code: error.code,
+            status: error.status,
+            responseStatus: error.response?.status,
+            message: error.message,
+            isDuplicateError,
+            attempts,
+            invoiceNumber
+          });
           
           if (isDuplicateError) {
             attempts++;
@@ -325,13 +330,9 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
             await new Promise(resolve => setTimeout(resolve, 100 * attempts));
             // Charger les factures existantes et générer un nouveau numéro
             const existing = await loadInvoicesFromSupabase();
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:320',message:'Loaded existing invoices for retry',data:{existingCount:existing.length,existingNumbers:existing.map(inv=>inv.invoiceNumber).slice(0,10),oldInvoiceNumber:invoiceNumber},timestamp:Date.now(),runId:'debug1',hypothesisId:'B,D'})}).catch(()=>{});
-            // #endregion
+            console.log('[DEBUG] Retry - loaded invoices:', existing.length, 'old number:', invoiceNumber);
             invoiceNumber = generateInvoiceNumber(existing);
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:322',message:'Generated new invoice number',data:{newInvoiceNumber:invoiceNumber,attempts},timestamp:Date.now(),runId:'debug1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
+            console.log('[DEBUG] Retry - new invoice number:', invoiceNumber, 'attempt:', attempts);
             continue; // Réessayer avec le nouveau numéro
           }
           
@@ -358,9 +359,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
 
       return validated.data;
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:347',message:'Catch block error',data:{errorCode:error.code,errorStatus:error.status,errorMessage:error.message,errorKeys:Object.keys(error),hasResponse:!!error.response,responseStatus:error.response?.status,attempts},timestamp:Date.now(),runId:'debug1',hypothesisId:'A,C'})}).catch(()=>{});
-      // #endregion
       // Détecter les erreurs de doublon (code 23505 PostgreSQL ou status 409 Supabase)
       const isDuplicateError = 
         error.code === '23505' || 
@@ -369,11 +367,18 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
         (error.message && (
           error.message.includes('invoice_number') ||
           error.message.includes('duplicate key') ||
-          error.message.includes('unique constraint')
+          error.message.includes('unique constraint') ||
+          error.message.includes('409')
         ));
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'invoices.ts:358',message:'Catch block duplicate detection',data:{isDuplicateError,attempts},timestamp:Date.now(),runId:'debug1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+      
+      console.log('[DEBUG] Catch block error:', {
+        code: error.code,
+        status: error.status,
+        responseStatus: error.response?.status,
+        message: error.message,
+        isDuplicateError,
+        attempts
+      });
       
       if (!isDuplicateError) {
         throw error;
@@ -386,7 +391,9 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
       // Attendre un peu avant de réessayer
       await new Promise(resolve => setTimeout(resolve, 100 * attempts));
       const existing = await loadInvoicesFromSupabase();
+      console.log('[DEBUG] Catch retry - loaded invoices:', existing.length);
       invoiceNumber = generateInvoiceNumber(existing);
+      console.log('[DEBUG] Catch retry - new invoice number:', invoiceNumber, 'attempt:', attempts);
     }
   }
   
