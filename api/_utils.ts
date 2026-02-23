@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
-// @ts-ignore - fast-levenshtein n'a pas de types
-import Levenshtein from 'fast-levenshtein';
+// Ne pas importer fast-levenshtein au niveau du module, on le chargera dynamiquement
 
 // Prompt système ultra-précis
 export const PROMPT_SYSTEME_OPTIMISE = `Tu es un expert en estimation BTP français avec 20 ans d'expérience. 
@@ -174,10 +173,19 @@ export function enrichirAvecMateriauxExistants(estimation: any, existingMaterial
       } else if (name1.includes(name2) || name2.includes(name1)) {
         nameScore = 0.9;
       } else {
-        const distance = Levenshtein.get(name1, name2);
-        const maxLength = Math.max(name1.length, name2.length);
-        if (maxLength > 0) {
-          nameScore = Math.max(0, (maxLength - distance) / maxLength);
+        // Charger Levenshtein dynamiquement avec fallback
+        try {
+          // @ts-ignore - fast-levenshtein n'a pas de types
+          const Levenshtein = require('fast-levenshtein');
+          const distance = Levenshtein.get(name1, name2);
+          const maxLength = Math.max(name1.length, name2.length);
+          if (maxLength > 0) {
+            nameScore = Math.max(0, (maxLength - distance) / maxLength);
+          }
+        } catch (e) {
+          // Si Levenshtein n'est pas disponible, utiliser une comparaison simple
+          console.warn('Levenshtein non disponible, utilisation du fallback:', e);
+          nameScore = calculateSimpleSimilarity(name1, name2);
         }
       }
       
@@ -226,4 +234,22 @@ export function enrichirAvecMateriauxExistants(estimation: any, existingMaterial
       materiaux: totalMateriaux
     }
   };
+}
+
+// Fonction de similarité simple si Levenshtein n'est pas disponible
+function calculateSimpleSimilarity(str1: string, str2: string): number {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  if (longer.length === 0) return 1.0;
+  
+  // Calcul simple basé sur la longueur et les caractères communs
+  let commonChars = 0;
+  for (let i = 0; i < shorter.length; i++) {
+    if (longer.includes(shorter[i])) {
+      commonChars++;
+    }
+  }
+  
+  const similarity = commonChars / longer.length;
+  return Math.max(0, similarity);
 }
