@@ -3,7 +3,7 @@ import path from 'path';
 // Charger dotenv avec le chemin explicite
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from 'openai';
@@ -268,6 +268,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // #region agent log
   fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:272',message:'registerRoutes function entry',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
   // #endregion
+  console.log('[Routes] registerRoutes called - about to register routes');
+  
+  // Créer un router Express pour les routes API
+  const apiRouter = express.Router();
   
   // Initialiser OpenAI ici, après que dotenv soit chargé
   if (!openai) {
@@ -295,13 +299,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // use storage to perform CRUD operations on the storage interface
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
   
-  // Route POST /api/estimate
+  // Route POST /estimate
   // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:293',message:'Registering /api/estimate route',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:293',message:'Registering /estimate route on API router',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
   // #endregion
   
   // Middleware pour capturer les erreurs multer
-  app.post('/api/estimate', (req, res, next) => {
+  apiRouter.post('/estimate', (req, res, next) => {
     // #region agent log
     fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:297',message:'Before multer middleware',data:{contentType:req.headers['content-type'],hasBody:!!req.body},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
@@ -449,8 +453,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Route POST /api/send-email pour envoyer des emails avec PDF via Resend
-  app.post('/api/send-email', async (req, res) => {
+  // Route GET /resend/status pour vérifier si Resend est configuré
+  // IMPORTANT: Cette route doit être enregistrée AVANT que Vite ne soit configuré
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:452',message:'Registering /resend/status route on API router',data:{},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  console.log('[Routes] Registering GET /resend/status on API router');
+  
+  // Enregistrer la route sur le router API (sans le préfixe /api car le router sera monté sur /api)
+  apiRouter.get('/resend/status', (req, res) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:459',message:'/api/resend/status route MATCHED - handler called',data:{method:req.method,url:req.originalUrl,path:req.path,baseUrl:req.baseUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    console.log('[Resend Status API] Route MATCHED - URL:', req.originalUrl, 'Path:', req.path);
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:456',message:'/api/resend/status route handler called',data:{method:req.method,url:req.originalUrl,path:req.path,baseUrl:req.baseUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    console.log('[Resend Status API] Route appelée - URL:', req.originalUrl, 'Path:', req.path);
+    
+    const hasKey = !!process.env.RESEND_API_KEY;
+    const keyLength = process.env.RESEND_API_KEY?.length || 0;
+    const configured = hasKey && keyLength > 0;
+    const keyPrefix = process.env.RESEND_API_KEY?.substring(0, 5) || 'none';
+    
+    console.log('[Resend Status API]', {
+      hasKey,
+      keyLength,
+      configured,
+      keyPrefix,
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('RESEND'))
+    });
+    
+    // S'assurer que la réponse est bien du JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.json({ 
+      configured: configured,
+      debug: process.env.NODE_ENV === 'development' ? {
+        hasKey,
+        keyLength,
+        keyPrefix
+      } : undefined
+    });
+  });
+  
+  // Route POST /send-email pour envoyer des emails avec PDF via Resend
+  apiRouter.post('/send-email', async (req, res) => {
     try {
       const { to, subject, body, pdfBase64, pdfFileName } = req.body;
       
@@ -510,6 +557,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // Monter le router API sur /api
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:562',message:'Mounting API router on /api',data:{},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  console.log('[Routes] Mounting API router on /api');
+  app.use('/api', apiRouter);
+  console.log('[Routes] API router mounted successfully');
   
   // Handler d'erreur pour multer
   app.use((error: any, req: any, res: any, next: any) => {

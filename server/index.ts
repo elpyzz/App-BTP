@@ -2,21 +2,25 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from "fs";
+import path from "path";
 // #region agent log
 fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4',message:'Checking OPENAI_API_KEY after dotenv',data:{hasApiKey:!!process.env.OPENAI_API_KEY,apiKeyLength:process.env.OPENAI_API_KEY?.length||0},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
 // #endregion
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Middleware pour logger toutes les requêtes API
-app.use('/api', (req, res, next) => {
+// Middleware de traçage GLOBAL - le premier middleware, capture TOUTES les requêtes
+app.use((req, res, next) => {
   // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:12',message:'API request received',data:{method:req.method,path:req.path,hasBody:!!req.body,bodyKeys:req.body?Object.keys(req.body):[]},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:12',message:'GLOBAL middleware - ALL requests',data:{method:req.method,url:req.originalUrl,path:req.path,isApi:req.originalUrl.startsWith('/api')},timestamp:Date.now(),runId:'resend-final',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
+  console.log('[GLOBAL] Request:', req.method, req.originalUrl, 'isApi:', req.originalUrl.startsWith('/api'));
   next();
 });
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -50,7 +54,16 @@ app.use((req, res, next) => {
 
 (async () => {
   // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:39',message:'Starting server initialization',data:{nodeEnv:process.env.NODE_ENV,port:process.env.PORT,hasDatabaseUrl:!!process.env.DATABASE_URL},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  const pkgJsonPath = path.resolve(import.meta.dirname, '..', 'package.json');
+  let hasSupabaseInPackageJson = false;
+  try {
+    const pkgJsonContent = fs.readFileSync(pkgJsonPath, 'utf-8');
+    const pkgJson = JSON.parse(pkgJsonContent);
+    hasSupabaseInPackageJson = !!(pkgJson.dependencies?.['@supabase/supabase-js'] || pkgJson.devDependencies?.['@supabase/supabase-js']);
+  } catch (e) {
+    // Ignore
+  }
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:51',message:'Starting server initialization',data:{nodeEnv:process.env.NODE_ENV,port:process.env.PORT,hasDatabaseUrl:!!process.env.DATABASE_URL,hasSupabaseInPackageJson},timestamp:Date.now(),runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
   let server;
   try {
@@ -76,12 +89,24 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // Middleware CRITIQUE : Intercepter TOUTES les routes API avant Vite
+  // Ce middleware garantit que les routes API ne passent jamais par Vite
+  app.use('/api', (req, res, next) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:105',message:'Pre-Vite API middleware',data:{method:req.method,url:req.originalUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    console.log('[Pre-Vite API Middleware] Intercepting API route:', req.method, req.originalUrl);
+    // Les routes API sont déjà enregistrées par registerRoutes
+    // On laisse Express les gérer, on ne passe JAMAIS à Vite pour /api
+    next();
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (process.env.NODE_ENV === "development" || !process.env.NODE_ENV) {
     // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:63',message:'Setting up Vite in development mode',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:103',message:'Setting up Vite in development mode',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
     // #endregion
     try {
       await setupVite(app, server);

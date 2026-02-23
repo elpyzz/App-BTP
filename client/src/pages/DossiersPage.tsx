@@ -80,6 +80,7 @@ export default function DossiersPage() {
   const [emailMessage, setEmailMessage] = useState('');
   const [itemToEmail, setItemToEmail] = useState<{ type: 'quote' | 'invoice'; data: Quote | Invoice } | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [resendConfigured, setResendConfigured] = useState(false);
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
@@ -115,6 +116,11 @@ export default function DossiersPage() {
     return () => {
       window.removeEventListener('invoicesUpdated', handleInvoicesUpdate);
     };
+  }, []);
+
+  // Vérifier si Resend est configuré au chargement
+  useEffect(() => {
+    isResendConfigured().then(setResendConfigured);
   }, []);
 
   const loadQuotesFromSupabase = async () => {
@@ -650,7 +656,7 @@ export default function DossiersPage() {
                               onClick={() => handleSendByEmail(quote, 'quote')}
                               className="text-white border-white/20 hover:bg-white/10"
                               title="Envoyer par email"
-                              disabled={!isResendConfigured()}
+                              disabled={!resendConfigured}
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
@@ -786,7 +792,7 @@ export default function DossiersPage() {
                               onClick={() => handleSendByEmail(invoice, 'invoice')}
                               className="text-white border-white/20 hover:bg-white/10"
                               title="Envoyer par email"
-                              disabled={!isResendConfigured()}
+                              disabled={!resendConfigured}
                             >
                               <Mail className="h-4 w-4" />
                             </Button>
@@ -1158,7 +1164,7 @@ export default function DossiersPage() {
                   className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-lg p-3 text-white placeholder:text-white/50 resize-none"
                 />
               </div>
-              {!isResendConfigured() && (
+              {!resendConfigured && (
                 <div className="p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
                   <p className="text-sm text-yellow-300">
                     ⚠️ Resend n'est pas configuré. Veuillez ajouter RESEND_API_KEY dans les variables d'environnement.
@@ -1180,7 +1186,7 @@ export default function DossiersPage() {
                 </Button>
                 <Button
                   onClick={confirmSendEmail}
-                  disabled={!emailRecipient || sendingEmail || !isResendConfigured()}
+                  disabled={!emailRecipient || sendingEmail || !resendConfigured}
                   className="bg-violet-600 hover:bg-violet-700"
                 >
                   {sendingEmail ? 'Envoi...' : 'Envoyer'}

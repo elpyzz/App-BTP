@@ -65,10 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:67',message:'onAuthStateChange event',data:{event,hasSession:!!session,hasUser:!!session?.user,userId:session?.user?.id,sessionExpiresAt:session?.expires_at},timestamp:Date.now(),runId:'login-final',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       console.log('Auth state change:', event, session ? 'has session' : 'no session');
       
       // Pour SIGNED_OUT, toujours mettre à jour l'état à null
       if (event === 'SIGNED_OUT') {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:74',message:'SIGNED_OUT event handling',data:{},timestamp:Date.now(),runId:'login-final',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         console.log('SIGNED_OUT event détecté');
         setSession(null);
         setUser(null);
@@ -76,7 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       
+      // Ignorer INITIAL_SESSION si la session est null (première initialisation)
+      if (event === 'INITIAL_SESSION' && !session) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:85',message:'Ignoring INITIAL_SESSION with null session',data:{},timestamp:Date.now(),runId:'login-final',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        setLoading(false);
+        return;
+      }
+      
       // Mettre à jour normalement pour tous les autres cas
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:92',message:'Updating session and user from onAuthStateChange',data:{event,hasSession:!!session,hasUser:!!session?.user},timestamp:Date.now(),runId:'login-final',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -131,19 +149,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:142',message:'signIn called',data:{email},timestamp:Date.now(),runId:'login-final',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (!error && data.user) {
-        setUser(data.user);
-        setSession(data.session || null);
-      }
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:148',message:'signInWithPassword result',data:{hasError:!!error,hasUser:!!data?.user,hasSession:!!data?.session,userId:data?.user?.id,sessionExpiresAt:data?.session?.expires_at},timestamp:Date.now(),runId:'login-final',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
+      // Ne pas mettre à jour l'état manuellement - laisser onAuthStateChange le faire
+      // Cela évite les conflits et garantit la cohérence
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:153',message:'signIn completed, waiting for onAuthStateChange',data:{hasError:!!error},timestamp:Date.now(),runId:'login-final',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       
       return { error };
     } catch (err: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:159',message:'signIn exception',data:{error:String(err)},timestamp:Date.now(),runId:'login-final',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error('Error in signIn:', err);
       return { error: err };
     }

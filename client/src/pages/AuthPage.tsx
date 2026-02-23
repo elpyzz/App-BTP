@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useLocation } from "wouter"
 import { useAuth } from "@/context/AuthContext"
 import { SignInPage } from "@/components/SignInPage"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -48,11 +49,45 @@ export default function AuthPage() {
         
         const { error: signInError } = await signIn(email, password)
         
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:49',message:'signIn completed in AuthPage',data:{hasError:!!signInError,errorMessage:signInError?.message},timestamp:Date.now(),runId:'login-fix',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
         if (signInError) {
           setError(signInError.message || "Email ou mot de passe incorrect")
         } else {
-          // Rediriger directement vers le dashboard après connexion réussie
-          setLocation("/dashboard")
+          // Attendre que onAuthStateChange se déclenche et mette à jour l'état
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:58',message:'Waiting for onAuthStateChange to update state',data:{},timestamp:Date.now(),runId:'login-final',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          
+          // Attendre jusqu'à 2 secondes que la session soit disponible
+          let attempts = 0;
+          const maxAttempts = 20; // 2 secondes max (20 * 100ms)
+          
+          while (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:66',message:'Session check attempt',data:{attempt:attempts+1,hasSession:!!session,hasUser:!!session?.user},timestamp:Date.now(),runId:'login-final',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            
+            if (session) {
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:71',message:'Session found, redirecting to /dashboard',data:{},timestamp:Date.now(),runId:'login-final',hypothesisId:'A'})}).catch(()=>{});
+              // #endregion
+              setLocation("/dashboard")
+              return;
+            }
+            attempts++;
+          }
+          
+          // Si après 2 secondes, toujours pas de session, afficher une erreur
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthPage.tsx:80',message:'Session not found after waiting',data:{},timestamp:Date.now(),runId:'login-final',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          setError("Erreur lors de la connexion. Veuillez réessayer.")
         }
       }
     } catch (err: any) {

@@ -27,6 +27,8 @@ export async function setupVite(app: Express, server: Server) {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true as const,
+    // Exclure les routes API du traitement Vite
+    base: '/',
   };
 
   // #region agent log
@@ -60,8 +62,36 @@ export async function setupVite(app: Express, server: Server) {
     throw err;
   }
 
-  app.use(vite.middlewares);
+  // Wrapper pour vite.middlewares qui ignore les routes API
+  // IMPORTANT: Ce middleware doit être appelé APRÈS que toutes les routes API soient enregistrées
+  const viteMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/vite.ts:65',message:'Vite middleware wrapper called',data:{method:req.method,url:req.originalUrl,isApi:req.originalUrl.startsWith('/api')},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Ignorer complètement les routes API - elles sont gérées par Express
+    if (req.originalUrl.startsWith('/api')) {
+      console.log('[Vite Middleware] Ignoring API route:', req.originalUrl);
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/vite.ts:70',message:'Vite middleware - skipping API route',data:{url:req.originalUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return next();
+    }
+    // Pour les autres routes, utiliser vite.middlewares
+    console.log('[Vite Middleware] Processing non-API route:', req.originalUrl);
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/vite.ts:76',message:'Vite middleware - processing with vite',data:{url:req.originalUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    vite.middlewares(req, res, next);
+  };
+  
+  app.use(viteMiddleware);
+  
   app.use("*", async (req, res, next) => {
+    // Ignorer les routes API - elles sont gérées par Express
+    if (req.originalUrl.startsWith('/api')) {
+      return next();
+    }
+    
     const url = req.originalUrl;
 
     try {
@@ -99,7 +129,11 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // Ignorer les routes API - elles sont gérées par Express
+  app.use("*", (req, res, next) => {
+    if (req.originalUrl.startsWith('/api')) {
+      return next();
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
