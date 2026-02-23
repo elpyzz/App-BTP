@@ -1,15 +1,38 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// Ne pas importer OpenAI et _utils au niveau du module - chargement dynamique dans le handler
 
-// Parser les données pour Vercel
-// Supporte deux formats :
-// 1. JSON avec images en base64 (recommandé pour Vercel)
-// 2. FormData (si disponible)
-async function parseRequestData(req: VercelRequest): Promise<{ fields: any; files: Array<{ buffer: Buffer; mimetype: string }> }> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:5',message:'Handler MINIMAL appelé',data:{method:req.method,url:req.url},timestamp:Date.now(),runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  
   try {
-    const contentType = req.headers['content-type'] || '';
+    // Seulement POST
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:15',message:'Avant chargement dynamique OpenAI',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    // Charger OpenAI dynamiquement
+    const { default: OpenAI } = await import('openai');
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:19',message:'Après chargement dynamique OpenAI',data:{step:'dynamic_import',openaiType:typeof OpenAI},timestamp:Date.now(),runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     
-    // Sur Vercel, le body est déjà parsé automatiquement si Content-Type est application/json
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:22',message:'Avant chargement dynamique _utils',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Charger _utils dynamiquement
+    const utils = await import('./_utils');
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:26',message:'Après chargement dynamique _utils',data:{step:'dynamic_import',hasOptimizeImages:typeof utils.optimizeImages,hasEnrichir:typeof utils.enrichirAvecMateriauxExistants},timestamp:Date.now(),runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+
+    const { optimizeImages, buildPromptUtilisateur, parseGPTResponse, enrichirAvecMateriauxExistants, PROMPT_SYSTEME_OPTIMISE } = utils;
+
+    // Parser les données
+    const contentType = req.headers['content-type'] || '';
     let body: any;
     if (typeof req.body === 'string') {
       try {
@@ -22,7 +45,7 @@ async function parseRequestData(req: VercelRequest): Promise<{ fields: any; file
     }
     
     if (!body || Object.keys(body).length === 0) {
-      throw new Error('Body de la requête vide ou invalide');
+      return res.status(400).json({ error: 'Body de la requête vide ou invalide' });
     }
     
     const { surface, metier, materiaux, localisation, delai, existingMaterials, images } = body;
@@ -34,86 +57,29 @@ async function parseRequestData(req: VercelRequest): Promise<{ fields: any; file
         const img = images[i];
         try {
           if (typeof img === 'string') {
-            // Format: "data:image/jpeg;base64,..." ou juste base64
             const base64Data = img.includes(',') ? img.split(',')[1] : img;
             if (!base64Data || base64Data.length === 0) {
-              console.warn(`Image ${i} base64 vide, ignorée`);
               continue;
             }
             const buffer = Buffer.from(base64Data, 'base64');
             if (buffer.length === 0) {
-              console.warn(`Image ${i} buffer vide après conversion, ignorée`);
               continue;
             }
             const mimeMatch = img.match(/data:([^;]+)/);
             const mimetype = mimeMatch ? mimeMatch[1] : 'image/jpeg';
             files.push({ buffer, mimetype });
           } else if (img && typeof img === 'object' && img.base64 && img.mimetype) {
-            // Format: { base64: "...", mimetype: "image/jpeg" }
             const buffer = Buffer.from(img.base64, 'base64');
             if (buffer.length === 0) {
-              console.warn(`Image ${i} buffer vide après conversion, ignorée`);
               continue;
             }
             files.push({ buffer, mimetype: img.mimetype });
-          } else {
-            console.warn(`Image ${i} format invalide, ignorée`);
           }
         } catch (e) {
-          console.warn(`Erreur conversion image ${i}:`, e);
           // Continuer avec les autres images
         }
       }
     }
-    
-    return {
-      fields: { surface, metier, materiaux, localisation, delai, existingMaterials },
-      files
-    };
-  } catch (error) {
-    console.error('Erreur parseRequestData:', error);
-    throw new Error(`Erreur parsing requête: ${error instanceof Error ? error.message : 'Unknown'}`);
-  }
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:86',message:'Handler appelé',data:{method:req.method,url:req.url},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
-  // Envelopper TOUT dans un try/catch global pour capturer même les erreurs d'import
-  try {
-    // Seulement POST
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:95',message:'Avant chargement dynamique OpenAI',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    // Charger OpenAI dynamiquement
-    const { default: OpenAI } = await import('openai');
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:98',message:'Après chargement dynamique OpenAI',data:{step:'dynamic_import',openaiType:typeof OpenAI},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:101',message:'Avant chargement dynamique _utils',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    // Charger _utils dynamiquement
-    const { 
-      optimizeImages, 
-      buildPromptUtilisateur, 
-      parseGPTResponse, 
-      enrichirAvecMateriauxExistants, 
-      PROMPT_SYSTEME_OPTIMISE 
-    } = await import('./_utils');
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:110',message:'Après chargement dynamique _utils',data:{step:'dynamic_import',hasOptimizeImages:typeof optimizeImages,hasEnrichir:typeof enrichirAvecMateriauxExistants},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-
-    // Parser les données (JSON avec base64 ou FormData)
-    const { fields, files } = await parseRequestData(req);
-    const { surface, metier, materiaux, localisation, delai, existingMaterials } = fields;
     
     // Validation stricte
     if (!files || files.length === 0) {
@@ -130,7 +96,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       optimizedImages = await optimizeImages(files);
     } catch (sharpError) {
       console.error('Erreur lors de l\'optimisation des images, utilisation des images originales:', sharpError);
-      // Fallback: utiliser les images originales en base64
       optimizedImages = files.map(file => file.buffer.toString('base64'));
     }
     
@@ -195,18 +160,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.json(estimation);
     
   } catch (error: any) {
-    // Gestion d'erreur globale - cette fois on est sûr que ça sera capturé
+    // Gestion d'erreur globale
     console.error('ERREUR GLOBALE dans handler:', error);
     console.error('Error name:', error?.name);
     console.error('Error message:', error?.message);
     console.error('Error stack:', error?.stack?.substring(0, 1000));
     
-    // Log supplémentaire pour identifier le type d'erreur
-    if (error?.code) console.error('Error code:', error?.code);
-    if (error?.status) console.error('Error status:', error?.status);
-    if (error?.response) console.error('Error response:', error?.response);
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:165',message:'Erreur capturée',data:{errorName:error?.name,errorMsg:error?.message,errorCode:error?.code},timestamp:Date.now(),runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     
-    // Gestion d'erreurs spécifiques avec messages clairs
     let errorMessage = 'Erreur lors de l\'analyse';
     let statusCode = 500;
     let userFriendlyMessage = 'Une erreur est survenue lors de l\'analyse.';
@@ -214,7 +177,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const errorMsg = error?.message || '';
     const errorName = error?.name || '';
     
-    // Vérifier OPENAI_API_KEY en premier
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
       errorMessage = 'OPENAI_API_KEY non configurée';
       userFriendlyMessage = 'La clé API OpenAI n\'est pas configurée sur Vercel. Veuillez l\'ajouter dans les variables d\'environnement.';
@@ -249,27 +211,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       statusCode = 503;
     }
     
-    // TOUJOURS retourner les détails pour le debugging (temporairement)
-    // On peut les masquer plus tard en production si nécessaire
     const isDev = process.env.VERCEL_ENV === 'development' || 
                   process.env.VERCEL_ENV === 'preview' || 
                   process.env.NODE_ENV === 'development' ||
-                  process.env.VERCEL === '1'; // Vercel définit toujours VERCEL=1
+                  process.env.VERCEL === '1';
     
-    // Toujours retourner du JSON valide avec détails pour debugging
     try {
       res.status(statusCode).json({ 
         error: errorMessage,
         message: userFriendlyMessage,
-        // Toujours inclure les détails pour le debugging
         details: errorMsg || 'Aucun détail disponible',
         errorName: errorName || 'Unknown',
-        // Stack seulement en dev/preview
         stack: isDev ? error?.stack?.substring(0, 1000) : undefined,
         helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
       });
     } catch (jsonError) {
-      // Dernier recours si même le JSON échoue
       console.error('Erreur lors de l\'envoi de la réponse JSON:', jsonError);
       res.status(statusCode).setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ 
