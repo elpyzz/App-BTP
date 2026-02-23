@@ -1,24 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// #region agent log
-fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:2',message:'Avant import OpenAI',data:{step:'module_load'},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-// #endregion
-import OpenAI from 'openai';
-// #region agent log
-fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:4',message:'Après import OpenAI',data:{step:'module_load',openaiType:typeof OpenAI},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-// #endregion
-// #region agent log
-fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:5',message:'Avant import _utils',data:{step:'module_load'},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-// #endregion
-import { 
-  optimizeImages, 
-  buildPromptUtilisateur, 
-  parseGPTResponse, 
-  enrichirAvecMateriauxExistants, 
-  PROMPT_SYSTEME_OPTIMISE 
-} from './_utils';
-// #region agent log
-fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:13',message:'Après import _utils',data:{step:'module_load',hasOptimizeImages:typeof optimizeImages,hasEnrichir:typeof enrichirAvecMateriauxExistants},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-// #endregion
+// Ne pas importer OpenAI et _utils au niveau du module - chargement dynamique dans le handler
 
 // Parser les données pour Vercel
 // Supporte deux formats :
@@ -105,6 +86,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
+
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:95',message:'Avant chargement dynamique OpenAI',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    // Charger OpenAI dynamiquement
+    const { default: OpenAI } = await import('openai');
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:98',message:'Après chargement dynamique OpenAI',data:{step:'dynamic_import',openaiType:typeof OpenAI},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:101',message:'Avant chargement dynamique _utils',data:{step:'dynamic_import'},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Charger _utils dynamiquement
+    const { 
+      optimizeImages, 
+      buildPromptUtilisateur, 
+      parseGPTResponse, 
+      enrichirAvecMateriauxExistants, 
+      PROMPT_SYSTEME_OPTIMISE 
+    } = await import('./_utils');
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:110',message:'Après chargement dynamique _utils',data:{step:'dynamic_import',hasOptimizeImages:typeof optimizeImages,hasEnrichir:typeof enrichirAvecMateriauxExistants},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     // Parser les données (JSON avec base64 ou FormData)
     const { fields, files } = await parseRequestData(req);
