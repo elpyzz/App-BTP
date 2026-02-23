@@ -183,23 +183,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Error message:', error?.message);
     console.error('Error stack:', error?.stack?.substring(0, 1000));
     
+    // Log supplémentaire pour identifier le type d'erreur
+    if (error?.code) console.error('Error code:', error?.code);
+    if (error?.status) console.error('Error status:', error?.status);
+    if (error?.response) console.error('Error response:', error?.response);
+    
     // Gestion d'erreurs spécifiques avec messages clairs
     let errorMessage = 'Erreur lors de l\'analyse';
     let statusCode = 500;
     let userFriendlyMessage = 'Une erreur est survenue lors de l\'analyse.';
     
     const errorMsg = error?.message || '';
+    const errorName = error?.name || '';
     
     // Vérifier OPENAI_API_KEY en premier
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
       errorMessage = 'OPENAI_API_KEY non configurée';
       userFriendlyMessage = 'La clé API OpenAI n\'est pas configurée sur Vercel. Veuillez l\'ajouter dans les variables d\'environnement.';
       statusCode = 500;
-    } else if (errorMsg.includes('401') || errorMsg.includes('Incorrect API key')) {
+    } else if (errorMsg.includes('401') || errorMsg.includes('Incorrect API key') || errorName === 'AuthenticationError') {
       errorMessage = 'Clé API OpenAI invalide';
       userFriendlyMessage = 'La clé API OpenAI est invalide. Veuillez vérifier votre configuration.';
       statusCode = 401;
-    } else if (errorMsg.includes('429') || errorMsg.includes('quota') || errorMsg.includes('exceeded')) {
+    } else if (errorMsg.includes('429') || errorMsg.includes('quota') || errorMsg.includes('exceeded') || errorName === 'RateLimitError') {
       errorMessage = 'Quota OpenAI dépassé';
       userFriendlyMessage = 'Votre compte OpenAI a atteint sa limite de crédits. Veuillez ajouter des crédits sur https://platform.openai.com/account/billing et réessayer.';
       statusCode = 429;
@@ -215,17 +221,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       errorMessage = 'Modèle non disponible';
       userFriendlyMessage = 'Le modèle GPT-4o n\'est pas disponible. Veuillez vérifier votre abonnement OpenAI.';
       statusCode = 400;
+    } else if (errorMsg.includes('timeout') || errorMsg.includes('TIMEOUT')) {
+      errorMessage = 'Timeout';
+      userFriendlyMessage = 'La requête a pris trop de temps. Veuillez réessayer.';
+      statusCode = 504;
+    } else if (errorMsg.includes('network') || errorMsg.includes('ECONNREFUSED') || errorMsg.includes('ENOTFOUND')) {
+      errorMessage = 'Erreur réseau';
+      userFriendlyMessage = 'Impossible de se connecter au service. Vérifiez votre connexion internet.';
+      statusCode = 503;
     }
     
-    // En preview/development, retourner plus de détails pour le debugging
-    const isDev = process.env.VERCEL_ENV === 'development' || process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
+    // TOUJOURS retourner les détails pour le debugging (temporairement)
+    // On peut les masquer plus tard en production si nécessaire
+    const isDev = process.env.VERCEL_ENV === 'development' || 
+                  process.env.VERCEL_ENV === 'preview' || 
+                  process.env.NODE_ENV === 'development' ||
+                  process.env.VERCEL === '1'; // Vercel définit toujours VERCEL=1
     
-    // Toujours retourner du JSON valide
+    // Toujours retourner du JSON valide avec détails pour debugging
     try {
       res.status(statusCode).json({ 
         error: errorMessage,
         message: userFriendlyMessage,
-        details: isDev ? errorMsg : undefined,
+        // Toujours inclure les détails pour le debugging
+        details: errorMsg || 'Aucun détail disponible',
+        errorName: errorName || 'Unknown',
+        // Stack seulement en dev/preview
         stack: isDev ? error?.stack?.substring(0, 1000) : undefined,
         helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
       });
@@ -235,7 +256,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(statusCode).setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ 
         error: 'Erreur serveur',
-        message: 'Une erreur est survenue lors du traitement de votre requête.'
+        message: 'Une erreur est survenue lors du traitement de votre requête.',
+        details: errorMsg || 'Aucun détail disponible'
       }));
     }
   }
