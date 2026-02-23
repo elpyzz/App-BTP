@@ -170,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let estimation = parseGPTResponse(content);
     
     // Enrichissement avec matériaux existants
-    estimation = enrichirAvecMateriauxExistants(estimation, materialsList);
+    estimation = await enrichirAvecMateriauxExistants(estimation, materialsList);
     
     res.json(estimation);
     

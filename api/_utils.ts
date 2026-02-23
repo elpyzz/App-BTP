@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 // Ne pas importer fast-levenshtein au niveau du module, on le chargera dynamiquement
 
 // Prompt système ultra-précis
@@ -150,12 +149,12 @@ export function parseGPTResponse(content: string | null | undefined): any {
 }
 
 // Fonction d'enrichissement avec matériaux existants
-export function enrichirAvecMateriauxExistants(estimation: any, existingMaterials: any[]): any {
+export async function enrichirAvecMateriauxExistants(estimation: any, existingMaterials: any[]): Promise<any> {
   if (!estimation.materiaux || !Array.isArray(estimation.materiaux)) {
     return estimation;
   }
   
-  const enrichedMateriaux = estimation.materiaux.map((mat: any) => {
+  const enrichedMateriaux = await Promise.all(estimation.materiaux.map(async (mat: any) => {
     // Normaliser le nom pour le matching
     const normalizeString = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, '').trim();
     
@@ -173,10 +172,11 @@ export function enrichirAvecMateriauxExistants(estimation: any, existingMaterial
       } else if (name1.includes(name2) || name2.includes(name1)) {
         nameScore = 0.9;
       } else {
-        // Charger Levenshtein dynamiquement avec fallback
+        // Charger Levenshtein dynamiquement avec fallback (utiliser import() pour ESM)
         try {
           // @ts-ignore - fast-levenshtein n'a pas de types
-          const Levenshtein = require('fast-levenshtein');
+          const LevenshteinModule = await import('fast-levenshtein');
+          const Levenshtein = LevenshteinModule.default || LevenshteinModule;
           const distance = Levenshtein.get(name1, name2);
           const maxLength = Math.max(name1.length, name2.length);
           if (maxLength > 0) {
@@ -221,7 +221,7 @@ export function enrichirAvecMateriauxExistants(estimation: any, existingMaterial
         needsAdding: true
       };
     }
-  });
+  }));
   
   // Recalculer le coût total des matériaux
   const totalMateriaux = enrichedMateriaux.reduce((sum: number, mat: any) => sum + (mat.prixTotal || 0), 0);
