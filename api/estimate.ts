@@ -1,4 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import OpenAI from 'openai';
+import { 
+  optimizeImages, 
+  buildPromptUtilisateur, 
+  parseGPTResponse, 
+  enrichirAvecMateriauxExistants, 
+  PROMPT_SYSTEME_OPTIMISE 
+} from './_utils';
 
 // Parser les données pour Vercel
 // Supporte deux formats :
@@ -82,16 +90,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
-
-    // Charger les dépendances dynamiquement pour éviter les erreurs d'import
-    const { default: OpenAI } = await import('openai');
-    const { 
-      optimizeImages, 
-      buildPromptUtilisateur, 
-      parseGPTResponse, 
-      enrichirAvecMateriauxExistants, 
-      PROMPT_SYSTEME_OPTIMISE 
-    } = await import('./_utils');
 
     // Parser les données (JSON avec base64 ou FormData)
     const { fields, files } = await parseRequestData(req);
