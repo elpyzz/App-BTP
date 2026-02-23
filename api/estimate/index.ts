@@ -29,7 +29,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch(e) {}
     // #endregion
 
-    const utilsModule = await import('../_utils');
+    // Import _utils avec extension .js (Vercel compile TS en JS)
+    const utilsModule = await import('../_utils.js');
     const utils = utilsModule;
 
     // #region agent log
