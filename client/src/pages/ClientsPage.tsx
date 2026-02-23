@@ -324,6 +324,7 @@ export default function ClientsPage() {
                           src={chantier.images[0]}
                           alt={chantier.nom}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                         {chantier.images.length > 1 && (
                           <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-xs flex items-center gap-1">

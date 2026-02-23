@@ -552,6 +552,7 @@ export default function PlanningPage() {
                           src={image}
                           alt={`Photo ${index + 1} du chantier ${selectedChantier.nom}`}
                           className="w-full h-48 object-cover rounded-lg border border-white/20 hover:border-white/40 transition-colors"
+                          loading="lazy"
                         />
                       </div>
                     ))}

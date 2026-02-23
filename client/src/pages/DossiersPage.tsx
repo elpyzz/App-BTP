@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { PageWrapper } from '@/components/PageWrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,9 @@ export default function DossiersPage() {
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
+  
+  // Debounce de la recherche pour améliorer les performances
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
 
   // Charger les devis depuis Supabase avec rafraîchissement automatique
@@ -185,9 +189,9 @@ export default function DossiersPage() {
   const filteredAndSortedQuotes = useMemo(() => {
     let filtered = filteredByTab;
 
-    // Recherche
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // Recherche (utilise la valeur debouncée)
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(quote =>
         quote.clientName.toLowerCase().includes(query) ||
         quote.chantierName.toLowerCase().includes(query) ||
@@ -212,15 +216,15 @@ export default function DossiersPage() {
     });
 
     return sorted;
-  }, [filteredByTab, searchQuery, sortBy, sortOrder]);
+  }, [filteredByTab, debouncedSearchQuery, sortBy, sortOrder]);
 
   // Recherche et tri pour les factures
   const filteredAndSortedInvoices = useMemo(() => {
     let filtered = invoices;
 
-    // Recherche
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // Recherche (utilise la valeur debouncée)
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(invoice =>
         invoice.client?.name?.toLowerCase().includes(query) ||
         invoice.chantier?.name?.toLowerCase().includes(query) ||
@@ -246,7 +250,7 @@ export default function DossiersPage() {
     });
 
     return sorted;
-  }, [invoices, searchQuery, sortBy, sortOrder]);
+  }, [invoices, debouncedSearchQuery, sortBy, sortOrder]);
 
   // Statistiques
   const stats = useMemo(() => {

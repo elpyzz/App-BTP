@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building, Plus, Calendar, Clock, User, Image as ImageIcon, X, Edit2, Trash2, Search, MoreVertical } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Link, useLocation } from 'wouter';
 import { useChantiers, Chantier, Client } from '@/context/ChantiersContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -144,12 +145,17 @@ export default function ProjectsPage() {
     }
   };
 
-  const filteredClients = clientSearchQuery
-    ? clients.filter(c => 
-        c.name.toLowerCase().includes(clientSearchQuery.toLowerCase()) || 
-        c.email.toLowerCase().includes(clientSearchQuery.toLowerCase())
-      )
-    : clients;
+  // Debounce de la recherche pour améliorer les performances
+  const debouncedClientSearchQuery = useDebounce(clientSearchQuery, 300);
+  
+  const filteredClients = useMemo(() => {
+    if (!debouncedClientSearchQuery) return clients;
+    const query = debouncedClientSearchQuery.toLowerCase();
+    return clients.filter(c => 
+      c.name.toLowerCase().includes(query) || 
+      c.email.toLowerCase().includes(query)
+    );
+  }, [clients, debouncedClientSearchQuery]);
 
   const handleAddClient = async () => {
     const newClient = {
@@ -622,6 +628,7 @@ export default function ProjectsPage() {
                       src={chantier.images[0]}
                       alt={chantier.nom}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                     {chantier.images.length > 1 && (
                       <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-xs flex items-center gap-1">

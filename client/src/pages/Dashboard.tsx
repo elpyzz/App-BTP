@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback, memo } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -150,11 +150,24 @@ function OverviewTab() {
     loadQuotesStats();
     loadInvoicesStats();
     
-    // Rafraîchir périodiquement (toutes les 10 secondes)
+    // Utiliser Page Visibility API pour ne rafraîchir que si la page est visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadQuotesStats();
+        loadInvoicesStats();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Rafraîchir périodiquement (toutes les 30 secondes au lieu de 10)
     const interval = setInterval(() => {
-      loadQuotesStats();
-      loadInvoicesStats();
-    }, 10000);
+      // Ne rafraîchir que si la page est visible
+      if (!document.hidden) {
+        loadQuotesStats();
+        loadInvoicesStats();
+      }
+    }, 30000);
     
     // Écouter les événements personnalisés
     const handleQuotesUpdate = () => {
@@ -170,20 +183,21 @@ function OverviewTab() {
     
     return () => {
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('quotesUpdated', handleQuotesUpdate);
       window.removeEventListener('invoicesUpdated', handleInvoicesUpdate);
     };
   }, []);
   
-  // Formater le montant
-  const formatAmount = (amount: number) => {
+  // Formater le montant (memoized pour éviter les recalculs)
+  const formatAmount = useCallback((amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
-  };
+  }, []);
   
   return (
     <div className="space-y-6">
@@ -297,7 +311,8 @@ function OverviewTab() {
   )
 }
 
-function MetricCard({ title, value, change, icon: Icon, delay, onClick }: { title: string, value: string, change: string, icon: any, delay: number, onClick?: () => void }) {
+// Memoized MetricCard pour éviter les re-renders inutiles
+const MetricCard = memo(({ title, value, change, icon: Icon, delay, onClick }: { title: string, value: string, change: string, icon: any, delay: number, onClick?: () => void }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -321,5 +336,5 @@ function MetricCard({ title, value, change, icon: Icon, delay, onClick }: { titl
       </Card>
     </motion.div>
   )
-}
+});
 
