@@ -24,23 +24,16 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
   React.useEffect(() => {
     const newValue = typeof invoice.depositsPaid === 'number' ? String(invoice.depositsPaid) : '0';
     if (localDepositsPaid !== newValue) {
-      console.log('[DEBUG] Syncing localDepositsPaid:', { from: localDepositsPaid, to: newValue, invoiceDepositsPaid: invoice.depositsPaid });
       setLocalDepositsPaid(newValue);
     }
   }, [invoice.depositsPaid]);
   
-  // #region agent log
-  console.log('[DEBUG] StepPayment render:', { depositsPaid: invoice.depositsPaid, localDepositsPaid, totalTTC });
-  // #endregion
-  
   const handleChange = (field: keyof Invoice, value: any) => {
-    console.log('[DEBUG] handleChange called:', { field, value, currentInvoice: invoice });
     // Ne passer que le champ modifié, pas tout l'objet invoice pour éviter d'écraser les valeurs
     onInvoiceChange({ [field]: value });
   };
 
   const handleDepositsPaidChange = (value: number) => {
-    console.log('[DEBUG] handleDepositsPaidChange:', { newValue: value, current: invoice.depositsPaid, totalTTC });
     // Mettre à jour depositsPaid et remainingAmount en une seule fois
     const remainingAmount = Math.max(0, totalTTC - value);
     onInvoiceChange({ depositsPaid: value, remainingAmount });
@@ -103,14 +96,9 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
                 value={localDepositsPaid}
                 onChange={(e) => {
                   const newValue = e.target.value;
-                  console.log('[DEBUG] Input onChange triggered:', { value: newValue, invoiceDepositsPaid: invoice.depositsPaid, localDepositsPaid });
                   setLocalDepositsPaid(newValue);
                   const numValue = parseFloat(newValue) || 0;
-                  console.log('[DEBUG] Parsed value:', numValue);
                   handleDepositsPaidChange(numValue);
-                }}
-                onInput={(e) => {
-                  console.log('[DEBUG] Input onInput triggered:', { value: (e.target as HTMLInputElement).value });
                 }}
                 className="bg-black/20 border-white/10 text-white"
               />

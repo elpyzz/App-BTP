@@ -311,16 +311,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
               error.message.includes('409')
             ));
           
-          console.log('[DEBUG] Invoice save error:', {
-            code: error.code,
-            status: error.status,
-            responseStatus: error.response?.status,
-            message: error.message,
-            isDuplicateError,
-            attempts,
-            invoiceNumber
-          });
-          
           if (isDuplicateError) {
             attempts++;
             if (attempts >= maxAttempts) {
@@ -331,7 +321,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
             // Charger les factures existantes et générer un nouveau numéro
             // Utiliser un timestamp pour garantir l'unicité si loadInvoicesFromSupabase ne retourne pas toutes les factures
             const existing = await loadInvoicesFromSupabase();
-            console.log('[DEBUG] Retry - loaded invoices:', existing.length, 'old number:', invoiceNumber, 'existingNumbers:', existing.map(inv => inv.invoiceNumber).slice(0, 5));
             
             // Si aucune facture n'est chargée mais qu'on a une erreur de doublon, utiliser un suffixe unique
             if (existing.length === 0 && attempts > 0) {
@@ -339,10 +328,8 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
               const year = new Date().getFullYear();
               const baseNumber = invoiceNumber.replace(`FAC-${year}-`, '');
               invoiceNumber = `FAC-${year}-${baseNumber}-${timestamp}`;
-              console.log('[DEBUG] Retry - using timestamp suffix:', invoiceNumber, 'attempt:', attempts);
             } else {
               invoiceNumber = generateInvoiceNumber(existing);
-              console.log('[DEBUG] Retry - new invoice number:', invoiceNumber, 'attempt:', attempts);
             }
             continue; // Réessayer avec le nouveau numéro
           }
@@ -382,15 +369,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
           error.message.includes('409')
         ));
       
-      console.log('[DEBUG] Catch block error:', {
-        code: error.code,
-        status: error.status,
-        responseStatus: error.response?.status,
-        message: error.message,
-        isDuplicateError,
-        attempts
-      });
-      
       if (!isDuplicateError) {
         throw error;
       }
@@ -402,7 +380,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
       // Attendre un peu avant de réessayer
       await new Promise(resolve => setTimeout(resolve, 100 * attempts));
       const existing = await loadInvoicesFromSupabase();
-      console.log('[DEBUG] Catch retry - loaded invoices:', existing.length, 'existingNumbers:', existing.map(inv => inv.invoiceNumber).slice(0, 5));
       
       // Si aucune facture n'est chargée mais qu'on a une erreur de doublon, utiliser un suffixe unique
       if (existing.length === 0 && attempts > 0) {
@@ -410,10 +387,8 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
         const year = new Date().getFullYear();
         const baseNumber = invoiceNumber.replace(`FAC-${year}-`, '');
         invoiceNumber = `FAC-${year}-${baseNumber}-${timestamp}`;
-        console.log('[DEBUG] Catch retry - using timestamp suffix:', invoiceNumber, 'attempt:', attempts);
       } else {
         invoiceNumber = generateInvoiceNumber(existing);
-        console.log('[DEBUG] Catch retry - new invoice number:', invoiceNumber, 'attempt:', attempts);
       }
     }
   }
