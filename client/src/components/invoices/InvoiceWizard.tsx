@@ -365,25 +365,28 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
   };
 
   // Objet invoice partiel pour les étapes - mémorisé pour garantir la synchronisation
-  const invoicePartial: Partial<Invoice> = useMemo(() => ({
-    issueDate,
-    saleDate,
-    executionPeriodStart,
-    executionPeriodEnd,
-    dueDate,
-    paymentDelayDays,
-    quoteId: selectedQuoteId || undefined,
-    quoteNumber,
-    purchaseOrderNumber,
-    internalReference,
-    depositsPaid,
-    remainingAmount: totals.remainingAmount,
-    paymentTerms,
-    paymentMethods,
-    latePaymentPenalties,
-    recoveryFee,
-    specialVatMention,
-  }), [
+  const invoicePartial: Partial<Invoice> = useMemo(() => {
+    console.log('[DEBUG] invoicePartial useMemo recalculating:', { depositsPaid, totalsRemainingAmount: totals.remainingAmount });
+    return {
+      issueDate,
+      saleDate,
+      executionPeriodStart,
+      executionPeriodEnd,
+      dueDate,
+      paymentDelayDays,
+      quoteId: selectedQuoteId || undefined,
+      quoteNumber,
+      purchaseOrderNumber,
+      internalReference,
+      depositsPaid,
+      remainingAmount: totals.remainingAmount,
+      paymentTerms,
+      paymentMethods,
+      latePaymentPenalties,
+      recoveryFee,
+      specialVatMention,
+    };
+  }, [
     issueDate,
     saleDate,
     executionPeriodStart,
@@ -484,6 +487,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
             invoice={invoicePartial}
             totalTTC={totals.totalTTC}
             onInvoiceChange={(updates) => {
+              console.log('[DEBUG] StepPayment onInvoiceChange called:', { updates, currentDepositsPaid: depositsPaid, invoicePartialDepositsPaid: invoicePartial.depositsPaid });
               if (updates.depositsPaid !== undefined) {
                 console.log('[DEBUG] Setting depositsPaid:', updates.depositsPaid, 'from', depositsPaid);
                 setDepositsPaid(updates.depositsPaid);

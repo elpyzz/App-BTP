@@ -14,7 +14,12 @@ interface StepPaymentProps {
 }
 
 export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentProps) {
+  // #region agent log
+  console.log('[DEBUG] StepPayment render:', { depositsPaid: invoice.depositsPaid, totalTTC });
+  // #endregion
+  
   const handleChange = (field: keyof Invoice, value: any) => {
+    console.log('[DEBUG] handleChange called:', { field, value, currentInvoice: invoice });
     onInvoiceChange({ ...invoice, [field]: value });
   };
 
@@ -82,8 +87,12 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
                 max={totalTTC}
                 value={typeof invoice.depositsPaid === 'number' ? invoice.depositsPaid : 0}
                 onChange={(e) => {
+                  console.log('[DEBUG] Input onChange triggered:', { value: e.target.value, invoiceDepositsPaid: invoice.depositsPaid });
                   const value = parseFloat(e.target.value) || 0;
                   handleDepositsPaidChange(value);
+                }}
+                onInput={(e) => {
+                  console.log('[DEBUG] Input onInput triggered:', { value: (e.target as HTMLInputElement).value });
                 }}
                 className="bg-black/20 border-white/10 text-white"
               />
