@@ -48,6 +48,7 @@ export const useEstimation = () => {
       );
       
       // Préparation du body JSON (compatible Vercel serverless)
+      // TEST: Envoyer d'abord un body minimal pour tester si le problème vient de la taille
       const requestBody = {
         surface: chantierInfo.surface,
         metier: chantierInfo.metier,
@@ -58,12 +59,20 @@ export const useEstimation = () => {
         images: imagesBase64
       };
       
-      // Appel API
+      // Calculer la taille du body
+      const bodySize = JSON.stringify(requestBody).length;
       console.log('Sending request to /api/estimate', {
         imagesCount: validImages.length,
         surface: chantierInfo.surface,
-        metier: chantierInfo.metier
+        metier: chantierInfo.metier,
+        bodySize: bodySize,
+        bodySizeMB: (bodySize / 1024 / 1024).toFixed(2)
       });
+      
+      // Si le body est trop volumineux (>4.5MB), Vercel peut rejeter la requête
+      if (bodySize > 4.5 * 1024 * 1024) {
+        throw new Error(`Le body de la requête est trop volumineux (${(bodySize / 1024 / 1024).toFixed(2)}MB). Vercel limite à 4.5MB. Veuillez réduire la taille des images.`);
+      }
       
       const response = await fetch('/api/estimate', {
         method: 'POST',
