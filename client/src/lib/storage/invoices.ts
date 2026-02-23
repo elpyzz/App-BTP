@@ -214,104 +214,142 @@ export async function loadInvoicesFromSupabase(filters?: {
 
 /**
  * Sauvegarde une facture dans Supabase (avec user_id)
+ * Gère automatiquement les numéros de facture en double avec retry
  */
 export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> {
-  try {
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
 
-    // Générer numéro et dates si nouvelle facture
-    if (!invoice.invoiceNumber) {
+  // Générer numéro et dates si nouvelle facture
+  let invoiceNumber = invoice.invoiceNumber;
+  if (!invoiceNumber) {
+    const existing = await loadInvoicesFromSupabase();
+    invoiceNumber = generateInvoiceNumber(existing);
+  }
+
+  // Retry en cas de numéro en double (max 5 tentatives)
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  while (attempts < maxAttempts) {
+    try {
+      // Créer une copie de l'invoice avec le numéro actuel
+      const invoiceToSave = { ...invoice, invoiceNumber };
+
+      if (!invoiceToSave.dueDate && invoiceToSave.issueDate) {
+        invoiceToSave.dueDate = calculateDueDate(invoiceToSave.issueDate, invoiceToSave.paymentDelayDays || 30);
+      }
+
+      // Calculer le reste à payer
+      invoiceToSave.remainingAmount = calculateRemainingAmount(invoiceToSave.totalTTC, invoiceToSave.depositsPaid);
+
+      // Convertir vers le format Supabase (snake_case)
+      const baseData = invoiceToSupabase(invoiceToSave);
+      const invoiceData: any = {
+        ...baseData,
+        user_id: userId,
+      };
+
+      // Pour les nouvelles factures, ne pas envoyer l'ID (Supabase le générera automatiquement)
+      const isNewInvoice = !invoiceToSave.id;
+      if (isNewInvoice) {
+        delete invoiceData.id;
+      }
+
+      // Vérifier si la facture existe déjà
+      let existing = null;
+      if (invoiceToSave.id) {
+        const { data } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('id', invoiceToSave.id)
+          .eq('user_id', userId)
+          .maybeSingle();
+        existing = data;
+      }
+
+      let result;
+      if (existing) {
+        // Mise à jour
+        const { data, error } = await supabase
+          .from('invoices')
+          .update(invoiceData)
+          .eq('id', invoiceToSave.id)
+          .eq('user_id', userId)
+          .select()
+          .single();
+
+        if (error) {
+          // Message d'erreur plus clair pour les problèmes de schéma
+          if (error.code === 'PGRST204') {
+            const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
+            throw new Error(`La colonne "${columnName}" n'existe pas dans la table invoices. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
+          }
+          throw error;
+        }
+        result = data;
+      } else {
+        // Création
+        const { data, error } = await supabase
+          .from('invoices')
+          .insert(invoiceData)
+          .select()
+          .single();
+
+        if (error) {
+          // Si c'est une erreur de doublon de numéro, générer un nouveau numéro et réessayer
+          if (error.code === '23505' && error.message?.includes('invoice_number')) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+              throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
+            }
+            // Charger les factures existantes et générer un nouveau numéro
+            const existing = await loadInvoicesFromSupabase();
+            invoiceNumber = generateInvoiceNumber(existing);
+            continue; // Réessayer avec le nouveau numéro
+          }
+          
+          // Message d'erreur plus clair pour les problèmes de schéma
+          if (error.code === 'PGRST204') {
+            const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
+            throw new Error(`La colonne "${columnName}" n'existe pas dans la table invoices. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
+          }
+          throw error;
+        }
+        result = data;
+      }
+
+      // Convertir et valider le résultat
+      const convertedInvoice = supabaseToInvoice(result);
+      const validated = InvoiceSchema.safeParse(convertedInvoice);
+      if (!validated.success) {
+        console.error('Erreur de validation après sauvegarde:', validated.error);
+        throw new Error('Données invalides après sauvegarde');
+      }
+
+      // Déclencher événement pour notifier les autres composants
+      window.dispatchEvent(new Event('invoicesUpdated'));
+
+      return validated.data;
+    } catch (error: any) {
+      // Si ce n'est pas une erreur de doublon, propager l'erreur
+      if (error.code !== '23505' || !error.message?.includes('invoice_number')) {
+        throw error;
+      }
+      // Sinon, continuer la boucle de retry
+      attempts++;
+      if (attempts >= maxAttempts) {
+        throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
+      }
       const existing = await loadInvoicesFromSupabase();
-      invoice.invoiceNumber = generateInvoiceNumber(existing);
+      invoiceNumber = generateInvoiceNumber(existing);
     }
-
-    if (!invoice.dueDate && invoice.issueDate) {
-      invoice.dueDate = calculateDueDate(invoice.issueDate, invoice.paymentDelayDays || 30);
-    }
-
-    // Calculer le reste à payer
-    invoice.remainingAmount = calculateRemainingAmount(invoice.totalTTC, invoice.depositsPaid);
-
-    // Convertir vers le format Supabase (snake_case)
-    const baseData = invoiceToSupabase(invoice);
-    const invoiceData: any = {
-      ...baseData,
-      user_id: userId,
-    };
-
-    // Pour les nouvelles factures, ne pas envoyer l'ID (Supabase le générera automatiquement)
-    const isNewInvoice = !invoice.id;
-    if (isNewInvoice) {
-      delete invoiceData.id;
-    }
-
-    // Vérifier si la facture existe déjà
-    let existing = null;
-    if (invoice.id) {
-      const { data } = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('id', invoice.id)
-        .eq('user_id', userId)
-        .maybeSingle();
-      existing = data;
-    }
-
-    let result;
-    if (existing) {
-      // Mise à jour
-      const { data, error } = await supabase
-        .from('invoices')
-        .update(invoiceData)
-        .eq('id', invoice.id)
-        .eq('user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        // Message d'erreur plus clair pour les problèmes de schéma
-        if (error.code === 'PGRST204') {
-          const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
-          throw new Error(`La colonne "${columnName}" n'existe pas dans la table invoices. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
-        }
-        throw error;
-      }
-      result = data;
-    } else {
-      // Création
-      const { data, error } = await supabase
-        .from('invoices')
-        .insert(invoiceData)
-        .select()
-        .single();
-
-      if (error) {
-        // Message d'erreur plus clair pour les problèmes de schéma
-        if (error.code === 'PGRST204') {
-          const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
-          throw new Error(`La colonne "${columnName}" n'existe pas dans la table invoices. Message Supabase: ${error.message}. Veuillez recréer la table avec le script SQL complet.`);
-        }
-        throw error;
-      }
-      result = data;
-    }
-
-    // Convertir et valider le résultat
-    const convertedInvoice = supabaseToInvoice(result);
-    const validated = InvoiceSchema.safeParse(convertedInvoice);
-    if (!validated.success) {
-      console.error('Erreur de validation après sauvegarde:', validated.error);
-      throw new Error('Données invalides après sauvegarde');
-    }
-
-    // Déclencher événement pour notifier les autres composants
-    window.dispatchEvent(new Event('invoicesUpdated'));
-
-    return validated.data;
-  } catch (error) {
+  }
+  
+  throw new Error('Impossible de sauvegarder la facture');
+}
     console.error('Error saving invoice to Supabase:', error);
     throw error;
   }

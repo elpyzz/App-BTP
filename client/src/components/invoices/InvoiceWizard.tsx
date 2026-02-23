@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Save, FileText, Building2, Users, Calendar, List
 import { useToast } from "@/hooks/use-toast";
 import { Invoice, InvoiceLine, InvoiceLot, Company, InvoiceClient, ChantierInfo, Discount, generateId, generateInvoiceNumber, calculateDueDate, calculateRemainingAmount } from "@/lib/invoices/types";
 import { calculateInvoiceTotals } from "@/lib/invoices/calculations";
+import { DEFAULT_PAYMENT_TERMS, DEFAULT_LATE_PAYMENT_PENALTIES } from "@/lib/invoices/defaults";
 import { useCompany } from "@/context/CompanyContext";
 import { useAuth } from "@/context/AuthContext";
 import { saveInvoice, loadInvoices } from "@/lib/storage/invoices";
@@ -52,9 +53,9 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
   const [discount, setDiscount] = useState<Discount>(initialInvoice?.discount || { enabled: false, type: "percentage", value: 0 });
   const [travelCosts, setTravelCosts] = useState<number>(initialInvoice?.travelCosts || 0);
   const [depositsPaid, setDepositsPaid] = useState<number>(initialInvoice?.depositsPaid || 0);
-  const [paymentTerms, setPaymentTerms] = useState<string>(initialInvoice?.paymentTerms || "");
+  const [paymentTerms, setPaymentTerms] = useState<string>(initialInvoice?.paymentTerms || DEFAULT_PAYMENT_TERMS);
   const [paymentMethods, setPaymentMethods] = useState<string[]>(initialInvoice?.paymentMethods || []);
-  const [latePaymentPenalties, setLatePaymentPenalties] = useState<string>(initialInvoice?.latePaymentPenalties || "");
+  const [latePaymentPenalties, setLatePaymentPenalties] = useState<string>(initialInvoice?.latePaymentPenalties || DEFAULT_LATE_PAYMENT_PENALTIES);
   const [recoveryFee, setRecoveryFee] = useState<number>(initialInvoice?.recoveryFee || 40);
   const [specialVatMention, setSpecialVatMention] = useState<string>(initialInvoice?.specialVatMention || "");
   const [notes, setNotes] = useState<string>(initialInvoice?.notes || "");
@@ -274,8 +275,9 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
       return;
     }
 
-    // Validation conditions de paiement
-    if (!paymentTerms || paymentTerms.trim() === "") {
+    // Validation conditions de paiement - utiliser la valeur par défaut si vide
+    const paymentTermsToCheck = paymentTerms || DEFAULT_PAYMENT_TERMS;
+    if (!paymentTermsToCheck.trim()) {
       toast({
         title: "Champ obligatoire manquant",
         description: "Les conditions de paiement sont obligatoires",
@@ -284,8 +286,9 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
       return;
     }
 
-    // Validation pénalités de retard
-    if (!latePaymentPenalties || latePaymentPenalties.trim() === "") {
+    // Validation pénalités de retard - utiliser la valeur par défaut si vide
+    const latePaymentPenaltiesToCheck = latePaymentPenalties || DEFAULT_LATE_PAYMENT_PENALTIES;
+    if (!latePaymentPenaltiesToCheck.trim()) {
       toast({
         title: "Champ obligatoire manquant",
         description: "Les pénalités de retard sont obligatoires en B2B",
@@ -328,9 +331,9 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
         discount,
         travelCosts,
         depositsPaid,
-        paymentTerms,
+        paymentTerms: paymentTermsToCheck,
         paymentMethods,
-        latePaymentPenalties,
+        latePaymentPenalties: latePaymentPenaltiesToCheck,
         recoveryFee,
         specialVatMention,
         notes,
@@ -467,7 +470,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
               if (updates.remainingAmount !== undefined) {
                 // Calculé automatiquement
               }
-              if (updates.paymentTerms !== undefined) setPaymentTerms(updates.paymentTerms || "");
+              if (updates.paymentTerms !== undefined) setPaymentTerms(updates.paymentTerms || DEFAULT_PAYMENT_TERMS);
               if (updates.paymentMethods !== undefined) setPaymentMethods(updates.paymentMethods || []);
             }}
           />
@@ -476,7 +479,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
           <StepLegal
             invoice={invoicePartial}
             onInvoiceChange={(updates) => {
-              if (updates.latePaymentPenalties !== undefined) setLatePaymentPenalties(updates.latePaymentPenalties || "");
+              if (updates.latePaymentPenalties !== undefined) setLatePaymentPenalties(updates.latePaymentPenalties || DEFAULT_LATE_PAYMENT_PENALTIES);
               if (updates.recoveryFee !== undefined) setRecoveryFee(updates.recoveryFee);
               if (updates.specialVatMention !== undefined) setSpecialVatMention(updates.specialVatMention || "");
             }}
