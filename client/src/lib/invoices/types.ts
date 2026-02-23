@@ -4,7 +4,7 @@ import { Company, CompanySchema, ChantierInfo, ChantierInfoSchema, VatRate, VatR
 // Schéma Company strict pour les factures (SIRET et RCS obligatoires)
 export const CompanySchemaForInvoice = CompanySchema.extend({
   siret: z.string().regex(/^\d{14}$/, "SIRET invalide (14 chiffres)").min(1, "SIRET obligatoire sur facture"),
-  rcsCity: z.string().min(1, "Ville RCS obligatoire sur facture B2B"),
+  rcsCity: z.string().min(1, "Ville RCS obligatoire sur facture B2B").optional(),
 }).refine(
   (data) => {
     // Si forme juridique nécessite un capital (SARL, SAS, etc.) et capital = 0, erreur
@@ -150,11 +150,11 @@ export const InvoiceSchema = z.object({
   remainingAmount: z.number().default(0), // Reste à payer = totalTTC - depositsPaid
   
   // Paiement
-  paymentTerms: z.string().min(1, "Conditions de paiement obligatoires"),
+  paymentTerms: z.string().min(1, "Conditions de paiement obligatoires").optional(),
   paymentMethods: z.array(z.string()).optional(),
   
   // Mentions légales
-  latePaymentPenalties: z.string().min(1, "Pénalités de retard obligatoires en B2B"),
+  latePaymentPenalties: z.string().min(1, "Pénalités de retard obligatoires en B2B").optional(),
   recoveryFee: z.number().default(40), // Indemnité forfaitaire recouvrement (40€ B2B)
   specialVatMention: z.string().optional(), // Mention TVA spéciale
   
@@ -167,12 +167,6 @@ export const InvoiceSchema = z.object({
   { 
     message: "Les acomptes ne peuvent pas dépasser le total TTC",
     path: ["depositsPaid"]
-  }
-).refine(
-  (data) => data.saleDate || (data.executionPeriodStart && data.executionPeriodEnd),
-  {
-    message: "Date de prestation ou période d'exécution requise",
-    path: ["saleDate"]
   }
 );
 
