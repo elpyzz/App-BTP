@@ -1,5 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:2',message:'Avant import OpenAI',data:{step:'module_load'},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
 import OpenAI from 'openai';
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:4',message:'Après import OpenAI',data:{step:'module_load',openaiType:typeof OpenAI},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+// #endregion
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:5',message:'Avant import _utils',data:{step:'module_load'},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 import { 
   optimizeImages, 
   buildPromptUtilisateur, 
@@ -7,6 +16,9 @@ import {
   enrichirAvecMateriauxExistants, 
   PROMPT_SYSTEME_OPTIMISE 
 } from './_utils';
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:13',message:'Après import _utils',data:{step:'module_load',hasOptimizeImages:typeof optimizeImages,hasEnrichir:typeof enrichirAvecMateriauxExistants},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 
 // Parser les données pour Vercel
 // Supporte deux formats :
@@ -84,6 +96,9 @@ async function parseRequestData(req: VercelRequest): Promise<{ fields: any; file
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate.ts:86',message:'Handler appelé',data:{method:req.method,url:req.url},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
   // Envelopper TOUT dans un try/catch global pour capturer même les erreurs d'import
   try {
     // Seulement POST

@@ -1,4 +1,7 @@
 // Ne pas importer fast-levenshtein au niveau du module, on le chargera dynamiquement
+// #region agent log
+fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_utils.ts:1',message:'Module _utils chargé',data:{step:'module_load'},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
 
 // Prompt système ultra-précis
 export const PROMPT_SYSTEME_OPTIMISE = `Tu es un expert en estimation BTP français avec 20 ans d'expérience. 
@@ -173,9 +176,15 @@ export async function enrichirAvecMateriauxExistants(estimation: any, existingMa
         nameScore = 0.9;
       } else {
         // Charger Levenshtein dynamiquement avec fallback (utiliser import() pour ESM)
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_utils.ts:176',message:'Avant import Levenshtein',data:{name1,name2},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         try {
           // @ts-ignore - fast-levenshtein n'a pas de types
           const LevenshteinModule = await import('fast-levenshtein');
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_utils.ts:180',message:'Après import Levenshtein',data:{hasDefault:!!LevenshteinModule.default,hasModule:!!LevenshteinModule},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           const Levenshtein = LevenshteinModule.default || LevenshteinModule;
           const distance = Levenshtein.get(name1, name2);
           const maxLength = Math.max(name1.length, name2.length);
@@ -184,6 +193,9 @@ export async function enrichirAvecMateriauxExistants(estimation: any, existingMa
           }
         } catch (e) {
           // Si Levenshtein n'est pas disponible, utiliser une comparaison simple
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'_utils.ts:189',message:'Erreur import Levenshtein',data:{error:e instanceof Error?e.message:String(e)},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           console.warn('Levenshtein non disponible, utilisation du fallback:', e);
           nameScore = calculateSimpleSimilarity(name1, name2);
         }
