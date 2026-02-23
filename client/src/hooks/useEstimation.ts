@@ -5,6 +5,43 @@ import { validateImages } from '@/utils/imageValidation';
 import { parseGPTResponse, type EstimationResult } from '@/utils/responseParser';
 import { findBestMaterialMatch } from '@/lib/materialMatcher';
 
+/**
+ * Compresse une image pour réduire sa taille
+ */
+function compressImage(dataUrl: string, quality: number = 0.7, maxWidth: number = 1920): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Calculer les nouvelles dimensions
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      // Créer un canvas pour redimensionner et compresser
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Impossible de créer le contexte canvas'));
+        return;
+      }
+      
+      // Dessiner l'image redimensionnée
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convertir en base64 avec compression
+      const compressed = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressed);
+    };
+    img.onerror = () => reject(new Error('Erreur lors du chargement de l\'image'));
+    img.src = dataUrl;
+  });
+}
+
 interface ChantierInfo {
   surface: string;
   materiaux: string;
