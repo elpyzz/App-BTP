@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Invoice } from "@/lib/invoices/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,22 @@ interface StepPaymentProps {
 }
 
 export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentProps) {
+  // Utiliser un state local pour l'input afin d'éviter les problèmes de synchronisation
+  const [localDepositsPaid, setLocalDepositsPaid] = React.useState<string>(
+    typeof invoice.depositsPaid === 'number' ? String(invoice.depositsPaid) : '0'
+  );
+  
+  // Synchroniser le state local avec la prop invoice quand elle change
+  React.useEffect(() => {
+    const newValue = typeof invoice.depositsPaid === 'number' ? String(invoice.depositsPaid) : '0';
+    if (localDepositsPaid !== newValue) {
+      console.log('[DEBUG] Syncing localDepositsPaid:', { from: localDepositsPaid, to: newValue, invoiceDepositsPaid: invoice.depositsPaid });
+      setLocalDepositsPaid(newValue);
+    }
+  }, [invoice.depositsPaid]);
+  
   // #region agent log
-  console.log('[DEBUG] StepPayment render:', { depositsPaid: invoice.depositsPaid, totalTTC });
+  console.log('[DEBUG] StepPayment render:', { depositsPaid: invoice.depositsPaid, localDepositsPaid, totalTTC });
   // #endregion
   
   const handleChange = (field: keyof Invoice, value: any) => {
@@ -85,11 +100,14 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
                 step="0.01"
                 min="0"
                 max={totalTTC}
-                value={typeof invoice.depositsPaid === 'number' ? invoice.depositsPaid : 0}
+                value={localDepositsPaid}
                 onChange={(e) => {
-                  console.log('[DEBUG] Input onChange triggered:', { value: e.target.value, invoiceDepositsPaid: invoice.depositsPaid });
-                  const value = parseFloat(e.target.value) || 0;
-                  handleDepositsPaidChange(value);
+                  const newValue = e.target.value;
+                  console.log('[DEBUG] Input onChange triggered:', { value: newValue, invoiceDepositsPaid: invoice.depositsPaid, localDepositsPaid });
+                  setLocalDepositsPaid(newValue);
+                  const numValue = parseFloat(newValue) || 0;
+                  console.log('[DEBUG] Parsed value:', numValue);
+                  handleDepositsPaidChange(numValue);
                 }}
                 onInput={(e) => {
                   console.log('[DEBUG] Input onInput triggered:', { value: (e.target as HTMLInputElement).value });

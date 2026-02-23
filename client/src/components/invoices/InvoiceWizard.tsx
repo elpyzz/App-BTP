@@ -484,6 +484,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
         )}
         {currentStep === 5 && (
           <StepPayment
+            key={`payment-${depositsPaid}`}
             invoice={invoicePartial}
             totalTTC={totals.totalTTC}
             onInvoiceChange={(updates) => {
