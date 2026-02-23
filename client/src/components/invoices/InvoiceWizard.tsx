@@ -384,6 +384,11 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
     recoveryFee,
     specialVatMention,
   };
+  // #region agent log
+  if (currentStep === 5) {
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InvoiceWizard.tsx:386',message:'invoicePartial depositsPaid value',data:{depositsPaid,invoicePartialDepositsPaid:invoicePartial.depositsPaid,totalTTC:totals.totalTTC},timestamp:Date.now(),runId:'debug1',hypothesisId:'E'})}).catch(()=>{});
+  }
+  // #endregion
 
   return (
     <div className="space-y-6">
@@ -466,7 +471,15 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
             invoice={invoicePartial}
             totalTTC={totals.totalTTC}
             onInvoiceChange={(updates) => {
-              if (updates.depositsPaid !== undefined) setDepositsPaid(updates.depositsPaid);
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InvoiceWizard.tsx:468',message:'StepPayment onInvoiceChange',data:{updates,currentDepositsPaid:depositsPaid,hasDepositsPaid:updates.depositsPaid!==undefined},timestamp:Date.now(),runId:'debug1',hypothesisId:'E,F'})}).catch(()=>{});
+              // #endregion
+              if (updates.depositsPaid !== undefined) {
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InvoiceWizard.tsx:470',message:'Setting depositsPaid',data:{newValue:updates.depositsPaid,oldValue:depositsPaid},timestamp:Date.now(),runId:'debug1',hypothesisId:'F'})}).catch(()=>{});
+                // #endregion
+                setDepositsPaid(updates.depositsPaid);
+              }
               if (updates.remainingAmount !== undefined) {
                 // Calculé automatiquement
               }

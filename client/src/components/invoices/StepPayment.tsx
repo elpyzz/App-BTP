@@ -19,6 +19,9 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
   };
 
   const handleDepositsPaidChange = (value: number) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepPayment.tsx:21',message:'handleDepositsPaidChange called',data:{newValue:value,currentInvoiceDepositsPaid:invoice.depositsPaid,totalTTC},timestamp:Date.now(),runId:'debug1',hypothesisId:'E,F'})}).catch(()=>{});
+    // #endregion
     handleChange("depositsPaid", value);
     // Recalculer le reste à payer
     const remainingAmount = Math.max(0, totalTTC - value);

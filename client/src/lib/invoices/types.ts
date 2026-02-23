@@ -197,6 +197,10 @@ export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
   const nextNumber = (maxNumber + 1).toString().padStart(4, "0");
   const baseNumber = `${prefix}${nextNumber}`;
   
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'types.ts:197',message:'Generating invoice number',data:{existingCount:existingInvoices.length,maxNumber,nextNumber,baseNumber,existingNumbers:existingInvoices.filter(inv=>inv.invoiceNumber?.startsWith(prefix)).map(inv=>inv.invoiceNumber).slice(0,5)},timestamp:Date.now(),runId:'debug1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  
   // Vérifier si le numéro existe déjà (sécurité supplémentaire)
   const exists = existingInvoices.some(inv => inv.invoiceNumber === baseNumber);
   
