@@ -1,5 +1,7 @@
 // Interface et fonctions helper pour gérer les matériaux dans localStorage
 
+import { supabase } from './supabaseClient';
+
 export interface Material {
   id: string;
   name: string;
@@ -33,18 +35,15 @@ export const MATERIAL_UNITS = [
   'rouleau'
 ];
 
-// Helper pour obtenir l'ID du membre connecté
-function getCurrentTeamMemberId(): string | null {
-  const memberData = localStorage.getItem('teamMember');
-  if (memberData) {
-    try {
-      const member = JSON.parse(memberData);
-      return member.id || null;
-    } catch {
-      return null;
-    }
+// Helper pour obtenir l'ID de l'utilisateur Supabase connecté
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
   }
-  return null;
 }
 
 // Charger depuis localStorage
@@ -75,7 +74,7 @@ function saveMaterialsToStorage(materials: Material[]): void {
 // Récupérer tous les matériaux du membre connecté
 export async function getMaterials(): Promise<Material[]> {
   try {
-    const userId = getCurrentTeamMemberId();
+    const userId = await getCurrentUserId();
     if (!userId) return [];
 
     const allMaterials = loadMaterialsFromStorage();
@@ -89,7 +88,7 @@ export async function getMaterials(): Promise<Material[]> {
 // Ajouter un nouveau matériau
 export async function addMaterial(material: Omit<Material, 'id' | 'created_at' | 'updated_at' | 'user_id'>): Promise<Material | null> {
   try {
-    const userId = getCurrentTeamMemberId();
+    const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
     const newMaterial: Material = {
@@ -107,14 +106,14 @@ export async function addMaterial(material: Omit<Material, 'id' | 'created_at' |
     return newMaterial;
   } catch (error) {
     console.error('Error adding material:', error);
-    return null;
+    throw error; // Propager l'erreur pour qu'elle soit visible
   }
 }
 
 // Modifier un matériau
 export async function updateMaterial(id: string, updates: Partial<Omit<Material, 'id' | 'created_at' | 'user_id'>>): Promise<Material | null> {
   try {
-    const userId = getCurrentTeamMemberId();
+    const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
     const allMaterials = loadMaterialsFromStorage();
@@ -139,7 +138,7 @@ export async function updateMaterial(id: string, updates: Partial<Omit<Material,
 // Supprimer un matériau
 export async function deleteMaterial(id: string): Promise<boolean> {
   try {
-    const userId = getCurrentTeamMemberId();
+    const userId = await getCurrentUserId();
     if (!userId) throw new Error('User not authenticated');
 
     const allMaterials = loadMaterialsFromStorage();
