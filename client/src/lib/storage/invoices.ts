@@ -350,10 +350,6 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
   
   throw new Error('Impossible de sauvegarder la facture');
 }
-    console.error('Error saving invoice to Supabase:', error);
-    throw error;
-  }
-}
 
 /**
  * Supprime une facture depuis Supabase (avec vérification user_id)
