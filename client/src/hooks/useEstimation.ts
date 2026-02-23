@@ -163,6 +163,18 @@ export const useEstimation = () => {
       
       const estimation = await response.json();
       
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useEstimation.ts:165',message:'Réponse API estimation reçue',data:{hasMateriaux:!!estimation.materiaux,materiauxIsArray:Array.isArray(estimation.materiaux),estimationKeys:Object.keys(estimation)},timestamp:Date.now(),runId:'run5',hypothesisId:'A'})}).catch(()=>{});
+      } catch(e) {}
+      // #endregion
+      
+      // Vérifier si la réponse est dans le bon format
+      if (!estimation.materiaux || !Array.isArray(estimation.materiaux)) {
+        console.error('Réponse API invalide - pas de materiaux:', estimation);
+        throw new Error('La réponse du serveur n\'est pas dans le format attendu. Le serveur retourne une réponse de test.');
+      }
+      
       // Enrichissement des matériaux avec matching
       const enrichedEstimation = enrichMaterialsWithExisting(estimation, existingMaterials);
       
