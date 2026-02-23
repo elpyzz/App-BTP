@@ -1,6 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import OpenAI from 'openai';
-import { optimizeImages, buildPromptUtilisateur, parseGPTResponse, enrichirAvecMateriauxExistants, PROMPT_SYSTEME_OPTIMISE } from './_utils';
 
 // Parser les données pour Vercel
 // Supporte deux formats :
@@ -78,12 +76,23 @@ async function parseRequestData(req: VercelRequest): Promise<{ fields: any; file
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Seulement POST
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+  // Envelopper TOUT dans un try/catch global pour capturer même les erreurs d'import
   try {
+    // Seulement POST
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    // Charger les dépendances dynamiquement pour éviter les erreurs d'import
+    const { default: OpenAI } = await import('openai');
+    const { 
+      optimizeImages, 
+      buildPromptUtilisateur, 
+      parseGPTResponse, 
+      enrichirAvecMateriauxExistants, 
+      PROMPT_SYSTEME_OPTIMISE 
+    } = await import('./_utils');
+
     // Parser les données (JSON avec base64 ou FormData)
     const { fields, files } = await parseRequestData(req);
     const { surface, metier, materiaux, localisation, delai, existingMaterials } = fields;
@@ -168,10 +177,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.json(estimation);
     
   } catch (error: any) {
-    console.error('Erreur lors de l\'analyse:', error);
+    // Gestion d'erreur globale - cette fois on est sûr que ça sera capturé
+    console.error('ERREUR GLOBALE dans handler:', error);
     console.error('Error name:', error?.name);
     console.error('Error message:', error?.message);
-    console.error('Error stack:', error?.stack?.substring(0, 500));
+    console.error('Error stack:', error?.stack?.substring(0, 1000));
     
     // Gestion d'erreurs spécifiques avec messages clairs
     let errorMessage = 'Erreur lors de l\'analyse';
@@ -210,17 +220,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // En preview/development, retourner plus de détails pour le debugging
     const isDev = process.env.VERCEL_ENV === 'development' || process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
     
-    // S'assurer que la réponse est toujours du JSON valide
+    // Toujours retourner du JSON valide
     try {
       res.status(statusCode).json({ 
         error: errorMessage,
         message: userFriendlyMessage,
         details: isDev ? errorMsg : undefined,
-        stack: isDev ? error?.stack?.substring(0, 500) : undefined,
+        stack: isDev ? error?.stack?.substring(0, 1000) : undefined,
         helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
       });
     } catch (jsonError) {
-      // Fallback si même le JSON échoue
+      // Dernier recours si même le JSON échoue
       console.error('Erreur lors de l\'envoi de la réponse JSON:', jsonError);
       res.status(statusCode).setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ 
