@@ -32,14 +32,22 @@ export const useEstimation = () => {
       // Récupération des matériaux existants
       const existingMaterials = await getMaterials();
       
-      // Convertir les images en base64 pour compatibilité Vercel
+      // Compresser et convertir les images en base64 pour compatibilité Vercel
+      // Vercel limite à 4.5MB pour le body, donc on doit compresser les images
       const imagesBase64 = await Promise.all(
         validImages.map(async (img) => {
           return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result as string;
-              resolve(result); // Format: "data:image/jpeg;base64,..."
+            reader.onload = async () => {
+              try {
+                const originalDataUrl = reader.result as string;
+                // Compresser l'image pour réduire la taille
+                const compressed = await compressImage(originalDataUrl, 0.7, 1920); // 70% qualité, max 1920px
+                resolve(compressed);
+              } catch (error) {
+                // Si la compression échoue, utiliser l'original
+                resolve(reader.result as string);
+              }
             };
             reader.onerror = reject;
             reader.readAsDataURL(img);
