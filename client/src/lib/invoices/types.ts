@@ -105,7 +105,7 @@ export type InvoiceLot = z.infer<typeof InvoiceLotSchema>;
 export const InvoiceSchema = z.object({
   id: z.string(),
   userId: z.string().min(1, "User ID requis"),
-  invoiceNumber: z.string().regex(/^FAC-\d{4}-\d{4}$/, "Format invalide (FAC-YYYY-XXXX)"),
+  invoiceNumber: z.string().regex(/^FAC-\d{4}-\d{4}(-\d{6})?$/, "Format invalide (FAC-YYYY-XXXX ou FAC-YYYY-XXXX-XXXXXX)"),
   status: InvoiceStatusEnum.default("draft"),
   
   // Dates
