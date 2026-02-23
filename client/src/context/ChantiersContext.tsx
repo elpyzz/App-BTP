@@ -40,6 +40,36 @@ interface ChantiersContextType {
 
 const ChantiersContext = createContext<ChantiersContextType | undefined>(undefined);
 
+// Helper pour mapper les données de Supabase (snake_case) vers l'interface (camelCase)
+function mapChantierFromSupabase(data: any): Chantier {
+  return {
+    id: data.id,
+    nom: data.nom,
+    clientId: data.client_id,
+    clientName: data.client_name || data.clientName || '',
+    dateDebut: data.date_debut || data.dateDebut || '',
+    duree: data.duree,
+    images: data.images || [],
+    statut: data.statut,
+    user_id: data.user_id,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  };
+}
+
+// Helper pour mapper les données de l'interface (camelCase) vers Supabase (snake_case)
+function mapChantierToSupabase(chantier: Partial<Chantier>): any {
+  const mapped: any = {};
+  if (chantier.nom !== undefined) mapped.nom = chantier.nom;
+  if (chantier.clientId !== undefined) mapped.client_id = chantier.clientId;
+  if (chantier.clientName !== undefined) mapped.client_name = chantier.clientName;
+  if (chantier.dateDebut !== undefined) mapped.date_debut = chantier.dateDebut;
+  if (chantier.duree !== undefined) mapped.duree = chantier.duree;
+  if (chantier.images !== undefined) mapped.images = chantier.images;
+  if (chantier.statut !== undefined) mapped.statut = chantier.statut;
+  return mapped;
+}
+
 export function ChantiersProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
@@ -86,7 +116,8 @@ export function ChantiersProvider({ children }: { children: ReactNode }) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setChantiers(data || []);
+      // Mapper les données de Supabase vers l'interface
+      setChantiers((data || []).map(mapChantierFromSupabase));
     } catch (error) {
       console.error('Error loading chantiers:', error);
       setChantiers([]);
@@ -175,17 +206,18 @@ export function ChantiersProvider({ children }: { children: ReactNode }) {
     if (!user?.id) throw new Error('User not authenticated');
 
     try {
+      const mappedData = mapChantierToSupabase(chantier);
       const { data, error } = await supabase
         .from('chantiers')
         .insert({
-          ...chantier,
+          ...mappedData,
           user_id: user.id,
         })
         .select()
         .single();
 
       if (error) throw error;
-      setChantiers(prev => [...prev, data]);
+      setChantiers(prev => [...prev, mapChantierFromSupabase(data)]);
     } catch (error) {
       console.error('Error adding chantier:', error);
       throw error;
@@ -196,16 +228,17 @@ export function ChantiersProvider({ children }: { children: ReactNode }) {
     if (!user?.id) throw new Error('User not authenticated');
 
     try {
+      const mappedUpdates = mapChantierToSupabase(updates);
       const { data, error } = await supabase
         .from('chantiers')
-        .update(updates)
+        .update(mappedUpdates)
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
         .single();
 
       if (error) throw error;
-      setChantiers(prev => prev.map(c => c.id === id ? data : c));
+      setChantiers(prev => prev.map(c => c.id === id ? mapChantierFromSupabase(data) : c));
     } catch (error) {
       console.error('Error updating chantier:', error);
       throw error;
