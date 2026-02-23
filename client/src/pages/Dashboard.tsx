@@ -12,7 +12,7 @@ import {
   Plus
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { loadQuotes } from '@/lib/storage/quotes'
 import { loadInvoices } from '@/lib/storage/invoices'
 import { useChantiers } from '@/context/ChantiersContext'
@@ -257,10 +257,6 @@ function OverviewTab() {
                       color: '#fff'
                     }}
                     cursor={{ fill: 'rgba(167, 139, 250, 0.1)' }}
-                  />
-                  <Legend 
-                    wrapperStyle={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                    iconType="square"
                   />
                   <Bar dataKey="signés" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="non signés" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
