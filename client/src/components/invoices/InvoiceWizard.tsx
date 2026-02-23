@@ -364,8 +364,8 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
     }
   };
 
-  // Objet invoice partiel pour les étapes
-  const invoicePartial: Partial<Invoice> = {
+  // Objet invoice partiel pour les étapes - mémorisé pour garantir la synchronisation
+  const invoicePartial: Partial<Invoice> = useMemo(() => ({
     issueDate,
     saleDate,
     executionPeriodStart,
@@ -383,7 +383,25 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
     latePaymentPenalties,
     recoveryFee,
     specialVatMention,
-  };
+  }), [
+    issueDate,
+    saleDate,
+    executionPeriodStart,
+    executionPeriodEnd,
+    dueDate,
+    paymentDelayDays,
+    selectedQuoteId,
+    quoteNumber,
+    purchaseOrderNumber,
+    internalReference,
+    depositsPaid, // IMPORTANT: dépendance pour que invoicePartial soit recalculé quand depositsPaid change
+    totals.remainingAmount,
+    paymentTerms,
+    paymentMethods,
+    latePaymentPenalties,
+    recoveryFee,
+    specialVatMention,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -469,6 +487,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
               if (updates.depositsPaid !== undefined) {
                 console.log('[DEBUG] Setting depositsPaid:', updates.depositsPaid, 'from', depositsPaid);
                 setDepositsPaid(updates.depositsPaid);
+                console.log('[DEBUG] After setDepositsPaid, invoicePartial will be recalculated with depositsPaid:', updates.depositsPaid);
               }
               if (updates.remainingAmount !== undefined) {
                 // Calculé automatiquement
