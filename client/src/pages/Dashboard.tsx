@@ -12,7 +12,7 @@ import {
   Plus
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
 import { loadQuotes } from '@/lib/storage/quotes'
 import { loadInvoices } from '@/lib/storage/invoices'
 import { useChantiers } from '@/context/ChantiersContext'
@@ -248,15 +248,6 @@ function OverviewTab() {
                   <YAxis 
                     stroke="rgba(255, 255, 255, 0.7)"
                     tick={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: 12 }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '12px',
-                      color: '#fff'
-                    }}
-                    cursor={{ fill: 'rgba(167, 139, 250, 0.1)' }}
                   />
                   <Bar dataKey="signés" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="non signés" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
