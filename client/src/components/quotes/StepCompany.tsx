@@ -34,9 +34,6 @@ export function StepCompany({ company, onCompanyChange }: StepCompanyProps) {
     };
     
     const newCompany = { ...baseCompany, [field]: value };
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'StepCompany.tsx:36',message:'handleChange - Modification entreprise',data:{field:field,value:value,baseCompanyName:baseCompany.name,newCompanyName:newCompany.name,newCompanyAddress:newCompany.address,newCompanyPhone:newCompany.phone,newCompanyEmail:newCompany.email},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     onCompanyChange(newCompany);
   };
 

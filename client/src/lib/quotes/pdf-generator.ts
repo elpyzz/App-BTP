@@ -21,10 +21,6 @@ function formatCurrencyForPDF(amount: number): string {
  * Génère un PDF professionnel pour un devis selon le modèle fourni
  */
 export function generateQuotePDF(quote: Quote): jsPDF {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'pdf-generator.ts:23',message:'Génération PDF - Données reçues',data:{quoteId:quote.id,companyName:quote.company?.name,companyAddress:quote.company?.address,companyPostalCode:quote.company?.postalCode,companyCity:quote.company?.city,companyPhone:quote.company?.phone,companyEmail:quote.company?.email,companySiret:quote.company?.siret,clientName:quote.client?.name,clientAddress:quote.client?.billingAddress,chantierName:quote.chantier?.name,linesCount:quote.lines?.length,hasCompany:!!quote.company,hasClient:!!quote.client,hasChantier:!!quote.chantier},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
-
   const doc = new jsPDF();
   let yPos = 20; // Réduit de 25 à 20
 

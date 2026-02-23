@@ -160,11 +160,6 @@ export async function loadQuotesFromSupabase(filters?: {
     // Convertir et valider chaque devis
     const quotes: Quote[] = [];
     for (const item of data || []) {
-      // #region agent log
-      if (data && data.length > 0) {
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:49',message:'DONNEES RECUES DE SUPABASE',data:{keys:Object.keys(item),hasCreatedAt:'created_at' in item,hasCreatedAtCamel:'createdAt' in item,hasUpdatedAt:'updated_at' in item,hasUpdatedAtCamel:'updatedAt' in item},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      }
-      // #endregion
       try {
         const quote = supabaseToQuote(item);
         const result = QuoteSchema.safeParse(quote);
@@ -219,10 +214,6 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
       delete quoteData.id;
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:195',message:'AVANT ENVOI - quoteData complet',data:{keys:Object.keys(quoteData),hasId:'id' in quoteData,quoteId:quoteData.id,depositAmount:quoteData.deposit_amount,depositAmountType:typeof quoteData.deposit_amount,isNewQuote,quoteDataSample:JSON.stringify(quoteData).substring(0,500)},timestamp:Date.now(),runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
-    // #endregion
-
     // Vérifier si le devis existe déjà (seulement si on a un ID valide)
     let existing = null;
     if (quoteData.id) {
@@ -247,10 +238,6 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
         .single();
 
       if (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:114',message:'ERREUR UPDATE',data:{errorCode:error.code,errorMessage:error.message,errorDetails:error.details,errorHint:error.hint},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-        // #endregion
-        
         // Message d'erreur plus clair pour les problèmes de schéma
         if (error.code === 'PGRST204') {
           const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';
@@ -268,10 +255,6 @@ export async function saveQuoteToSupabase(quote: Quote): Promise<Quote> {
         .single();
 
       if (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'quotes.ts:124',message:'ERREUR INSERT',data:{errorCode:error.code,errorMessage:error.message,errorDetails:error.details,errorHint:error.hint},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
-        // #endregion
-        
         // Message d'erreur plus clair pour les problèmes de schéma
         if (error.code === 'PGRST204') {
           const columnName = error.message?.match(/column ['"]([^'"]+)['"]/i)?.[1] || 'inconnue';

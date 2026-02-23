@@ -81,36 +81,21 @@ FORMAT RÉPONSE OBLIGATOIRE:
 
 // Fonction d'optimisation d'images avec Sharp
 async function optimizeImages(files: Express.Multer.File[]): Promise<string[]> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:78',message:'optimizeImages called',data:{filesCount:files.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   const optimizedImages = await Promise.all(
     files.map(async (file, index) => {
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:86',message:'Before sharp processing',data:{fileIndex:index,fileSize:file.buffer?.length||0,mimetype:file.mimetype},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         const optimized = await sharp(file.buffer)
           .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
           .jpeg({ quality: 85 })
           .toBuffer();
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:90',message:'After sharp processing',data:{fileIndex:index,optimizedSize:optimized.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         return optimized.toString('base64');
       } catch (error) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:92',message:'Sharp error, using fallback',data:{fileIndex:index,errorMessage:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         console.error('Erreur optimisation image:', error);
         // Fallback: utiliser l'image originale en base64
         return file.buffer.toString('base64');
       }
     })
   );
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:98',message:'optimizeImages completed',data:{optimizedCount:optimizedImages.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   return optimizedImages;
 }
 
@@ -265,9 +250,6 @@ function enrichirAvecMateriauxExistants(estimation: any, existingMaterials: any[
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:272',message:'registerRoutes function entry',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   console.log('[Routes] registerRoutes called - about to register routes');
   
   // Créer un router Express pour les routes API
@@ -275,11 +257,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialiser OpenAI ici, après que dotenv soit chargé
   if (!openai) {
-    // #region agent log
-    const rawApiKey = process.env.OPENAI_API_KEY || '';
-    const apiKey = rawApiKey.trim();
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:277',message:'Initializing OpenAI in registerRoutes',data:{hasApiKey:!!apiKey,apiKeyLength:apiKey.length,apiKeyPrefix:apiKey.substring(0,7)||'none',apiKeyFirst20:apiKey.substring(0,20),apiKeyLast10:apiKey.substring(apiKey.length-10),rawApiKeyLast10:rawApiKey.substring(rawApiKey.length-10),hasWhitespace:apiKey !== rawApiKey},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     if (!apiKey) {
       console.error('OPENAI_API_KEY is not set in environment variables');
     }
@@ -288,10 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Pour les clés de projet (sk-proj-), pas besoin de configuration spéciale
       // mais on peut spécifier explicitement l'organisation si nécessaire
     });
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:282',message:'OpenAI initialized successfully',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-  }
+    }
   
   // put application routes here
   // prefix all routes with /api
@@ -300,48 +274,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
   
   // Route POST /estimate
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:293',message:'Registering /estimate route on API router',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
-  // #endregion
-  
   // Middleware pour capturer les erreurs multer
   apiRouter.post('/estimate', (req, res, next) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:297',message:'Before multer middleware',data:{contentType:req.headers['content-type'],hasBody:!!req.body},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
     next();
   }, upload.array('images', 10), async (req, res) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:262',message:'POST /api/estimate called',data:{hasFiles:!!req.files,filesCount:req.files?.length||0,hasSurface:!!req.body.surface,hasMetier:!!req.body.metier,hasOpenAIKey:!!process.env.OPENAI_API_KEY},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     try {
       const { surface, metier, materiaux, localisation, delai, existingMaterials } = req.body;
       const files = req.files as Express.Multer.File[];
       
       // Validation stricte
       if (!files || files.length === 0) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:268',message:'Validation failed: no files',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         return res.status(400).json({ error: 'Au moins une image est requise' });
       }
       
       if (!surface || !metier) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:272',message:'Validation failed: missing surface or metier',data:{hasSurface:!!surface,hasMetier:!!metier},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         return res.status(400).json({ error: 'Surface et métier sont requis' });
       }
       
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:276',message:'Before optimizeImages',data:{filesCount:files.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       // Optimisation des images avec Sharp
       const optimizedImages = await optimizeImages(files);
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:278',message:'After optimizeImages',data:{optimizedCount:optimizedImages.length},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      
       // Parse existingMaterials
       let materialsList: any[] = [];
       try {
@@ -353,20 +304,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Construction du prompt
       const userPrompt = buildPromptUtilisateur(surface, metier, materiaux || '', localisation || '', delai || '', materialsList);
       
-      // #region agent log
-      const envApiKey = (process.env.OPENAI_API_KEY || '').trim();
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:291',message:'Before OpenAI API call',data:{model:'gpt-4o',hasApiKey:!!envApiKey,apiKeyLength:envApiKey.length,apiKeyFirst20:envApiKey.substring(0,20),apiKeyLast10:envApiKey.substring(envApiKey.length-10)},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      
       // FORCER la recréation de l'instance OpenAI avec la clé de l'environnement à chaque appel
       // Cela garantit qu'on utilise toujours la clé la plus récente de .env
       openai = new OpenAI({
         apiKey: envApiKey,
       });
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:356',message:'OpenAI instance recreated with env key',data:{newApiKeyLast10:envApiKey.substring(envApiKey.length-10)},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       
       // Appel OpenAI avec prompt ultra-précis
       const response = await openai.chat.completions.create({
@@ -390,29 +332,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         max_tokens: 2000,
         temperature: 0.1 // Très faible pour la précision
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:311',message:'After OpenAI API call',data:{hasResponse:!!response,hasContent:!!response.choices?.[0]?.message?.content,contentLength:response.choices?.[0]?.message?.content?.length||0},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-      
       // Parsing JSON ultra-robuste
       const content = response.choices[0].message.content;
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:315',message:'Before parseGPTResponse',data:{contentLength:content?.length||0,contentPreview:content?.substring(0,100)||''},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       let estimation = parseGPTResponse(content);
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:316',message:'After parseGPTResponse',data:{hasEstimation:!!estimation,hasMateriaux:!!estimation?.materiaux},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
       // Enrichissement avec matériaux existants
       estimation = enrichirAvecMateriauxExistants(estimation, materialsList);
       
       res.json(estimation);
       
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:395',message:'Error caught in /api/estimate',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
-      // #endregion
       console.error('Erreur lors de l\'analyse:', error);
       
       // Gestion d'erreurs spécifiques avec messages clairs
@@ -455,20 +383,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Route GET /resend/status pour vérifier si Resend est configuré
   // IMPORTANT: Cette route doit être enregistrée AVANT que Vite ne soit configuré
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:452',message:'Registering /resend/status route on API router',data:{},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   console.log('[Routes] Registering GET /resend/status on API router');
   
   // Enregistrer la route sur le router API (sans le préfixe /api car le router sera monté sur /api)
   apiRouter.get('/resend/status', (req, res) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:459',message:'/api/resend/status route MATCHED - handler called',data:{method:req.method,url:req.originalUrl,path:req.path,baseUrl:req.baseUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     console.log('[Resend Status API] Route MATCHED - URL:', req.originalUrl, 'Path:', req.path);
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:456',message:'/api/resend/status route handler called',data:{method:req.method,url:req.originalUrl,path:req.path,baseUrl:req.baseUrl},timestamp:Date.now(),runId:'resend-final',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     console.log('[Resend Status API] Route appelée - URL:', req.originalUrl, 'Path:', req.path);
     
     const hasKey = !!process.env.RESEND_API_KEY;
@@ -559,9 +478,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Monter le router API sur /api
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:562',message:'Mounting API router on /api',data:{},timestamp:Date.now(),runId:'resend-final',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   console.log('[Routes] Mounting API router on /api');
   app.use('/api', apiRouter);
   console.log('[Routes] API router mounted successfully');
@@ -569,27 +485,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Handler d'erreur pour multer
   app.use((error: any, req: any, res: any, next: any) => {
     if (error instanceof multer.MulterError) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:407',message:'Multer error caught',data:{errorCode:error.code,errorMessage:error.message,field:error.field},timestamp:Date.now(),runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return res.status(400).json({ error: `Erreur upload: ${error.message}` });
     }
     if (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:412',message:'General error in middleware',data:{errorMessage:error.message},timestamp:Date.now(),runId:'run1',hypothesisId:'ALL'})}).catch(()=>{});
-      // #endregion
       return res.status(400).json({ error: error.message });
     }
     next();
   });
 
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:13',message:'Creating HTTP server',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   const httpServer = createServer(app);
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:15',message:'HTTP server created successfully',data:{},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
-
   return httpServer;
 }

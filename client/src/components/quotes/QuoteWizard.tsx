@@ -126,10 +126,6 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
       // Créer une copie complète de quoteCompany pour éviter les mutations
       const companyToSave: Company = { ...quoteCompany };
       
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuoteWizard.tsx:127',message:'AVANT SAUVEGARDE - quoteCompany state',data:{quoteCompanyName:quoteCompany.name,quoteCompanyAddress:quoteCompany.address,quoteCompanyPostalCode:quoteCompany.postalCode,quoteCompanyCity:quoteCompany.city,quoteCompanyPhone:quoteCompany.phone,quoteCompanyEmail:quoteCompany.email,quoteCompanySiret:quoteCompany.siret},timestamp:Date.now(),runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
-      // #endregion
-      
       const quoteData: Quote = {
         id: initialQuote?.id || generateId(),
         quoteNumber: initialQuote?.quoteNumber || generateQuoteNumber([]),
@@ -154,10 +150,6 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
         createdAt: initialQuote?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuoteWizard.tsx:150',message:'AVANT SAUVEGARDE - quoteData.company',data:{companyName:quoteData.company.name,companyAddress:quoteData.company.address,companyPostalCode:quoteData.company.postalCode,companyCity:quoteData.company.city,companyPhone:quoteData.company.phone,companyEmail:quoteData.company.email,companySiret:quoteData.company.siret,quoteId:quoteData.id},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
 
       const savedQuote = await saveQuote(quoteData);
       

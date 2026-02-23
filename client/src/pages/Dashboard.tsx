@@ -15,6 +15,7 @@ import { Link, useLocation } from 'wouter'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
 import { loadQuotes } from '@/lib/storage/quotes'
 import { loadInvoices } from '@/lib/storage/invoices'
+import { useChantiers } from '@/context/ChantiersContext'
 
 export default function Dashboard() {
   const [location] = useLocation();
@@ -61,6 +62,7 @@ export default function Dashboard() {
 // Overview Tab Component
 function OverviewTab() {
   const [, setLocation] = useLocation();
+  const { chantiers } = useChantiers();
   const [unsignedQuotesCount, setUnsignedQuotesCount] = useState(0);
   const [totalQuotes, setTotalQuotes] = useState(0);
   const [signedQuotesCount, setSignedQuotesCount] = useState(0);
@@ -197,8 +199,8 @@ function OverviewTab() {
         />
         <MetricCard
           title="Chantiers Actifs"
-          value="12"
-          change="+3 en cours"
+          value={chantiers.length.toString()}
+          change="0 en cours"
           icon={Building}
           delay={0.2}
           onClick={() => setLocation('/dashboard/projects')}
@@ -218,7 +220,6 @@ function OverviewTab() {
         <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl text-white">
           <CardHeader>
             <CardTitle className="text-white font-light">Évolution des Devis (6 derniers mois)</CardTitle>
-            <p className="text-sm text-white/60 mt-1">Répartition des devis signés et non signés par mois</p>
           </CardHeader>
           <CardContent>
             {quotesByMonth.length > 0 ? (
