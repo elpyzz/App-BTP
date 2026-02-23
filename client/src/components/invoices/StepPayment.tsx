@@ -35,15 +35,15 @@ export function StepPayment({ invoice, totalTTC, onInvoiceChange }: StepPaymentP
   
   const handleChange = (field: keyof Invoice, value: any) => {
     console.log('[DEBUG] handleChange called:', { field, value, currentInvoice: invoice });
-    onInvoiceChange({ ...invoice, [field]: value });
+    // Ne passer que le champ modifié, pas tout l'objet invoice pour éviter d'écraser les valeurs
+    onInvoiceChange({ [field]: value });
   };
 
   const handleDepositsPaidChange = (value: number) => {
     console.log('[DEBUG] handleDepositsPaidChange:', { newValue: value, current: invoice.depositsPaid, totalTTC });
-    handleChange("depositsPaid", value);
-    // Recalculer le reste à payer
+    // Mettre à jour depositsPaid et remainingAmount en une seule fois
     const remainingAmount = Math.max(0, totalTTC - value);
-    handleChange("remainingAmount", remainingAmount);
+    onInvoiceChange({ depositsPaid: value, remainingAmount });
   };
 
   const handleDepositsPercentageChange = (percentage: number) => {
