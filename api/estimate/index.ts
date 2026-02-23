@@ -1,25 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Test d'import progressif pour isoler le problème
-let OpenAI: any;
-let utils: any;
-
-try {
-  OpenAI = require('openai');
-} catch (e) {
-  console.error('Erreur import OpenAI:', e);
-}
-
-try {
-  utils = require('../_utils');
-} catch (e) {
-  console.error('Erreur import _utils:', e);
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // #region agent log
   try {
-    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:25',message:'Handler appelé',data:{method:req.method,url:req.url,hasBody:!!req.body,hasOpenAI:!!OpenAI,hasUtils:!!utils},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:4',message:'Handler appelé',data:{method:req.method,url:req.url,hasBody:!!req.body},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
   } catch(e) {}
   // #endregion
   
@@ -28,22 +12,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Si les imports ont échoué, retourner une erreur explicite
-  if (!OpenAI) {
-    return res.status(500).json({ error: 'OpenAI module non disponible' });
-  }
-
-  if (!utils) {
-    return res.status(500).json({ error: 'Utils module non disponible' });
-  }
-
   try {
+    // Imports dynamiques ESM (compatible Vercel)
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:15',message:'Avant import OpenAI',data:{},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
+    } catch(e) {}
+    // #endregion
+
+    const openaiModule = await import('openai');
+    const OpenAI = openaiModule.default;
+
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:20',message:'Après import OpenAI',data:{hasOpenAI:!!OpenAI},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
+    } catch(e) {}
+    // #endregion
+
+    const utilsModule = await import('../_utils');
+    const utils = utilsModule;
+
+    // #region agent log
+    try {
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:27',message:'Après import _utils',data:{hasUtils:!!utils,hasBuildPrompt:!!utils.buildPromptUtilisateur},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
+    } catch(e) {}
+    // #endregion
+
     // Parser les données de la requête
     const { surface, metier, materiaux, localisation, delai, existingMaterials, images } = req.body;
 
     // #region agent log
     try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:45',message:'Données parsées',data:{hasImages:!!images,imagesCount:images?.length||0,surface,metier},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:35',message:'Données parsées',data:{hasImages:!!images,imagesCount:images?.length||0,surface,metier},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
     } catch(e) {}
     // #endregion
 
@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Initialiser OpenAI
-    const openai = new OpenAI.default({ apiKey });
+    const openai = new OpenAI({ apiKey });
 
     // Parser les matériaux existants
     let parsedMaterials = [];
@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // #region agent log
     try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:90',message:'Avant appel OpenAI',data:{imagesCount:imageContents.length},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:85',message:'Avant appel OpenAI',data:{imagesCount:imageContents.length},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
     } catch(e) {}
     // #endregion
 
@@ -121,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // #region agent log
     try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:115',message:'Après appel OpenAI',data:{hasContent:!!completion.choices[0]?.message?.content},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:110',message:'Après appel OpenAI',data:{hasContent:!!completion.choices[0]?.message?.content},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
     } catch(e) {}
     // #endregion
 
@@ -138,7 +138,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // #region agent log
     try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:130',message:'Avant réponse finale',data:{hasMateriaux:!!estimation.materiaux,materiauxCount:estimation.materiaux?.length||0},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:125',message:'Avant réponse finale',data:{hasMateriaux:!!estimation.materiaux,materiauxCount:estimation.materiaux?.length||0},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
     } catch(e) {}
     // #endregion
 
@@ -150,16 +150,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     // #region agent log
     try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:140',message:'Erreur handler',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),runId:'run6',hypothesisId:'H3'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:135',message:'Erreur handler',data:{errorName:error?.name,errorMessage:error?.message,errorStack:error?.stack?.substring(0,200)},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
     } catch(e) {}
     // #endregion
 
     // Gestion d'erreurs spécifiques OpenAI
-    if (error instanceof OpenAI.default?.APIError || error?.status === 401) {
-      return res.status(500).json({ error: 'Clé API OpenAI invalide' });
-    }
-    if (error?.status === 429) {
-      return res.status(500).json({ error: 'Quota OpenAI dépassé' });
+    if (error instanceof Error && error.message.includes('APIError')) {
+      if (error.message.includes('401')) {
+        return res.status(500).json({ error: 'Clé API OpenAI invalide' });
+      }
+      if (error.message.includes('429')) {
+        return res.status(500).json({ error: 'Quota OpenAI dépassé' });
+      }
     }
 
     // Erreur générique
