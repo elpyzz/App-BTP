@@ -77,11 +77,11 @@ export const CompanySchema = z.object({
   country: z.string().optional().default("France"), // Pays
   apeCode: z.string().optional(),   // Code APE/NAF
   
-  // Optionnels
-  logo: z.string().optional(),      // Base64 ou URL
-  website: z.string().optional(),
-  fax: z.string().optional(),
-  iban: z.string().optional(),
+  // Optionnels (acceptent null et undefined car Supabase peut retourner null)
+  logo: z.string().nullish(),      // Base64 ou URL
+  website: z.string().nullish(),
+  fax: z.string().nullish(),
+  iban: z.string().nullish(),
   
   // Assurances (recommandées BTP)
   insuranceDecennale: z.object({
@@ -89,15 +89,15 @@ export const CompanySchema = z.object({
     policyNumber: z.string(),
     coverageZone: z.string().optional(),
     validUntil: z.string(),
-  }).optional(),
+  }).nullish(),
   
   insuranceRC: z.object({
     company: z.string(),
     policyNumber: z.string(),
-  }).optional(),
+  }).nullish(),
   
   // Qualifications
-  qualifications: z.array(z.string()).optional(), // RGE, Qualibat, etc.
+  qualifications: z.array(z.string()).nullish(), // RGE, Qualibat, etc.
 });
 
 export type Company = z.infer<typeof CompanySchema>;
