@@ -7,28 +7,62 @@ import { optimizeImages, buildPromptUtilisateur, parseGPTResponse, enrichirAvecM
 // 1. JSON avec images en base64 (recommandé pour Vercel)
 // 2. FormData (si disponible)
 async function parseRequestData(req: VercelRequest): Promise<{ fields: any; files: Array<{ buffer: Buffer; mimetype: string }> }> {
-  const contentType = req.headers['content-type'] || '';
-  
-  // Si c'est du JSON avec images en base64
-  if (contentType.includes('application/json')) {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  try {
+    const contentType = req.headers['content-type'] || '';
+    
+    // Sur Vercel, le body est déjà parsé automatiquement si Content-Type est application/json
+    let body: any;
+    if (typeof req.body === 'string') {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        throw new Error(`Erreur parsing JSON: ${e instanceof Error ? e.message : 'Unknown'}`);
+      }
+    } else {
+      body = req.body || {};
+    }
+    
+    if (!body || Object.keys(body).length === 0) {
+      throw new Error('Body de la requête vide ou invalide');
+    }
+    
     const { surface, metier, materiaux, localisation, delai, existingMaterials, images } = body;
     
     // Convertir les images base64 en buffers
     const files: Array<{ buffer: Buffer; mimetype: string }> = [];
-    if (images && Array.isArray(images)) {
-      for (const img of images) {
-        if (typeof img === 'string') {
-          // Format: "data:image/jpeg;base64,..." ou juste base64
-          const base64Data = img.includes(',') ? img.split(',')[1] : img;
-          const buffer = Buffer.from(base64Data, 'base64');
-          const mimeMatch = img.match(/data:([^;]+)/);
-          const mimetype = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-          files.push({ buffer, mimetype });
-        } else if (img.base64 && img.mimetype) {
-          // Format: { base64: "...", mimetype: "image/jpeg" }
-          const buffer = Buffer.from(img.base64, 'base64');
-          files.push({ buffer, mimetype: img.mimetype });
+    if (images && Array.isArray(images) && images.length > 0) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        try {
+          if (typeof img === 'string') {
+            // Format: "data:image/jpeg;base64,..." ou juste base64
+            const base64Data = img.includes(',') ? img.split(',')[1] : img;
+            if (!base64Data || base64Data.length === 0) {
+              console.warn(`Image ${i} base64 vide, ignorée`);
+              continue;
+            }
+            const buffer = Buffer.from(base64Data, 'base64');
+            if (buffer.length === 0) {
+              console.warn(`Image ${i} buffer vide après conversion, ignorée`);
+              continue;
+            }
+            const mimeMatch = img.match(/data:([^;]+)/);
+            const mimetype = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+            files.push({ buffer, mimetype });
+          } else if (img && typeof img === 'object' && img.base64 && img.mimetype) {
+            // Format: { base64: "...", mimetype: "image/jpeg" }
+            const buffer = Buffer.from(img.base64, 'base64');
+            if (buffer.length === 0) {
+              console.warn(`Image ${i} buffer vide après conversion, ignorée`);
+              continue;
+            }
+            files.push({ buffer, mimetype: img.mimetype });
+          } else {
+            console.warn(`Image ${i} format invalide, ignorée`);
+          }
+        } catch (e) {
+          console.warn(`Erreur conversion image ${i}:`, e);
+          // Continuer avec les autres images
         }
       }
     }
@@ -37,11 +71,10 @@ async function parseRequestData(req: VercelRequest): Promise<{ fields: any; file
       fields: { surface, metier, materiaux, localisation, delai, existingMaterials },
       files
     };
+  } catch (error) {
+    console.error('Erreur parseRequestData:', error);
+    throw new Error(`Erreur parsing requête: ${error instanceof Error ? error.message : 'Unknown'}`);
   }
-  
-  // Sinon, essayer de parser FormData avec busboy
-  // Note: Sur Vercel, FormData peut nécessiter une configuration spéciale
-  throw new Error('Format de requête non supporté. Utilisez JSON avec images en base64.');
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -64,8 +97,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Surface et métier sont requis' });
     }
     
-    // Optimisation des images avec Sharp
-    const optimizedImages = await optimizeImages(files);
+    // Optimisation des images avec Sharp (avec fallback automatique)
+    let optimizedImages: string[];
+    try {
+      optimizedImages = await optimizeImages(files);
+    } catch (sharpError) {
+      console.error('Erreur lors de l\'optimisation des images, utilisation des images originales:', sharpError);
+      // Fallback: utiliser les images originales en base64
+      optimizedImages = files.map(file => file.buffer.toString('base64'));
+    }
     
     // Parse existingMaterials
     let materialsList: any[] = [];
@@ -129,6 +169,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
   } catch (error: any) {
     console.error('Erreur lors de l\'analyse:', error);
+    console.error('Error name:', error?.name);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack?.substring(0, 500));
     
     // Gestion d'erreurs spécifiques avec messages clairs
     let errorMessage = 'Erreur lors de l\'analyse';
@@ -137,7 +180,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const errorMsg = error?.message || '';
     
-    if (errorMsg.includes('401') || errorMsg.includes('Incorrect API key')) {
+    // Vérifier OPENAI_API_KEY en premier
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === '') {
+      errorMessage = 'OPENAI_API_KEY non configurée';
+      userFriendlyMessage = 'La clé API OpenAI n\'est pas configurée sur Vercel. Veuillez l\'ajouter dans les variables d\'environnement.';
+      statusCode = 500;
+    } else if (errorMsg.includes('401') || errorMsg.includes('Incorrect API key')) {
       errorMessage = 'Clé API OpenAI invalide';
       userFriendlyMessage = 'La clé API OpenAI est invalide. Veuillez vérifier votre configuration.';
       statusCode = 401;
@@ -159,10 +207,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       statusCode = 400;
     }
     
+    // En preview/development, retourner plus de détails pour le debugging
+    const isDev = process.env.VERCEL_ENV === 'development' || process.env.VERCEL_ENV === 'preview' || process.env.NODE_ENV === 'development';
+    
     res.status(statusCode).json({ 
       error: errorMessage,
       message: userFriendlyMessage,
-      details: process.env.NODE_ENV === 'development' ? errorMsg : undefined,
+      details: isDev ? errorMsg : undefined,
+      stack: isDev ? error?.stack?.substring(0, 500) : undefined,
       helpUrl: (statusCode === 429 || statusCode === 402) ? 'https://platform.openai.com/account/billing' : undefined
     });
   }

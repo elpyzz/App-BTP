@@ -1,5 +1,5 @@
-import sharp from 'sharp';
 import OpenAI from 'openai';
+// @ts-ignore - fast-levenshtein n'a pas de types
 import Levenshtein from 'fast-levenshtein';
 
 // Prompt système ultra-précis
@@ -50,18 +50,26 @@ FORMAT RÉPONSE OBLIGATOIRE:
   "facteursPrix": ["facteur1", "facteur2"]
 }`;
 
-// Fonction d'optimisation d'images avec Sharp
+// Fonction d'optimisation d'images avec Sharp (avec fallback)
 export async function optimizeImages(files: Array<{ buffer: Buffer; mimetype: string }>): Promise<string[]> {
   const optimizedImages = await Promise.all(
     files.map(async (file, index) => {
       try {
-        const optimized = await sharp(file.buffer)
-          .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 85 })
-          .toBuffer();
-        return optimized.toString('base64');
+        // Essayer d'utiliser Sharp (peut ne pas être disponible sur Vercel)
+        const sharp = await import('sharp').catch(() => null);
+        if (sharp && sharp.default) {
+          const optimized = await sharp.default(file.buffer)
+            .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 85 })
+            .toBuffer();
+          return optimized.toString('base64');
+        } else {
+          // Fallback si Sharp n'est pas disponible (sur Vercel par exemple)
+          console.warn(`Sharp non disponible pour l'image ${index}, utilisation de l'image originale`);
+          return file.buffer.toString('base64');
+        }
       } catch (error) {
-        console.error('Erreur optimisation image:', error);
+        console.error(`Erreur optimisation image ${index}:`, error);
         // Fallback: utiliser l'image originale en base64
         return file.buffer.toString('base64');
       }
