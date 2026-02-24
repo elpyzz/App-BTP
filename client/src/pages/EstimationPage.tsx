@@ -320,7 +320,7 @@ export default function EstimationPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white">
@@ -343,7 +343,7 @@ export default function EstimationPage() {
               exit={{ opacity: 0, x: -20 }}
               className="max-w-4xl mx-auto"
             >
-              <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+              <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Upload className="h-5 w-5 text-white/70" />
@@ -392,6 +392,7 @@ export default function EstimationPage() {
                           <img
                             src={image.preview}
                             alt={`Preview ${index + 1}`}
+                            loading="lazy"
                             className="w-full h-32 object-cover rounded-lg border border-white/20"
                           />
                           <button
@@ -428,7 +429,7 @@ export default function EstimationPage() {
               exit={{ opacity: 0, x: -20 }}
               className="max-w-4xl mx-auto"
             >
-              <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+              <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5 text-white/70" />
@@ -670,7 +671,7 @@ export default function EstimationPage() {
               exit={{ opacity: 0, x: -20 }}
               className="max-w-6xl mx-auto space-y-6"
             >
-              <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+              <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-400" />
@@ -826,7 +827,7 @@ export default function EstimationPage() {
         
         {/* Dialog pour ajouter un matériau */}
         <Dialog open={isAddMaterialDialogOpen} onOpenChange={setIsAddMaterialDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white rounded-2xl">
             <DialogHeader>
               <DialogTitle className="text-white">Ajouter un matériau à ma bibliothèque</DialogTitle>
             </DialogHeader>

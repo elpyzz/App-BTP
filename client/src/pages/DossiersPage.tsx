@@ -480,7 +480,7 @@ export default function DossiersPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
@@ -495,7 +495,7 @@ export default function DossiersPage() {
       <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -506,7 +506,7 @@ export default function DossiersPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -520,7 +520,7 @@ export default function DossiersPage() {
         </div>
 
         {/* Barre de recherche et tri */}
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white mb-6">
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white mb-6">
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
@@ -540,7 +540,7 @@ export default function DossiersPage() {
                     <ArrowUpDown className="h-4 w-4 mr-2" />
                     <SelectValue placeholder="Trier par" />
                   </SelectTrigger>
-                  <SelectContent className="bg-black/20 backdrop-blur-xl border-white/10">
+                  <SelectContent className="bg-black/20 backdrop-blur-md border-white/10">
                     <SelectItem value="date">Date</SelectItem>
                     <SelectItem value="amount">Montant</SelectItem>
                   </SelectContent>
@@ -559,7 +559,7 @@ export default function DossiersPage() {
 
         {/* Onglets */}
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'quotes' | 'invoices')} className="w-full">
-          <TabsList className="bg-black/20 backdrop-blur-xl border border-white/10 mb-6">
+          <TabsList className="bg-black/20 backdrop-blur-md border border-white/10 mb-6">
             <TabsTrigger 
               value="quotes" 
               className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 text-white/70"
@@ -600,7 +600,7 @@ export default function DossiersPage() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:border-violet-500/50 transition-all">
+                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -709,7 +709,7 @@ export default function DossiersPage() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
                     >
-                      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:border-violet-500/50 transition-all">
+                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -822,7 +822,7 @@ export default function DossiersPage() {
 
         {/* Dialog de détails */}
         <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white">Détails du Devis</DialogTitle>
             </DialogHeader>
@@ -901,7 +901,7 @@ export default function DossiersPage() {
 
         {/* Dialog de détails facture */}
         <Dialog open={isInvoiceDetailDialogOpen} onOpenChange={setIsInvoiceDetailDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white">Détails de la Facture</DialogTitle>
             </DialogHeader>
@@ -1036,7 +1036,7 @@ export default function DossiersPage() {
 
         {/* Dialog de confirmation de suppression devis */}
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-red-500/50 text-white">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-red-500/50 text-white">
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -1088,7 +1088,7 @@ export default function DossiersPage() {
 
         {/* Dialog de confirmation de suppression facture */}
         <Dialog open={isInvoiceDeleteDialogOpen} onOpenChange={setIsInvoiceDeleteDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-red-500/50 text-white">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-red-500/50 text-white">
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -1140,7 +1140,7 @@ export default function DossiersPage() {
 
         {/* Dialog pour l'envoi d'email */}
         <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-          <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
             <DialogHeader>
               <DialogTitle className="text-white flex items-center gap-2">
                 <Mail className="h-5 w-5" />

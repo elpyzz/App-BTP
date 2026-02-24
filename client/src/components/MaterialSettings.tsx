@@ -236,7 +236,7 @@ export default function MaterialSettings() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -260,7 +260,7 @@ export default function MaterialSettings() {
       </Card>
 
       {/* Filtres et recherche */}
-      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -292,7 +292,7 @@ export default function MaterialSettings() {
       </Card>
 
       {/* Liste des matériaux */}
-      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
         <CardContent className="pt-6">
           {loading ? (
             <div className="text-center py-8">
@@ -350,7 +350,7 @@ export default function MaterialSettings() {
 
       {/* Dialog d'ajout/modification */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl">
+        <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">
               {editingMaterial ? 'Modifier le matériau' : 'Ajouter un nouveau matériau'}
@@ -424,7 +424,7 @@ export default function MaterialSettings() {
 
       {/* Dialog de confirmation de suppression */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white rounded-2xl">
+        <AlertDialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription className="text-white/70">

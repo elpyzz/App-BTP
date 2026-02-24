@@ -160,14 +160,14 @@ function OverviewTab() {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Rafraîchir périodiquement (toutes les 30 secondes au lieu de 10)
+    // Rafraîchir périodiquement (toutes les 60 secondes pour réduire la charge)
     const interval = setInterval(() => {
       // Ne rafraîchir que si la page est visible
       if (!document.hidden) {
         loadQuotesStats();
         loadInvoicesStats();
       }
-    }, 30000);
+    }, 60000);
     
     // Écouter les événements personnalisés
     const handleQuotesUpdate = () => {
@@ -231,7 +231,7 @@ function OverviewTab() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl text-white">
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl text-white">
           <CardHeader>
             <CardTitle className="text-white font-light">Évolution des Devis (6 derniers mois)</CardTitle>
           </CardHeader>
@@ -267,7 +267,7 @@ function OverviewTab() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl text-white">
+      <Card className="bg-black/20 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl text-white">
         <CardHeader>
           <CardTitle className="text-white font-light">Actions Rapides</CardTitle>
         </CardHeader>
@@ -307,7 +307,7 @@ const MetricCard = memo(({ title, value, change, icon: Icon, delay, onClick }: {
       transition={{ delay, duration: 0.3 }}
     >
       <Card 
-        className={`bg-black/20 backdrop-blur-xl border border-white/10 shadow-xl rounded-2xl hover:shadow-2xl transition-all text-white ${
+        className={`bg-black/20 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl hover:shadow-2xl transition-all text-white ${
           onClick ? 'cursor-pointer hover:scale-105 hover:border-violet-400' : ''
         }`}
         onClick={onClick}

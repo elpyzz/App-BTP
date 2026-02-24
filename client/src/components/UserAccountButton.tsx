@@ -33,7 +33,7 @@ export function UserAccountButton() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:bg-black/30 transition-colors shadow-lg"
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/30 transition-colors shadow-lg"
       >
         <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center">
           <User size={16} />
@@ -56,7 +56,7 @@ export function UserAccountButton() {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="absolute top-full right-0 mt-2 w-64 bg-black/20 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
+              className="absolute top-full right-0 mt-2 w-64 bg-black/20 backdrop-blur-md border border-white/10 rounded-xl shadow-xl overflow-hidden z-50"
             >
               <div className="p-4 border-b border-white/10">
                 <div className="flex items-center gap-3">

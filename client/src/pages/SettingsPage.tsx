@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 md:gap-6">
           <div className="flex-shrink-0 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
@@ -112,7 +112,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="company">
-            <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+            <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
               <CardHeader>
                 <CardTitle className="text-white">Informations Entreprise</CardTitle>
               </CardHeader>

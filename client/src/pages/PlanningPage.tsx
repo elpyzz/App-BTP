@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, Building, Clock, User, Image as ImageIcon, Mail, Phone, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { useChantiers, Chantier } from '@/context/ChantiersContext';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
@@ -102,25 +102,37 @@ export default function PlanningPage() {
     setIsDialogOpen(true);
   };
   
-  // Fonction pour obtenir les chantiers d'un jour donné
-  const getChantiersForDay = (date: Date) => {
-    return filteredChantiers.filter(chantier => {
-      const startDate = new Date(chantier.dateDebut);
-      const endDate = calculateEndDate(chantier.dateDebut, chantier.duree);
-      
-      // Normaliser les dates (ignorer l'heure)
-      const dayStart = new Date(date);
+  // Mémoriser les chantiers par jour pour éviter 42 recalculs à chaque render
+  const chantiersByDay = useMemo(() => {
+    const map = new Map<string, Chantier[]>();
+    
+    days.forEach(day => {
+      const dateKey = day.date.toISOString().split('T')[0];
+      const dayStart = new Date(day.date);
       dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(date);
-      dayEnd.setHours(23, 59, 59, 999);
       
-      const chantierStart = new Date(startDate);
-      chantierStart.setHours(0, 0, 0, 0);
-      const chantierEnd = new Date(endDate);
-      chantierEnd.setHours(23, 59, 59, 999);
+      const dayChantiers = filteredChantiers.filter(chantier => {
+        const startDate = new Date(chantier.dateDebut);
+        const endDate = calculateEndDate(chantier.dateDebut, chantier.duree);
+        
+        const chantierStart = new Date(startDate);
+        chantierStart.setHours(0, 0, 0, 0);
+        const chantierEnd = new Date(endDate);
+        chantierEnd.setHours(23, 59, 59, 999);
+        
+        return dayStart >= chantierStart && dayStart <= chantierEnd;
+      });
       
-      return dayStart >= chantierStart && dayStart <= chantierEnd;
+      map.set(dateKey, dayChantiers);
     });
+    
+    return map;
+  }, [days, filteredChantiers]);
+  
+  // Fonction pour obtenir les chantiers d'un jour donné (utilise le cache)
+  const getChantiersForDay = (date: Date) => {
+    const dateKey = date.toISOString().split('T')[0];
+    return chantiersByDay.get(dateKey) || [];
   };
   
   const monthNames = [
@@ -156,7 +168,7 @@ export default function PlanningPage() {
   
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white">
@@ -169,7 +181,7 @@ export default function PlanningPage() {
 
       <main className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 ml-0 md:ml-20">
         {/* Contrôles du calendrier */}
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <CardHeader>
             <div className="flex flex-col gap-4">
               {/* Première ligne : Navigation principale */}
@@ -274,7 +286,7 @@ export default function PlanningPage() {
         </Card>
 
         {/* Calendrier */}
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <CardContent className="p-6">
             {/* En-têtes des jours */}
             <div className="grid grid-cols-7 gap-2 mb-4">
@@ -352,7 +364,7 @@ export default function PlanningPage() {
         </Card>
 
         {/* Légende */}
-        <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <CardHeader>
             <CardTitle className="text-lg">Légende</CardTitle>
           </CardHeader>
@@ -376,7 +388,7 @@ export default function PlanningPage() {
 
         {/* Liste des chantiers du mois */}
         {filteredChantiers.length > 0 && (
-          <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+          <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Building className="h-5 w-5" />
@@ -443,7 +455,7 @@ export default function PlanningPage() {
 
       {/* Dialog de détails du chantier */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-white text-2xl flex items-center gap-2">
               <Building className="h-6 w-6" />

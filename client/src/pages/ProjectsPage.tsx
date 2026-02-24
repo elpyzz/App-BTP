@@ -188,7 +188,7 @@ export default function ProjectsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 md:gap-6">
           <div className="flex-shrink-0 min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-white">
@@ -217,7 +217,7 @@ export default function ProjectsPage() {
                   Ajouter un Chantier
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-2xl">
+              <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="text-white">Nouveau Chantier</DialogTitle>
                 </DialogHeader>
@@ -253,7 +253,7 @@ export default function ProjectsPage() {
                         <SelectTrigger className="bg-black/20 backdrop-blur-md border-white/10 text-white">
                           <SelectValue placeholder="Sélectionner un client" />
                         </SelectTrigger>
-                        <SelectContent className="bg-black/20 backdrop-blur-xl border-white/10">
+                        <SelectContent className="bg-black/20 backdrop-blur-md border-white/10">
                           {filteredClients.length > 0 ? (
                             filteredClients.map((client) => (
                               <SelectItem key={client.id} value={client.id} className="text-white">
@@ -324,6 +324,7 @@ export default function ProjectsPage() {
                               src={img}
                               alt={`Preview ${index + 1}`}
                               className="w-full h-20 object-cover rounded-lg border border-white/20"
+                              loading="lazy"
                             />
                             <button
                               onClick={() => removeImage(index)}
@@ -370,7 +371,7 @@ export default function ProjectsPage() {
           setClientSearchQuery('');
         }
       }}>
-        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white max-w-2xl">
+        <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Modifier le Chantier</DialogTitle>
           </DialogHeader>
@@ -406,7 +407,7 @@ export default function ProjectsPage() {
                   <SelectTrigger className="bg-black/20 backdrop-blur-md border-white/10 text-white">
                     <SelectValue placeholder="Sélectionner un client" />
                   </SelectTrigger>
-                  <SelectContent className="bg-black/20 backdrop-blur-xl border-white/10">
+                  <SelectContent className="bg-black/20 backdrop-blur-md border-white/10">
                     {filteredClients.length > 0 ? (
                       filteredClients.map((client) => (
                         <SelectItem key={client.id} value={client.id} className="text-white">
@@ -465,7 +466,7 @@ export default function ProjectsPage() {
                   <SelectTrigger className="bg-black/20 backdrop-blur-md border-white/10 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-black/20 backdrop-blur-xl border-white/10">
+                  <SelectContent className="bg-black/20 backdrop-blur-md border-white/10">
                     <SelectItem value="planifié" className="text-white">Planifié</SelectItem>
                     <SelectItem value="en cours" className="text-white">En cours</SelectItem>
                     <SelectItem value="terminé" className="text-white">Terminé</SelectItem>
@@ -501,6 +502,7 @@ export default function ProjectsPage() {
                         src={img}
                         alt={`Preview ${index + 1}`}
                         className="w-full h-20 object-cover rounded-lg border border-white/20"
+                        loading="lazy"
                       />
                       <button
                         onClick={() => removeImage(index)}
@@ -541,7 +543,7 @@ export default function ProjectsPage() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <AlertDialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Supprimer le chantier</AlertDialogTitle>
             <AlertDialogDescription className="text-white/70">
@@ -565,7 +567,7 @@ export default function ProjectsPage() {
       <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         {chantiers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <Card className="w-full max-w-md text-center bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+            <Card className="w-full max-w-md text-center bg-black/20 backdrop-blur-md border border-white/10 text-white">
               <CardHeader className="pb-4">
                 <div className="w-16 h-16 mx-auto rounded-xl bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center mb-4">
                   <Building className="h-8 w-8 text-white/70" />
@@ -591,7 +593,7 @@ export default function ProjectsPage() {
             {chantiers.map((chantier) => (
               <Card
                 key={chantier.id}
-                className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:shadow-lg transition-shadow relative group"
+                className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:shadow-lg transition-shadow relative group"
               >
                 <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                   <DropdownMenu>

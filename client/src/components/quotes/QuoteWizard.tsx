@@ -207,7 +207,7 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
       </div>
 
       {/* Contenu de l'étape */}
-      <Card className="p-6 bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+      <Card className="p-6 bg-black/20 backdrop-blur-md border border-white/10 text-white">
         {currentStep === 1 && (
           <StepCompany
             company={quoteCompany}

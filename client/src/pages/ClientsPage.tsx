@@ -93,7 +93,7 @@ export default function ClientsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+      <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white">
@@ -112,7 +112,7 @@ export default function ClientsPage() {
                     Ajouter un Client
                   </Button>
                 </DialogTrigger>
-              <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+              <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <DialogHeader>
                   <DialogTitle className="text-white">Nouveau Client</DialogTitle>
                 </DialogHeader>
@@ -203,7 +203,7 @@ export default function ClientsPage() {
             {clients.map((client) => (
               <Card
                 key={client.id}
-                className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:shadow-lg transition-shadow relative group"
+                className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:shadow-lg transition-shadow relative group"
               >
                 <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                   <DropdownMenu>
@@ -287,7 +287,7 @@ export default function ClientsPage() {
           </div>
         ) : (
           <div>
-            <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white mb-6">
+            <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
@@ -305,7 +305,7 @@ export default function ClientsPage() {
             <h2 className="text-xl font-semibold text-white mb-4">Chantiers de {selectedClient.name}</h2>
 
             {clientChantiers.length === 0 ? (
-              <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+              <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
                 <CardContent className="py-12 text-center">
                   <Building className="h-12 w-12 mx-auto mb-4 text-white/50" />
                   <p className="text-white/70">Aucun chantier pour ce client</p>
@@ -316,7 +316,7 @@ export default function ClientsPage() {
                 {clientChantiers.map((chantier) => (
                   <Card
                     key={chantier.id}
-                    className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:shadow-lg transition-shadow"
+                    className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:shadow-lg transition-shadow"
                   >
                     {chantier.images.length > 0 && (
                       <div className="relative h-48 overflow-hidden rounded-t-lg">
@@ -370,7 +370,7 @@ export default function ClientsPage() {
           setEditedClient({ name: '', email: '', phone: '' });
         }
       }}>
-        <DialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-white">Modifier le Client</DialogTitle>
           </DialogHeader>
@@ -426,7 +426,7 @@ export default function ClientsPage() {
 
       {/* Dialog de confirmation de suppression */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">
+        <AlertDialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Supprimer le client</AlertDialogTitle>
             <AlertDialogDescription className="text-white/70">
