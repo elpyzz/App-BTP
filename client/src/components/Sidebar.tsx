@@ -117,7 +117,7 @@ export default function Sidebar() {
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
         style={{ x: dragX }}
-        className="fixed top-0 left-0 h-full w-80 z-40 shadow-2xl bg-white dark:bg-gray-800 flex flex-col rounded-r-3xl"
+        className="fixed top-0 left-0 h-full w-[85vw] max-w-[320px] md:w-80 z-40 shadow-2xl bg-white dark:bg-gray-800 flex flex-col rounded-r-3xl"
       >
         {/* Drag Indicator */}
         <motion.div

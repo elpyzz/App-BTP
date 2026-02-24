@@ -480,19 +480,19 @@ export default function DossiersPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20 mb-6">
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Folder className="h-6 w-6" />
+            <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+              <Folder className="h-5 w-5 md:h-6 md:w-6" />
               Dossiers
             </h1>
-            <p className="text-sm text-white/70">Gérez tous vos devis et factures</p>
+            <p className="text-xs md:text-sm text-white/70">Gérez tous vos devis et factures</p>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 ml-20">
+      <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="bg-black/20 backdrop-blur-xl border border-white/10 text-white">

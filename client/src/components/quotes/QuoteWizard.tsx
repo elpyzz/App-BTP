@@ -258,19 +258,20 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
       </Card>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-6 md:pb-0">
+        <div className="w-full sm:w-auto">
           {onCancel && (
-            <Button variant="outline" onClick={onCancel} disabled={saving}>
+            <Button variant="outline" onClick={onCancel} disabled={saving} className="w-full sm:w-auto">
               Annuler
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 1}
+            className="w-full sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Précédent
@@ -279,15 +280,17 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
             variant="outline"
             onClick={() => handleSave("draft")}
             disabled={saving}
+            className="w-full sm:w-auto"
           >
             <Save className="h-4 w-4 mr-2" />
-            Enregistrer brouillon
+            <span className="hidden sm:inline">Enregistrer brouillon</span>
+            <span className="sm:hidden">Brouillon</span>
           </Button>
           {currentStep === 5 ? (
             <Button
               onClick={() => handleSave("sent")}
               disabled={saving || !canGoNext()}
-              className="bg-violet-600 hover:bg-violet-700"
+              className="bg-violet-600 hover:bg-violet-700 w-full sm:w-auto"
             >
               <FileText className="h-4 w-4 mr-2" />
               Finaliser le devis
@@ -296,7 +299,7 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
             <Button
               onClick={handleNext}
               disabled={!canGoNext()}
-              className="bg-violet-600 hover:bg-violet-700"
+              className="bg-violet-600 hover:bg-violet-700 w-full sm:w-auto"
             >
               Suivant
               <ArrowRight className="h-4 w-4 ml-2" />

@@ -29,7 +29,7 @@ export default function Dashboard() {
         <UserAccountButton />
 
         {/* Main Content */}
-        <main className="ml-0 lg:ml-0 p-6 lg:p-8">
+        <main className="ml-0 lg:ml-0 p-4 md:p-6 lg:p-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={location}
@@ -40,11 +40,11 @@ export default function Dashboard() {
             className="max-w-7xl mx-auto"
           >
             {/* Header */}
-            <div className="mb-8 ml-20">
-              <h1 className="text-4xl font-light tracking-tight text-white mb-2 drop-shadow-lg">
+            <div className="mb-6 md:mb-8 ml-0 md:ml-20">
+              <h1 className="text-2xl md:text-4xl font-light tracking-tight text-white mb-2 drop-shadow-lg">
                 Dashboard
               </h1>
-              <p className="text-white/90 drop-shadow-md">Vue d'ensemble de votre activité</p>
+              <p className="text-sm md:text-base text-white/90 drop-shadow-md">Vue d'ensemble de votre activité</p>
             </div>
 
             {/* Content */}

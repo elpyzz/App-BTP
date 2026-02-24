@@ -188,13 +188,13 @@ export default function ProjectsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 md:gap-6">
           <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-xl md:text-2xl font-bold text-white">
               Mes Chantiers
             </h1>
-            <p className="text-sm text-white/70">Gérez tous vos projets en cours et terminés</p>
+            <p className="text-xs md:text-sm text-white/70">Gérez tous vos projets en cours et terminés</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 flex-shrink-0 ml-auto lg:ml-0 w-full lg:w-auto mr-0 lg:mr-40">
             <Link href="/dashboard/clients">
@@ -562,7 +562,7 @@ export default function ProjectsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="flex-1 p-6 ml-20">
+      <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         {chantiers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <Card className="w-full max-w-md text-center bg-black/20 backdrop-blur-xl border border-white/10 text-white">

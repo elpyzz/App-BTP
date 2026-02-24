@@ -93,17 +93,17 @@ export default function ClientsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20">
-        <div className="flex items-center justify-between">
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-xl md:text-2xl font-bold text-white">
               Clients
             </h1>
-            <p className="text-sm text-white/70">
+            <p className="text-xs md:text-sm text-white/70">
               {selectedClient ? `Chantiers de ${selectedClient.name}` : 'Gérez vos clients et leurs chantiers'}
             </p>
           </div>
-          <div className="flex items-center gap-2 mr-40">
+          <div className="flex items-center gap-2 mr-0 md:mr-40 w-full md:w-auto">
             {!selectedClient && (
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
@@ -197,7 +197,7 @@ export default function ClientsPage() {
         </div>
       </header>
 
-      <main className="flex-1 p-6 ml-20">
+      <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         {!selectedClient ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clients.map((client) => (

@@ -252,20 +252,15 @@ function enrichirAvecMateriauxExistants(estimation: any, existingMaterials: any[
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('[Routes] registerRoutes called - about to register routes');
   
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:252',message:'registerRoutes entry',data:{hasOpenAI:!!openai,envApiKeyExists:!!process.env.OPENAI_API_KEY},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   // Créer un router Express pour les routes API
   const apiRouter = express.Router();
   
-  // Initialiser OpenAI ici, après que dotenv soit chargé
-  if (!openai) {
-    if (!apiKey) {
-      console.error('OPENAI_API_KEY is not set in environment variables');
-    }
-    openai = new OpenAI({
-      apiKey: apiKey,
-      // Pour les clés de projet (sk-proj-), pas besoin de configuration spéciale
-      // mais on peut spécifier explicitement l'organisation si nécessaire
-    });
-    }
+  // OpenAI sera initialisé de manière lazy dans la route /api/estimate
+  // Cela permet au serveur de démarrer même si OPENAI_API_KEY n'est pas définie
   
   // put application routes here
   // prefix all routes with /api
@@ -303,6 +298,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Construction du prompt
       const userPrompt = buildPromptUtilisateur(surface, metier, materiaux || '', localisation || '', delai || '', materialsList);
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:305',message:'Before OpenAI initialization',data:{envApiKey:!!process.env.OPENAI_API_KEY,hasOpenAI:!!openai},timestamp:Date.now(),runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      
+      // Initialisation lazy d'OpenAI - seulement quand nécessaire
+      const envApiKey = process.env.OPENAI_API_KEY;
+      if (!envApiKey) {
+        return res.status(500).json({ 
+          error: 'OPENAI_API_KEY n\'est pas définie dans les variables d\'environnement. Veuillez créer un fichier .env avec OPENAI_API_KEY=votre_clé' 
+        });
+      }
       
       // FORCER la recréation de l'instance OpenAI avec la clé de l'environnement à chaque appel
       // Cela garantit qu'on utilise toujours la clé la plus récente de .env

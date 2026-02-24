@@ -73,14 +73,14 @@ export default function SettingsPage() {
 
   return (
     <PageWrapper>
-      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-6 py-4 rounded-tl-3xl ml-20 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <header className="bg-black/20 backdrop-blur-xl border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 md:gap-6">
           <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <FileText className="h-6 w-6" />
+            <h1 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+              <FileText className="h-5 w-5 md:h-6 md:w-6" />
               Paramètres
             </h1>
-            <p className="text-sm text-white/70">Configurez les informations de votre entreprise</p>
+            <p className="text-xs md:text-sm text-white/70">Configurez les informations de votre entreprise</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 flex-shrink-0 ml-auto lg:ml-0 w-full lg:w-auto mr-0 lg:mr-40">
             <Button
@@ -94,7 +94,7 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="flex-1 p-6 ml-20">
+      <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         <Tabs defaultValue="materials" className="w-full">
           <TabsList className="bg-black/20 border-white/10 mb-6">
             <TabsTrigger value="materials" className="data-[state=active]:bg-violet-500/20">
