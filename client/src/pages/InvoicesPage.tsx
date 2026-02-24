@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageWrapper } from '@/components/PageWrapper';
 import { InvoiceWizard } from '@/components/invoices/InvoiceWizard';
 import { Invoice } from '@/lib/invoices/types';
 import { useLocation } from 'wouter';
 
 export default function InvoicesPage() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  
+  // Extraire le quoteId depuis l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const quoteId = urlParams.get('quoteId') || undefined;
 
   const handleSave = (invoice: Invoice) => {
-    // Rediriger vers la page des factures après sauvegarde
-    setLocation('/dashboard/invoices');
+    // Rediriger vers la page des dossiers (onglet factures) après sauvegarde
+    setLocation('/dashboard/dossiers?tab=invoices');
   };
 
   const handleCancel = () => {
-    setLocation('/dashboard');
+    // Retourner vers les dossiers (onglet devis si on venait d'un devis, sinon factures)
+    if (quoteId) {
+      setLocation('/dashboard/dossiers?tab=quotes');
+    } else {
+      setLocation('/dashboard/dossiers?tab=invoices');
+    }
   };
 
   return (
@@ -24,13 +33,15 @@ export default function InvoicesPage() {
             <h1 className="text-xl md:text-2xl font-bold text-white">
               Générateur de Facturation
             </h1>
-            <p className="text-xs md:text-sm text-white/70">Créez des factures professionnelles conformes BTP</p>
+            <p className="text-xs md:text-sm text-white/70">
+              {quoteId ? 'Créer une facture depuis le devis' : 'Créez des factures professionnelles conformes BTP'}
+            </p>
           </div>
         </div>
       </header>
 
       <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
-        <InvoiceWizard onSave={handleSave} onCancel={handleCancel} />
+        <InvoiceWizard quoteId={quoteId} onSave={handleSave} onCancel={handleCancel} />
       </main>
     </PageWrapper>
   );

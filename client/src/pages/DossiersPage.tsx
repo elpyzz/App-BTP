@@ -63,7 +63,7 @@ interface Quote {
 export default function DossiersPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<'quotes' | 'invoices'>('quotes');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
@@ -663,6 +663,16 @@ export default function DossiersPage() {
                               disabled={!resendConfigured}
                             >
                               <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setLocation(`/dashboard/invoices?quoteId=${quote.id}`)}
+                              className="text-white border-violet-500/50 hover:bg-violet-500/20 hover:border-violet-500"
+                              title="Créer une facture depuis ce devis"
+                            >
+                              <Receipt className="h-4 w-4" />
+                              <span className="hidden sm:inline ml-2">Facture</span>
                             </Button>
                             <Button
                               variant="outline"
