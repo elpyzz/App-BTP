@@ -593,13 +593,7 @@ export default function DossiersPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredAndSortedQuotes.map((quote) => (
-                    <motion.div
-                      key={quote.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                    >
+                    <div key={quote.id}>
                       <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
@@ -686,7 +680,7 @@ export default function DossiersPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               )}
@@ -712,13 +706,7 @@ export default function DossiersPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredAndSortedInvoices.map((invoice) => (
-                    <motion.div
-                      key={invoice.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                    >
+                    <div key={invoice.id}>
                       <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
@@ -822,7 +810,7 @@ export default function DossiersPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               )}

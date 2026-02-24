@@ -9,43 +9,47 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CompanyProvider } from "@/context/CompanyContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AnimatePresence, motion } from "framer-motion";
+import { lazy, Suspense } from "react";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/AuthPage";
 import LoadingRedirectPage from "@/pages/LoadingRedirectPage";
-import Dashboard from "@/pages/Dashboard";
-import QuotesPage from "@/pages/QuotesPage";
-import ProspectsPage from "@/pages/ProspectsPage";
-import ProjectsPage from "@/pages/ProjectsPage";
-import PlanningPage from "@/pages/PlanningPage";
-import EstimationPage from "@/pages/EstimationPage";
-import ClientsPage from "@/pages/ClientsPage";
-import SettingsPage from "@/pages/SettingsPage";
-import DossiersPage from "@/pages/DossiersPage";
-import InvoicesPage from "@/pages/InvoicesPage";
-import NotFound from "@/pages/not-found";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+
+// Lazy load des pages pour améliorer les performances
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const QuotesPage = lazy(() => import("@/pages/QuotesPage"));
+const ProspectsPage = lazy(() => import("@/pages/ProspectsPage"));
+const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
+const PlanningPage = lazy(() => import("@/pages/PlanningPage"));
+const EstimationPage = lazy(() => import("@/pages/EstimationPage"));
+const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const DossiersPage = lazy(() => import("@/pages/DossiersPage"));
+const InvoicesPage = lazy(() => import("@/pages/InvoicesPage"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 20,
-    scale: 0.98
+    y: 10,
+    scale: 0.99
   },
   animate: {
     opacity: 1,
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.4,
-      ease: [0.22, 1, 0.36, 1]
+      duration: 0.2,
+      ease: "easeOut"
     }
   },
   exit: {
     opacity: 0,
-    y: -20,
-    scale: 0.98,
+    y: -10,
+    scale: 0.99,
     transition: {
-      duration: 0.3,
-      ease: [0.22, 1, 0.36, 1]
+      duration: 0.15,
+      ease: "easeIn"
     }
   }
 };
@@ -100,14 +104,20 @@ function Router() {
           variants={pageVariants}
           className="w-full h-full"
         >
-          {getComponent()}
+          <Suspense fallback={<LoadingSpinner />}>
+            {getComponent()}
+          </Suspense>
         </motion.div>
       </AnimatePresence>
     );
   }
 
   // Pages with sidebar - animation handled in PageWrapper or Dashboard
-  return <>{getComponent()}</>;
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      {getComponent()}
+    </Suspense>
+  );
 }
 
 function App() {

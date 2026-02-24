@@ -34,19 +34,15 @@ export default function Sidebar() {
     closed: {
       x: '-100%',
       transition: {
-        type: 'spring',
-        stiffness: 200,
-        damping: 30,
-        mass: 0.8,
+        duration: 0.2,
+        ease: "easeInOut",
       },
     },
     open: {
       x: 0,
       transition: {
-        type: 'spring',
-        stiffness: 200,
-        damping: 30,
-        mass: 0.8,
+        duration: 0.2,
+        ease: "easeInOut",
       },
     },
   };
@@ -57,10 +53,9 @@ export default function Sidebar() {
       x: 0,
       opacity: 1,
       transition: {
-        delay: 0.1 + i * 0.08,
-        type: 'spring',
-        stiffness: 250,
-        damping: 25,
+        delay: 0.05 + i * 0.03,
+        duration: 0.15,
+        ease: "easeOut",
       },
     }),
   };
