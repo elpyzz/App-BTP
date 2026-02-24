@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Wand2, Plus, Calculator, User, ArrowRight, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChantiers, type Client } from '@/context/ChantiersContext';
 import { getMaterials, addMaterial, updateMaterial, type Material, MATERIAL_CATEGORIES, MATERIAL_UNITS } from '@/lib/materials';
@@ -25,6 +25,7 @@ export default function EstimationPage() {
   const { analyzeChantier, isLoading: isLoadingEstimation, result: estimationResult } = useEstimation();
   const [step, setStep] = useState(1);
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const imagesRef = useRef(images);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientMode, setClientMode] = useState<'select' | 'create'>('select');
@@ -58,6 +59,22 @@ export default function EstimationPage() {
       setAnalysisResults(estimationResult);
     }
   }, [estimationResult]);
+  
+  // Mettre à jour la ref à chaque changement d'images
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+  
+  // Nettoyer les previews d'images au démontage pour éviter les fuites mémoire
+  useEffect(() => {
+    return () => {
+      imagesRef.current.forEach(img => {
+        if (img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, []); // Seulement au démontage
   
   const loadMaterials = async () => {
     try {
