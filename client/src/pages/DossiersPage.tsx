@@ -635,12 +635,12 @@ export default function DossiersPage() {
                             <span>Validité: {quote.validityDays} jours</span>
                           </div>
 
-                          <div className="flex gap-2 pt-2 border-t border-white/10">
+                          <div className="flex gap-1.5 flex-wrap pt-2 border-t border-white/10">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewDetails(quote)}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Voir les détails"
                             >
                               <Eye className="h-4 w-4" />
@@ -649,7 +649,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleExportQuote(quote)}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Télécharger le devis"
                             >
                               <Download className="h-4 w-4" />
@@ -658,7 +658,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleSendByEmail(quote, 'quote')}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Envoyer par email"
                               disabled={!resendConfigured}
                             >
@@ -668,7 +668,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => setLocation(`/dashboard/invoices?quoteId=${quote.id}`)}
-                              className="text-white border-violet-500/50 hover:bg-violet-500/20 hover:border-violet-500"
+                              className="flex-shrink-0 text-white border-violet-500/50 hover:bg-violet-500/20 hover:border-violet-500"
                               title="Créer une facture depuis ce devis"
                             >
                               <Receipt className="h-4 w-4" />
@@ -678,7 +678,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteQuote(quote)}
-                              className="text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
+                              className="flex-shrink-0 text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
                               title="Supprimer le devis"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -781,12 +781,12 @@ export default function DossiersPage() {
                             </div>
                           )}
 
-                          <div className="flex gap-2 pt-2 border-t border-white/10">
+                          <div className="flex gap-1.5 flex-wrap pt-2 border-t border-white/10">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewInvoiceDetails(invoice)}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Voir les détails"
                             >
                               <Eye className="h-4 w-4" />
@@ -795,7 +795,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleExportInvoice(invoice)}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Télécharger la facture"
                             >
                               <Download className="h-4 w-4" />
@@ -804,7 +804,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleSendByEmail(invoice, 'invoice')}
-                              className="text-white border-white/20 hover:bg-white/10"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10"
                               title="Envoyer par email"
                               disabled={!resendConfigured}
                             >
@@ -814,7 +814,7 @@ export default function DossiersPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteInvoice(invoice)}
-                              className="text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
+                              className="flex-shrink-0 text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
                               title="Supprimer la facture"
                             >
                               <Trash2 className="h-4 w-4" />
