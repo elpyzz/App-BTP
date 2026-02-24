@@ -185,26 +185,26 @@ export default function PlanningPage() {
           <CardHeader>
             <div className="flex flex-col gap-4">
               {/* Première ligne : Navigation principale */}
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
                   {/* Bouton Mois précédent */}
                   <Button
                     onClick={goToPreviousMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 flex-shrink-0"
                   >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Précédent
+                    <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Précédent</span>
                   </Button>
                   
                   {/* Sélecteur de mois/année */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Select
                       value={month.toString()}
                       onValueChange={(value) => handleMonthChange(parseInt(value))}
                     >
-                      <SelectTrigger className="w-[140px] bg-white/10 border-white/20 text-white hover:bg-white/20">
+                      <SelectTrigger className="w-[120px] sm:w-[140px] bg-white/10 border-white/20 text-white hover:bg-white/20">
                         <SelectValue>{monthNames[month]}</SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-black/90 border-white/20 text-white">
@@ -220,7 +220,7 @@ export default function PlanningPage() {
                       value={year.toString()}
                       onValueChange={(value) => handleYearChange(parseInt(value))}
                     >
-                      <SelectTrigger className="w-[100px] bg-white/10 border-white/20 text-white hover:bg-white/20">
+                      <SelectTrigger className="w-[80px] sm:w-[100px] bg-white/10 border-white/20 text-white hover:bg-white/20">
                         <SelectValue>{year}</SelectValue>
                       </SelectTrigger>
                       <SelectContent className="bg-black/90 border-white/20 text-white">
@@ -238,10 +238,10 @@ export default function PlanningPage() {
                     onClick={goToNextMonth}
                     variant="outline"
                     size="sm"
-                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 flex-shrink-0"
                   >
-                    Suivant
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    <span className="hidden sm:inline">Suivant</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
                   </Button>
                 </div>
                 
@@ -250,20 +250,20 @@ export default function PlanningPage() {
                   onClick={goToToday}
                   variant="outline"
                   size="sm"
-                  className="bg-blue-500/20 border-blue-500/50 text-blue-200 hover:bg-blue-500/30 hover:border-blue-500/70"
+                  className="bg-blue-500/20 border-blue-500/50 text-blue-200 hover:bg-blue-500/30 hover:border-blue-500/70 w-full sm:w-auto flex-shrink-0"
                 >
-                  <Calendar className="h-4 w-4 mr-2" />
+                  <Calendar className="h-4 w-4 sm:mr-2" />
                   Aujourd'hui
                 </Button>
               </div>
 
               {/* Deuxième ligne : Filtres */}
-              <div className="flex items-center gap-4 pt-2 border-t border-white/10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 pt-2 border-t border-white/10">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-white/70" />
                   <span className="text-sm text-white/70">Filtrer par statut :</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {['tous', 'planifié', 'en cours', 'terminé'].map((statut) => (
                     <Button
                       key={statut}
