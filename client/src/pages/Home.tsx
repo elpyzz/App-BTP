@@ -40,7 +40,7 @@ export default function Home() {
                 transition={{ delay: 0.6, duration: 0.8 }}
                 className="text-lg text-white/80 mb-12 max-w-2xl mx-auto drop-shadow-sm"
               >
-                Votre application professionnelle pour gérer vos chantiers, devis et équipes avec intelligence
+                Votre application professionnelle pour gérer vos chantiers, devis, factures et relances clients.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
