@@ -24,7 +24,8 @@ import {
   Trash2,
   AlertTriangle,
   Receipt,
-  Mail
+  Mail,
+  Bell
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { downloadQuotePDF } from '@/lib/quotes/pdf-generator';
@@ -36,6 +37,8 @@ import { Invoice } from '@/lib/invoices/types';
 import { downloadInvoicePDF } from '@/lib/invoices/pdf-generator';
 import { sendQuoteByEmail, sendInvoiceByEmail } from '@/lib/email/send-email';
 import { isResendConfigured } from '@/lib/email/resend';
+import { loadReminders, saveReminder } from '@/lib/storage/reminders';
+import type { Reminder } from '@/lib/storage/reminders';
 
 interface QuoteItem {
   id: string;
@@ -82,6 +85,9 @@ export default function DossiersPage() {
   const [itemToEmail, setItemToEmail] = useState<{ type: 'quote' | 'invoice'; data: Quote | Invoice } | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [resendConfigured, setResendConfigured] = useState(false);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [showRemindersHistory, setShowRemindersHistory] = useState(false);
+  const [selectedInvoiceForReminders, setSelectedInvoiceForReminders] = useState<Invoice | null>(null);
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
@@ -126,6 +132,13 @@ export default function DossiersPage() {
   useEffect(() => {
     isResendConfigured().then(setResendConfigured);
   }, []);
+
+  // Charger l'historique des relances quand une facture est sélectionnée
+  useEffect(() => {
+    if (selectedInvoiceForReminders) {
+      loadReminders(selectedInvoiceForReminders.id).then(setReminders);
+    }
+  }, [selectedInvoiceForReminders]);
 
   const loadQuotesFromSupabase = async () => {
     try {
@@ -478,6 +491,77 @@ export default function DossiersPage() {
     }
   };
 
+  // Fonction pour envoyer une relance en 1 clic
+  const handleSendReminder = async (invoice: Invoice) => {
+    if (!invoice.client?.email) {
+      toast({
+        title: 'Erreur',
+        description: 'Aucun email client disponible pour cette facture',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (invoice.status === 'paid') {
+      toast({
+        title: 'Information',
+        description: 'Cette facture est déjà payée',
+      });
+      return;
+    }
+
+    try {
+      // Calculer les jours de retard si la date d'échéance est passée
+      const today = new Date();
+      const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
+      const daysOverdue = dueDate && dueDate < today 
+        ? Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+      // Message de relance personnalisé
+      const reminderMessage = `Bonjour ${invoice.client.name},
+
+Nous vous rappelons que la facture ${invoice.invoiceNumber} d'un montant de ${invoice.remainingAmount.toFixed(2)} € est en attente de paiement.
+
+${dueDate ? `Date d'échéance : ${dueDate.toLocaleDateString('fr-FR')}` : ''}
+${daysOverdue > 0 ? `Retard : ${daysOverdue} jour(s)` : ''}
+Montant dû : ${invoice.remainingAmount.toFixed(2)} €
+
+Merci de procéder au règlement dans les plus brefs délais.
+
+Cordialement`;
+
+      // Envoyer l'email de relance
+      const result = await sendInvoiceByEmail(invoice, invoice.client.email, reminderMessage);
+      
+      if (result.success) {
+        // Enregistrer dans l'historique
+        await saveReminder({
+          userId: '', // Sera rempli par saveReminder
+          invoiceId: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          clientName: invoice.client.name,
+          clientEmail: invoice.client.email,
+          amountDue: invoice.remainingAmount,
+          sentAt: new Date().toISOString(),
+        });
+
+        toast({
+          title: 'Relance envoyée',
+          description: `La relance a été envoyée à ${invoice.client.email}`,
+        });
+      } else {
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Impossible d\'envoyer la relance',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <PageWrapper>
       <header className="bg-black/20 backdrop-blur-md border-b border-white/10 px-4 md:px-6 py-4 rounded-tl-3xl ml-0 md:ml-20 mb-4 md:mb-6">
@@ -801,6 +885,16 @@ export default function DossiersPage() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleSendReminder(invoice)}
+                              className="flex-shrink-0 text-white border-orange-500/50 hover:bg-orange-500/20 hover:border-orange-500"
+                              title="Relancer le client"
+                              disabled={!resendConfigured || invoice.status === 'paid' || !invoice.client?.email}
+                            >
+                              <Bell className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleDeleteInvoice(invoice)}
                               className="flex-shrink-0 text-white border-red-500/50 hover:bg-red-500/20 hover:border-red-500"
                               title="Supprimer la facture"
@@ -1027,6 +1121,22 @@ export default function DossiersPage() {
                     )}
                   </div>
                 </div>
+
+                <div className="pt-4 border-t border-white/10">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      setSelectedInvoiceForReminders(selectedInvoice);
+                      setShowRemindersHistory(true);
+                      const loadedReminders = await loadReminders(selectedInvoice.id);
+                      setReminders(loadedReminders);
+                    }}
+                    className="w-full text-white border-white/20 hover:bg-white/10"
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Voir l'historique des relances
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
@@ -1194,6 +1304,50 @@ export default function DossiersPage() {
                   {sendingEmail ? 'Envoi...' : 'Envoyer'}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog historique des relances */}
+        <Dialog open={showRemindersHistory} onOpenChange={setShowRemindersHistory}>
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Historique des relances - {selectedInvoiceForReminders?.invoiceNumber}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+              {reminders.length === 0 ? (
+                <p className="text-white/70 text-center py-8">Aucune relance envoyée</p>
+              ) : (
+                reminders.map((reminder) => (
+                  <div
+                    key={reminder.id}
+                    className="p-4 bg-black/20 rounded-lg border border-white/10"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="text-white font-medium">{reminder.clientName}</p>
+                        {reminder.clientEmail && (
+                          <p className="text-sm text-white/70">{reminder.clientEmail}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="border-green-500/50 text-green-300">
+                        {reminder.amountDue.toFixed(2)} €
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-white/50">
+                      Envoyé le {new Date(reminder.sentAt).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </DialogContent>
         </Dialog>
