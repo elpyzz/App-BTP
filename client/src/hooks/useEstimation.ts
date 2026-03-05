@@ -42,12 +42,16 @@ function compressImage(dataUrl: string, quality: number = 0.7, maxWidth: number 
   });
 }
 
-interface ChantierInfo {
-  surface: string;
-  materiaux: string;
-  localisation: string;
-  delai: string;
+interface EstimationPayload {
   metier: string;
+  reponsesMetier: any;
+  contexteCommun: {
+    acces: string;
+    fournitureMateriaux: string;
+    localisation: string;
+    delai: string;
+    precisions: string;
+  };
 }
 
 export const useEstimation = () => {
@@ -57,7 +61,9 @@ export const useEstimation = () => {
   
   const analyzeChantier = useCallback(async (
     images: File[],
-    chantierInfo: ChantierInfo
+    metier: string,
+    reponsesMetier: any,
+    contexteCommun: EstimationPayload['contexteCommun']
   ) => {
     setIsLoading(true);
     setResult(null);
@@ -93,13 +99,10 @@ export const useEstimation = () => {
       );
       
       // Préparation du body JSON (compatible Vercel serverless)
-      // TEST: Envoyer d'abord un body minimal pour tester si le problème vient de la taille
       const requestBody = {
-        surface: chantierInfo.surface,
-        metier: chantierInfo.metier,
-        materiaux: chantierInfo.materiaux,
-        localisation: chantierInfo.localisation,
-        delai: chantierInfo.delai,
+        metier: metier,
+        reponsesMetier: reponsesMetier,
+        contexteCommun: contexteCommun,
         existingMaterials: JSON.stringify(existingMaterials),
         images: imagesBase64
       };
@@ -108,8 +111,7 @@ export const useEstimation = () => {
       const bodySize = JSON.stringify(requestBody).length;
       console.log('Sending request to /api/estimate', {
         imagesCount: validImages.length,
-        surface: chantierInfo.surface,
-        metier: chantierInfo.metier,
+        metier: metier,
         bodySize: bodySize,
         bodySizeMB: (bodySize / 1024 / 1024).toFixed(2)
       });

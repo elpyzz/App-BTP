@@ -56,9 +56,14 @@ const pageVariants = {
 
 function Router() {
   const [location] = useLocation();
+  
+  // Normaliser la location (supprimer le slash final sauf pour la racine)
+  const normalizedLocation = location.endsWith('/') && location !== '/' 
+    ? location.slice(0, -1) 
+    : location;
 
   const getComponent = () => {
-    switch (location) {
+    switch (normalizedLocation) {
       case "/":
         return <Home />;
       case "/auth":
@@ -91,13 +96,13 @@ function Router() {
   };
 
   // Pages without sidebar (Home, Auth, Loading) get full page animation
-  const isFullPage = location === "/" || location === "/auth" || location === "/loading";
+  const isFullPage = normalizedLocation === "/" || normalizedLocation === "/auth" || normalizedLocation === "/loading";
 
   if (isFullPage) {
     return (
       <AnimatePresence mode="wait">
         <motion.div
-          key={location}
+          key={normalizedLocation}
           initial="initial"
           animate="animate"
           exit="exit"
