@@ -15,9 +15,34 @@ function formatCurrencyForPDF(amount: number): string {
 }
 
 /**
+ * Charge l'image du logo depuis le serveur public
+ */
+async function loadLogoImage(): Promise<string | null> {
+  try {
+    const response = await fetch('/logo.jpg');
+    if (!response.ok) {
+      return null;
+    }
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn('Impossible de charger le logo:', error);
+    return null;
+  }
+}
+
+/**
  * Génère un PDF professionnel pour une facture
  */
-export function generateInvoicePDF(invoice: Invoice): jsPDF {
+export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   const doc = new jsPDF();
   let yPos = 20; // Réduit de 25 à 20
 
@@ -37,14 +62,34 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   const logoX = margin;
   const logoY = yPos;
   
-  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.rect(logoX, logoY, logoSize, logoSize, "F");
+  // Essayer de charger l'image du logo
+  const logoImage = await loadLogoImage();
   
-  doc.setFontSize(12); // Réduit de 14 à 12
-  doc.setFont(undefined, "bold");
-  doc.setTextColor(255, 255, 255);
-  const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
-  doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
+  if (logoImage) {
+    // Utiliser l'image du logo
+    try {
+      doc.addImage(logoImage, 'JPEG', logoX, logoY, logoSize, logoSize * 1.15);
+    } catch (error) {
+      console.warn('Erreur lors de l\'ajout de l\'image du logo:', error);
+      // Fallback sur le carré ambre avec initiale
+      doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.rect(logoX, logoY, logoSize, logoSize, "F");
+      doc.setFontSize(12);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(255, 255, 255);
+      const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
+      doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
+    }
+  } else {
+    // Fallback : carré ambre avec initiale
+    doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.rect(logoX, logoY, logoSize, logoSize, "F");
+    doc.setFontSize(12); // Réduit de 14 à 12
+    doc.setFont(undefined, "bold");
+    doc.setTextColor(255, 255, 255);
+    const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
+    doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
+  }
   
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(14); // Réduit de 16 à 14
@@ -521,8 +566,8 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
 /**
  * Télécharge le PDF d'une facture
  */
-export function downloadInvoicePDF(invoice: Invoice): void {
-  const doc = generateInvoicePDF(invoice);
+export async function downloadInvoicePDF(invoice: Invoice): Promise<void> {
+  const doc = await generateInvoicePDF(invoice);
   const fileName = `Facture_${invoice.invoiceNumber || invoice.id}_${(invoice.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(fileName);
 }

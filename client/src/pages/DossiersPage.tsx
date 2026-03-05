@@ -309,7 +309,7 @@ export default function DossiersPage() {
       const fullQuote: NewQuote = rawQuote;
 
       // Générer et télécharger le PDF
-      downloadQuotePDF(fullQuote);
+      await downloadQuotePDF(fullQuote);
       
       toast({
         title: 'Export réussi',
@@ -344,7 +344,7 @@ export default function DossiersPage() {
         return;
       }
 
-      downloadInvoicePDF(fullInvoice);
+      await downloadInvoicePDF(fullInvoice);
       
       toast({
         title: 'Export réussi',
