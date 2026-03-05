@@ -45,6 +45,7 @@ function companyToSupabase(company: Company): any {
   if (company.insuranceDecennale) data.insurance_decennale = company.insuranceDecennale;
   if (company.insuranceRC) data.insurance_rc = company.insuranceRC;
   if (company.qualifications) data.qualifications = company.qualifications;
+  if (company.signature) data.signature = company.signature;
 
   return data;
 }
@@ -74,6 +75,7 @@ function supabaseToCompany(data: any): Company {
     insuranceDecennale: data.insurance_decennale,
     insuranceRC: data.insurance_rc,
     qualifications: data.qualifications,
+    signature: data.signature,
   };
 }
 

@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { LEGAL_FORMS } from '@/lib/quotes/defaults';
-import { Building2, FileText, Package } from 'lucide-react';
+import { Building2, FileText, Package, PenTool } from 'lucide-react';
 import MaterialSettings from '@/components/MaterialSettings';
+import { SignatureCanvas } from '@/components/SignatureCanvas';
 
 export default function SettingsPage() {
   const { company, setCompany, isLoading } = useCompany();
@@ -105,10 +106,25 @@ export default function SettingsPage() {
               <Building2 className="h-4 w-4 mr-2" />
               Entreprise
             </TabsTrigger>
+            <TabsTrigger value="signature">
+              <PenTool className="h-4 w-4 mr-2" />
+              Signature
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="materials">
             <MaterialSettings />
+          </TabsContent>
+
+          <TabsContent value="signature">
+            <SignatureCanvas
+              initialSignature={company?.signature || null}
+              onSave={async (signatureData) => {
+                if (company) {
+                  await setCompany({ ...company, signature: signatureData });
+                }
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="company">

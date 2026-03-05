@@ -82,6 +82,7 @@ export const CompanySchema = z.object({
   website: z.string().nullish(),
   fax: z.string().nullish(),
   iban: z.string().nullish(),
+  signature: z.string().nullish(),  // Base64 de la signature de l'artisan
   
   // Assurances (recommandées BTP)
   insuranceDecennale: z.object({
