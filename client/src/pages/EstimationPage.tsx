@@ -484,9 +484,10 @@ export default function EstimationPage() {
                             onClick={() => setClientMode('select')}
                             className={`flex-1 ${
                               clientMode === 'select'
-                                ? 'bg-violet-500 text-white'
+                                ? 'text-white'
                                 : 'bg-transparent border-white/20 text-white hover:bg-white/10'
                             }`}
+                            style={clientMode === 'select' ? { background: 'var(--accent-blue)' } : undefined}
                           >
                             Sélectionner un client existant
                           </Button>
@@ -496,9 +497,10 @@ export default function EstimationPage() {
                             onClick={() => setClientMode('create')}
                             className={`flex-1 ${
                               clientMode === 'create'
-                                ? 'bg-violet-500 text-white'
+                                ? 'text-white'
                                 : 'bg-transparent border-white/20 text-white hover:bg-white/10'
                             }`}
+                            style={clientMode === 'create' ? { background: 'var(--accent-blue)' } : undefined}
                           >
                             Créer un nouveau client
                           </Button>

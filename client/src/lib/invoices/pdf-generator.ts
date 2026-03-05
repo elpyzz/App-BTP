@@ -26,7 +26,7 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20; // Réduit de 25 à 20
   const contentWidth = pageWidth - 2 * margin;
-  const violetColor = [138, 43, 226]; // Violet RGB
+  const accentColor = [245, 158, 11]; // Ambre RGB (#F59E0B)
 
   // ============================================
   // EN-TÊTE AVEC LOGO ET NUMÉRO FACTURE
@@ -37,7 +37,7 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   const logoX = margin;
   const logoY = yPos;
   
-  doc.setFillColor(violetColor[0], violetColor[1], violetColor[2]);
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.rect(logoX, logoY, logoSize, logoSize, "F");
   
   doc.setFontSize(12); // Réduit de 14 à 12
@@ -46,7 +46,7 @@ export function generateInvoicePDF(invoice: Invoice): jsPDF {
   const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
   doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   
-  doc.setTextColor(violetColor[0], violetColor[1], violetColor[2]);
+  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
   const companyName = (invoice.company?.name || "VOTRE ENTREPRISE").toLowerCase();

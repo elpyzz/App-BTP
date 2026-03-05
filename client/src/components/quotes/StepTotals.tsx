@@ -265,7 +265,7 @@ export function StepTotals({
           </div>
           <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10">
             <span>TOTAL TTC:</span>
-            <span className="text-violet-400">{formatCurrency(totals.totalTTC)}</span>
+            <span style={{ color: 'var(--accent-amber)' }}>{formatCurrency(totals.totalTTC)}</span>
           </div>
           {deposit.enabled && (
             <>

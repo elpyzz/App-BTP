@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/context/AuthContext"
 import { motion } from "framer-motion"
+import { Logo } from "@/components/Logo"
 
 export default function LoginPage() {
   const { user, loading: authLoading } = useAuth()
@@ -103,11 +104,14 @@ export default function LoginPage() {
           className="w-full max-w-md bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-8 shadow-2xl text-white"
         >
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4 relative">
-              <div className="flex-1"></div>
-              <h1 className="text-3xl font-light tracking-tight text-white flex-1 text-center absolute left-0 right-0">
+            <div className="flex flex-col items-center mb-6">
+              <Logo size={64} />
+              <h1 className="text-3xl font-light tracking-tight text-white mt-4">
                 Connexion
               </h1>
+            </div>
+            <div className="flex items-center justify-between mb-4 relative">
+              <div className="flex-1"></div>
               {loginMode === 'admin' && (
                 <Dialog open={isAdminCodeDialogOpen} onOpenChange={setIsAdminCodeDialogOpen}>
                   <DialogTrigger asChild>
@@ -145,7 +149,7 @@ export default function LoginPage() {
                       <Button variant="outline" onClick={() => setIsAdminCodeDialogOpen(false)} className="border-white/20 text-white hover:bg-white/10">
                         Annuler
                       </Button>
-                      <Button onClick={handleUpdateAdminCode} className="bg-violet-500 hover:bg-violet-600 text-white">
+                      <Button onClick={handleUpdateAdminCode} className="btn-amber text-white">
                         {newAdminCode ? "Modifier" : "Créer"} le Code
                       </Button>
                     </DialogFooter>
@@ -167,8 +171,9 @@ export default function LoginPage() {
               variant={loginMode === 'admin' ? 'default' : 'outline'}
               onClick={() => setLoginMode('admin')}
               className={`flex-1 ${loginMode === 'admin' 
-                ? 'bg-violet-500 text-white' 
+                ? 'text-white' 
                 : 'bg-transparent border-white/20 text-white hover:bg-white/10'}`}
+              style={loginMode === 'admin' ? { background: 'var(--accent-blue)' } : undefined}
             >
               Admin
             </Button>
@@ -177,8 +182,9 @@ export default function LoginPage() {
               variant={loginMode === 'team' ? 'default' : 'outline'}
               onClick={() => setLoginMode('team')}
               className={`flex-1 ${loginMode === 'team' 
-                ? 'bg-violet-500 text-white' 
+                ? 'text-white' 
                 : 'bg-transparent border-white/20 text-white hover:bg-white/10'}`}
+              style={loginMode === 'team' ? { background: 'var(--accent-blue)' } : undefined}
             >
               <Users className="h-4 w-4 mr-2" />
               Équipe
@@ -227,14 +233,14 @@ export default function LoginPage() {
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="Ou entrez votre code"
-                    className="w-full bg-black/20 border-white/20 text-white placeholder:text-white/50 focus:border-violet-400 focus:ring-violet-400/20 h-12 text-center text-lg tracking-widest font-mono"
+                    className="w-full bg-black/20 border-white/20 text-white placeholder:text-white/50 h-12 text-center text-lg tracking-widest font-mono input-field"
                     maxLength={10}
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-violet-500 hover:bg-violet-600 text-white transition-colors h-12 text-base font-medium rounded-2xl"
+                  className="w-full text-white transition-colors h-12 text-base font-medium rounded-2xl btn-amber"
                 >
                   Se connecter
                 </Button>
@@ -248,14 +254,14 @@ export default function LoginPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="Entrez votre code"
-                  className="w-full bg-black/40 backdrop-blur-md border-white/20 text-white placeholder:text-white/50 focus:border-violet-400 focus:ring-violet-400/20 h-12 text-center text-lg tracking-widest font-mono"
+                  className="w-full bg-black/40 backdrop-blur-md border-white/20 text-white placeholder:text-white/50 h-12 text-center text-lg tracking-widest font-mono input-field"
                   maxLength={10}
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-violet-500 hover:bg-violet-600 text-white transition-colors h-12 text-base font-medium rounded-2xl"
+                className="w-full text-white transition-colors h-12 text-base font-medium rounded-2xl btn-amber"
               >
                 Se connecter
               </Button>

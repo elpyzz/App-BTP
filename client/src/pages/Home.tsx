@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowRight } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -17,6 +18,14 @@ export default function Home() {
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="text-center"
             >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.8 }}
+                className="flex justify-center mb-6"
+              >
+                <Logo size={120} showDots={true} />
+              </motion.div>
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -49,7 +58,8 @@ export default function Home() {
               >
                 <button
                   onClick={() => setLocation("/auth")}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-white/90 hover:bg-white text-violet-600 rounded-2xl font-medium text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105 backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-white/90 hover:bg-white rounded-2xl font-medium text-lg transition-all shadow-xl hover:shadow-2xl hover:scale-105 backdrop-blur-sm"
+                  style={{ color: 'var(--accent-blue)' }}
                 >
                   Se connecter
                   <ArrowRight className="h-5 w-5" />

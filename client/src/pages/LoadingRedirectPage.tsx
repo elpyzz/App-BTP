@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
+import { Logo } from "@/components/Logo";
 
 export default function LoadingRedirectPage() {
   const [, setLocation] = useLocation();
@@ -32,14 +33,13 @@ export default function LoadingRedirectPage() {
   return (
     <div className="h-screen w-screen flex items-center justify-center font-sans">
       <div className="relative z-10 flex flex-col items-center gap-8 max-w-md w-full px-6">
-        {/* Logo ou icône */}
+        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-xl"
         >
-          <span className="text-3xl font-bold text-white">P</span>
+          <Logo size={80} showDots={true} />
         </motion.div>
 
         {/* Texte principal */}
@@ -66,7 +66,8 @@ export default function LoadingRedirectPage() {
         >
           <div className="h-1 bg-white/20 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-violet-500 to-violet-600 rounded-full"
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(to right, var(--accent-amber), var(--accent-amber-dark))' }}
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.1, ease: 'linear' }}
@@ -84,7 +85,8 @@ export default function LoadingRedirectPage() {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-2 h-2 rounded-full bg-violet-500"
+              className="w-2 h-2 rounded-full"
+              style={{ background: 'var(--accent-amber)' }}
               animate={{
                 scale: [1, 1.2, 1],
                 opacity: [0.5, 1, 0.5],

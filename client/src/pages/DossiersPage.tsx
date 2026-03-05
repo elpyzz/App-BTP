@@ -586,7 +586,7 @@ Cordialement`;
                   <p className="text-sm text-white/70">Total des devis</p>
                   <p className="text-2xl font-bold text-white">{stats.totalQuotes}</p>
                 </div>
-                <FileText className="h-8 w-8 text-violet-400" />
+                <FileText className="h-8 w-8" style={{ color: 'var(--accent-blue-light)' }} />
               </div>
             </CardContent>
           </Card>
@@ -597,7 +597,7 @@ Cordialement`;
                   <p className="text-sm text-white/70">Total des factures</p>
                   <p className="text-2xl font-bold text-white">{stats.totalInvoices}</p>
                 </div>
-                <Receipt className="h-8 w-8 text-violet-400" />
+                <Receipt className="h-8 w-8" style={{ color: 'var(--accent-blue-light)' }} />
               </div>
             </CardContent>
           </Card>
@@ -646,13 +646,13 @@ Cordialement`;
           <TabsList className="bg-black/20 backdrop-blur-md border border-white/10 mb-6">
             <TabsTrigger 
               value="quotes" 
-              className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 text-white/70"
+              className="text-white/70"
             >
               Devis ({quotes.length})
             </TabsTrigger>
             <TabsTrigger 
               value="invoices" 
-              className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 text-white/70"
+              className="text-white/70"
             >
               Facturation ({invoices.length})
             </TabsTrigger>
@@ -678,7 +678,7 @@ Cordialement`;
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredAndSortedQuotes.map((quote) => (
                     <div key={quote.id}>
-                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
+                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-amber-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -746,7 +746,7 @@ Cordialement`;
                               variant="outline"
                               size="sm"
                               onClick={() => setLocation(`/dashboard/invoices?quoteId=${quote.id}`)}
-                              className="flex-shrink-0 text-white border-violet-500/50 hover:bg-violet-500/20 hover:border-violet-500"
+                              className="flex-shrink-0 text-white border-white/20 hover:bg-white/10 btn-primary"
                               title="Créer une facture depuis ce devis"
                             >
                               <Receipt className="h-4 w-4" />
@@ -791,7 +791,7 @@ Cordialement`;
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredAndSortedInvoices.map((invoice) => (
                     <div key={invoice.id}>
-                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-violet-500/50 transition-all">
+                      <Card className="bg-black/20 backdrop-blur-md border border-white/10 text-white hover:border-amber-500/50 transition-all">
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -968,7 +968,7 @@ Cordialement`;
                   </div>
                   <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10">
                     <span>Total TTC</span>
-                    <span className="text-violet-300">{(selectedQuote.total ?? 0).toFixed(2)} €</span>
+                    <span style={{ color: 'var(--accent-amber)' }}>{(selectedQuote.total ?? 0).toFixed(2)} €</span>
                   </div>
                 </div>
 
@@ -1085,7 +1085,7 @@ Cordialement`;
                   )}
                   <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10">
                     <span>Total TTC</span>
-                    <span className="text-violet-300">{(selectedInvoice.totalTTC ?? 0).toFixed(2)} €</span>
+                    <span style={{ color: 'var(--accent-amber)' }}>{(selectedInvoice.totalTTC ?? 0).toFixed(2)} €</span>
                   </div>
                   {selectedInvoice.remainingAmount && selectedInvoice.remainingAmount > 0 && (
                     <div className="flex justify-between text-white/70 pt-2">
@@ -1299,7 +1299,7 @@ Cordialement`;
                 <Button
                   onClick={confirmSendEmail}
                   disabled={!emailRecipient || sendingEmail || !resendConfigured}
-                  className="bg-violet-600 hover:bg-violet-700"
+                  className="btn-primary"
                 >
                   {sendingEmail ? 'Envoi...' : 'Envoyer'}
                 </Button>

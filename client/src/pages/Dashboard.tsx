@@ -272,26 +272,30 @@ function OverviewTab() {
           <CardTitle className="text-white font-light">Actions Rapides</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button 
-            className="w-full justify-start h-auto p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800"
+          <div 
+            className="quick-action-card"
             onClick={() => setLocation('/dashboard/projects?openDialog=true')}
           >
-            <Plus className="h-5 w-5 mr-3" />
-            <div className="text-left">
-              <div className="font-medium">Nouveau Chantier</div>
-              <div className="text-xs opacity-70">Créer un projet</div>
+            <div className="quick-action-icon">
+              <Plus className="h-5 w-5" />
             </div>
-          </Button>
-          <Button 
-            className="w-full justify-start h-auto p-4 rounded-xl bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 border border-violet-200 dark:border-violet-800"
+            <div>
+              <div className="quick-action-title">Nouveau Chantier</div>
+              <div className="quick-action-sub">Créer un projet</div>
+            </div>
+          </div>
+          <div 
+            className="quick-action-card"
             onClick={() => setLocation('/dashboard/quotes')}
           >
-            <FileText className="h-5 w-5 mr-3" />
-            <div className="text-left">
-              <div className="font-medium">Créer un Devis</div>
-              <div className="text-xs opacity-70">Générer un devis</div>
+            <div className="quick-action-icon">
+              <FileText className="h-5 w-5" />
             </div>
-          </Button>
+            <div>
+              <div className="quick-action-title">Créer un Devis</div>
+              <div className="quick-action-sub">Générer un devis</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -308,13 +312,14 @@ const MetricCard = memo(({ title, value, change, icon: Icon, delay, onClick }: {
     >
       <Card 
         className={`bg-black/20 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl hover:shadow-2xl transition-all text-white ${
-          onClick ? 'cursor-pointer hover:scale-105 hover:border-violet-400' : ''
+          onClick ? 'cursor-pointer hover:scale-105' : ''
         }`}
+        style={onClick ? { '--hover-border': 'var(--accent-amber)' } as React.CSSProperties : undefined}
         onClick={onClick}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-white/70">{title}</CardTitle>
-          <Icon className="h-5 w-5 text-violet-400" />
+          <Icon className="h-5 w-5" style={{ color: 'var(--accent-amber)' }} />
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-light text-white mb-1">{value}</div>

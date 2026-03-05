@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { Link, useLocation } from 'wouter';
 import { Menu, X, ChevronLeft, Home, Calculator, Building, Calendar, FileText, User, Settings, Folder, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Logo } from './Logo';
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,17 +135,23 @@ export default function Sidebar() {
             transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
             className="mb-4"
           >
-            <h2 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-              Aos Renov
-            </h2>
-            <p className="text-sm mb-2 text-gray-600 dark:text-gray-400">
-              Construire pour durer
-            </p>
+            <div className="flex items-center gap-3 mb-3">
+              <Logo size={40} />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Aos Renov
+                </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Construire pour durer
+                </p>
+              </div>
+            </div>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: 80 }}
               transition={{ delay: 0.3, duration: 0.6, ease: 'easeOut' }}
-              className="h-1 rounded bg-violet-600 dark:bg-violet-500"
+              className="h-1 rounded"
+              style={{ background: 'var(--accent-amber)' }}
             />
           </motion.div>
 
@@ -173,9 +180,15 @@ export default function Sidebar() {
                         className={cn(
                           "flex items-center space-x-3 p-2.5 rounded-lg transition-all cursor-pointer group",
                           isActive
-                            ? 'bg-violet-50 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400'
+                            ? 'text-amber-500'
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
                         )}
+                        style={isActive ? {
+                          background: 'var(--accent-amber-subtle)',
+                          borderColor: 'var(--border-amber)',
+                          borderWidth: '1px',
+                          borderStyle: 'solid'
+                        } : {}}
                       >
                         <motion.div
                           whileHover={{ scale: 1.1, rotate: 5 }}
@@ -183,9 +196,12 @@ export default function Sidebar() {
                           className={cn(
                             "p-1.5 rounded-md transition-all duration-300",
                             isActive
-                              ? 'bg-violet-500 text-white'
-                              : 'bg-gray-200 dark:bg-gray-700 group-hover:bg-violet-500 group-hover:text-white'
+                              ? 'text-white'
+                              : 'bg-gray-200 dark:bg-gray-700'
                           )}
+                          style={isActive ? {
+                            background: 'var(--accent-amber)'
+                          } : {}}
                         >
                           <item.icon size={16} />
                         </motion.div>

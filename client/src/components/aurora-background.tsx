@@ -122,7 +122,8 @@ const AuroraBackground: React.FC<AuroraBackgroundProps> = ({
 
           <motion.div
 
-            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-600 rounded-full filter blur-3xl opacity-40"
+            className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full filter blur-3xl opacity-40"
+            style={{ background: 'var(--accent-amber)' }}
 
             animate={{
 

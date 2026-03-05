@@ -86,7 +86,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-violet-600 hover:bg-violet-700 whitespace-nowrap flex-shrink-0"
+              className="btn-amber whitespace-nowrap flex-shrink-0"
             >
               Enregistrer
             </Button>
@@ -97,11 +97,11 @@ export default function SettingsPage() {
       <main className="flex-1 p-4 md:p-6 ml-0 md:ml-20">
         <Tabs defaultValue="materials" className="w-full">
           <TabsList className="bg-black/20 border-white/10 mb-6">
-            <TabsTrigger value="materials" className="data-[state=active]:bg-violet-500/20">
+            <TabsTrigger value="materials">
               <Package className="h-4 w-4 mr-2" />
               Matériaux
             </TabsTrigger>
-            <TabsTrigger value="company" className="data-[state=active]:bg-violet-500/20">
+            <TabsTrigger value="company">
               <Building2 className="h-4 w-4 mr-2" />
               Entreprise
             </TabsTrigger>

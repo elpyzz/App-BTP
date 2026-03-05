@@ -314,7 +314,7 @@ export default function MaterialSettings() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <p className="font-medium text-white">{material.name}</p>
-                      <Badge className="bg-violet-500/20 text-violet-300 border-violet-500/30">
+                      <Badge className="tag-material">
                         {material.category}
                       </Badge>
                     </div>

@@ -35,7 +35,7 @@ export function UserAccountButton() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 backdrop-blur-md border border-white/10 text-white hover:bg-black/30 transition-colors shadow-lg"
       >
-        <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-amber)' }}>
           <User size={16} />
         </div>
         <span className="text-sm font-medium hidden md:block">{userName}</span>
@@ -60,7 +60,7 @@ export function UserAccountButton() {
             >
               <div className="p-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--accent-amber)' }}>
                     <User size={20} />
                   </div>
                   <div className="flex-1 min-w-0">

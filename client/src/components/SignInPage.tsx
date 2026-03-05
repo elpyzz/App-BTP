@@ -38,7 +38,7 @@ interface SignInPageProps {
 // --- SUB-COMPONENTS ---
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-white/20 bg-black/20 backdrop-blur-sm transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10">
+  <div className="rounded-2xl border border-white/20 bg-black/20 backdrop-blur-sm transition-colors focus-within:border-blue-400/70 focus-within:bg-blue-500/10">
     {children}
   </div>
 );
@@ -124,11 +124,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     <input type="checkbox" name="rememberMe" className="custom-checkbox" />
                     <span className="text-white/90">Keep me signed in</span>
                   </label>
-                  <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-violet-400 transition-colors">Reset password</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline transition-colors" style={{ color: 'var(--accent-blue-light)' }}>Reset password</a>
                 </div>
               )}
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-violet-500 hover:bg-violet-600 py-4 font-medium text-white transition-colors">
+              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl py-4 font-medium text-white transition-colors btn-amber">
                 {isSignUp ? 'Create Account' : 'Sign In'}
               </button>
             </form>
@@ -137,11 +137,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <div className="animate-element animate-delay-650 text-center text-sm text-white/70">
                 {isSignUp ? (
                   <>
-                    Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onToggleMode(); }} className="text-violet-400 hover:underline transition-colors">Sign In</a>
+                    Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onToggleMode(); }} className="hover:underline transition-colors" style={{ color: 'var(--accent-blue-light)' }}>Sign In</a>
                   </>
                 ) : (
                   <>
-                    New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onToggleMode(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>
+                    New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onToggleMode(); }} className="hover:underline transition-colors" style={{ color: 'var(--accent-blue-light)' }}>Create Account</a>
                   </>
                 )}
               </div>
@@ -163,7 +163,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
             {!onToggleMode && onCreateAccount && (
               <p className="animate-element animate-delay-900 text-center text-sm text-white/70">
-                New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>
+                New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="hover:underline transition-colors" style={{ color: 'var(--accent-blue-light)' }}>Create Account</a>
               </p>
             )}
           </div>

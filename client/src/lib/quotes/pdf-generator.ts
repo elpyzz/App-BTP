@@ -29,19 +29,19 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20; // Réduit de 25 à 20
   const contentWidth = pageWidth - 2 * margin;
-  const violetColor = [138, 43, 226]; // Violet RGB
+  const accentColor = [245, 158, 11]; // Ambre RGB (#F59E0B)
 
   // ============================================
   // EN-TÊTE AVEC LOGO ET NUMÉRO DEVIS
   // ============================================
   
-  // Logo à gauche (carré violet avec initiale)
+  // Logo à gauche (carré ambre avec initiale)
   const logoSize = 15; // Réduit de 18 à 15
   const logoX = margin;
   const logoY = yPos;
   
-  // Carré violet pour le logo
-  doc.setFillColor(violetColor[0], violetColor[1], violetColor[2]);
+  // Carré ambre pour le logo
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.rect(logoX, logoY, logoSize, logoSize, "F");
   
   // Initiale ou première lettre du nom de l'entreprise
@@ -51,9 +51,9 @@ export function generateQuotePDF(quote: Quote): jsPDF {
   const companyInitial = quote.company?.name?.charAt(0).toUpperCase() || "C";
   doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   
-  // Nom de l'entreprise à côté du logo (en violet, en minuscules)
+  // Nom de l'entreprise à côté du logo (en ambre, en minuscules)
   // Limiter la largeur pour éviter le chevauchement avec le numéro de devis
-  doc.setTextColor(violetColor[0], violetColor[1], violetColor[2]);
+  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
   const companyName = (quote.company?.name || "VOTRE ENTREPRISE").toLowerCase();

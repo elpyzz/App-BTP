@@ -186,11 +186,12 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
               onClick={() => setCurrentStep(step.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 currentStep === step.id
-                  ? "bg-violet-600 text-white"
+                  ? "text-white"
                   : currentStep > step.id
                   ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-500"
               }`}
+              style={currentStep === step.id ? { background: 'var(--accent-amber)' } : undefined}
             >
               <step.icon className="h-5 w-5" />
               <span className="hidden md:inline">{step.name}</span>
@@ -290,7 +291,7 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
             <Button
               onClick={() => handleSave("sent")}
               disabled={saving || !canGoNext()}
-              className="bg-violet-600 hover:bg-violet-700 w-full sm:w-auto"
+              className="btn-amber w-full sm:w-auto"
             >
               <FileText className="h-4 w-4 mr-2" />
               Finaliser le devis
@@ -299,7 +300,7 @@ export function QuoteWizard({ initialQuote, dossierId, onSave, onCancel }: Quote
             <Button
               onClick={handleNext}
               disabled={!canGoNext()}
-              className="bg-violet-600 hover:bg-violet-700 w-full sm:w-auto"
+              className="btn-amber w-full sm:w-auto"
             >
               Suivant
               <ArrowRight className="h-4 w-4 ml-2" />
