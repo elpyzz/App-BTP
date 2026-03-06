@@ -524,15 +524,15 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   
   // Calculer les positions des colonnes
   const signatureColWidth = (pageWidth - 2 * margin) / 2;
-  const leftColX = margin;
-  const rightColX = margin + signatureColWidth;
+  const signatureLeftColX = margin;
+  const signatureRightColX = margin + signatureColWidth;
   const signatureStartY = yPos;
   
   // Colonne gauche : Signature de l'artisan
   doc.setFontSize(9);
   doc.setFont(undefined, "bold");
   doc.setTextColor(100, 100, 100);
-  doc.text("Signature de l'artisan", leftColX, yPos);
+  doc.text("Signature de l'artisan", signatureLeftColX, yPos);
   yPos += 8;
   
   // Image de signature (si disponible)
@@ -544,21 +544,21 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
       
       // Charger l'image depuis le base64
       const signatureImage = quote.company.signature;
-      doc.addImage(signatureImage, 'PNG', leftColX, yPos, maxWidth, maxHeight);
+      doc.addImage(signatureImage, 'PNG', signatureLeftColX, yPos, maxWidth, maxHeight);
       yPos += maxHeight + 5;
     } catch (error) {
       console.warn('Erreur lors de l\'ajout de la signature:', error);
       // Afficher une ligne vide si l'image ne peut pas être chargée
       doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(0.5);
-      doc.line(leftColX, yPos + 10, leftColX + 60, yPos + 10);
+      doc.line(signatureLeftColX, yPos + 10, signatureLeftColX + 60, yPos + 10);
       yPos += 20;
     }
   } else {
     // Ligne vide si pas de signature
     doc.setDrawColor(200, 200, 200);
     doc.setLineWidth(0.5);
-    doc.line(leftColX, yPos + 10, leftColX + 60, yPos + 10);
+    doc.line(signatureLeftColX, yPos + 10, signatureLeftColX + 60, yPos + 10);
     yPos += 20;
   }
   
@@ -567,7 +567,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const artisanName = quote.company?.name || "Nom de l'artisan";
-  doc.text(artisanName, leftColX, yPos);
+  doc.text(artisanName, signatureLeftColX, yPos);
   yPos += 4;
   
   // Raison sociale (si différente du nom)
@@ -575,42 +575,42 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
     doc.setFontSize(7);
     doc.setFont(undefined, "normal");
     doc.setTextColor(100, 100, 100);
-    doc.text(quote.company.name, leftColX, yPos);
+    doc.text(quote.company.name, signatureLeftColX, yPos);
     yPos += 4;
   }
   
   // Date de génération
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Date : ${new Date(quote.issueDate).toLocaleDateString("fr-FR")}`, leftColX, yPos);
+  doc.text(`Date : ${new Date(quote.issueDate).toLocaleDateString("fr-FR")}`, signatureLeftColX, yPos);
   
   // Colonne droite : Bon pour accord client
   yPos = signatureStartY;
   doc.setFontSize(9);
   doc.setFont(undefined, "bold");
   doc.setTextColor(100, 100, 100);
-  doc.text("Bon pour accord", rightColX, yPos);
+  doc.text("Bon pour accord", signatureRightColX, yPos);
   yPos += 6;
   
   doc.setFontSize(8);
   doc.setFont(undefined, "italic");
   doc.setTextColor(100, 100, 100);
-  doc.text("Lu et approuvé", rightColX, yPos);
+  doc.text("Lu et approuvé", signatureRightColX, yPos);
   yPos += 10;
   
   // Ligne signature client
   doc.setFontSize(8);
   doc.setFont(undefined, "normal");
   doc.setTextColor(100, 100, 100);
-  doc.text("Signature :", rightColX, yPos);
+  doc.text("Signature :", signatureRightColX, yPos);
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
-  doc.line(rightColX + 25, yPos - 2, rightColX + signatureColWidth - 5, yPos - 2);
+  doc.line(signatureRightColX + 25, yPos - 2, signatureRightColX + signatureColWidth - 5, yPos - 2);
   yPos += 12;
   
   // Ligne date client
-  doc.text("Date :", rightColX, yPos);
-  doc.line(rightColX + 15, yPos - 2, rightColX + signatureColWidth - 5, yPos - 2);
+  doc.text("Date :", signatureRightColX, yPos);
+  doc.line(signatureRightColX + 15, yPos - 2, signatureRightColX + signatureColWidth - 5, yPos - 2);
   
   // Ajuster yPos pour le pied de page
   yPos = Math.max(yPos + 10, signatureStartY + 50);
