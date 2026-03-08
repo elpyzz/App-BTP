@@ -105,8 +105,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           id: '1',
           name: clientName,
           email: quoteData.client.email,
-          signing_fields: [
+          fields: [
             {
+              api_id: 'signature_client',
               type: 'signature',
               page: 1,
               x: 50,
@@ -115,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               height: 60
             },
             {
+              api_id: 'date_signature',
               type: 'date',
               page: 1,
               x: 50,
