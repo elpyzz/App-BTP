@@ -100,41 +100,79 @@ export async function sendQuoteForSignature(
     // Vérifier si la réponse est JSON avant de parser
     let data;
     const contentType = response.headers.get('content-type');
+    
+    // Lire la réponse en texte d'abord pour voir ce qui est réellement retourné
+    let responseText: string;
+    try {
+      // Essayer de cloner la réponse pour lire le texte sans consommer la réponse
+      const clonedResponse = response.clone();
+      responseText = await clonedResponse.text();
+    } catch (cloneError) {
+      // Si clone() échoue, lire directement (mais cela consomme la réponse)
+      responseText = await response.text();
+    }
+    
+    // #region agent log
+    console.log('[Client] Réponse brute (texte):', responseText);
+    console.log('[Client] Longueur réponse:', responseText.length);
+    console.log('[Client] Est vide?', responseText.length === 0);
+    // #endregion
+    
     if (contentType && contentType.includes('application/json')) {
       try {
-        data = await response.json();
+        // Si la réponse est vide, créer un objet d'erreur
+        if (responseText.length === 0) {
+          console.error('[Client] Réponse JSON vide!');
+          return {
+            success: false,
+            error: `Erreur ${response.status}: Le serveur a retourné une réponse vide`
+          };
+        }
+        
+        data = JSON.parse(responseText);
+        // #region agent log
+        console.log('[Client] Données parsées:', JSON.stringify(data, null, 2));
+        console.log('[Client] Structure data:', {
+          hasMessage: !!data?.message,
+          hasDetails: !!data?.details,
+          hasError: !!data?.error,
+          hasSuccess: 'success' in data,
+          keys: data ? Object.keys(data) : []
+        });
+        // #endregion
       } catch (jsonError) {
-        const textResponse = await response.text();
-        console.error('Erreur parsing JSON:', jsonError, 'Response:', textResponse);
+        console.error('[Client] Erreur parsing JSON:', jsonError);
+        console.error('[Client] Texte qui a causé l\'erreur:', responseText.substring(0, 500));
         return {
           success: false,
-          error: `Erreur ${response.status}: Réponse invalide du serveur`
+          error: `Erreur ${response.status}: Réponse invalide du serveur (non-JSON valide)`
         };
       }
     } else {
-      const textResponse = await response.text();
-      console.error('Réponse non-JSON:', textResponse);
+      console.error('[Client] Réponse non-JSON:', responseText);
       return {
         success: false,
-        error: `Erreur ${response.status}: ${textResponse || response.statusText}`
+        error: `Erreur ${response.status}: ${responseText || response.statusText}`
       };
     }
 
     if (!response.ok) {
       // #region agent log
-      console.error('Erreur API:', {
+      console.error('[Client] Erreur API:', {
         status: response.status,
         statusText: response.statusText,
         data: data,
-        details: data.details
+        details: data?.details,
+        message: data?.message,
+        error: data?.error
       });
       // #endregion
       
       // Construire un message d'erreur détaillé
-      let errorMessage = data.message || `Erreur ${response.status}: ${response.statusText}`;
+      let errorMessage = data?.message || data?.error || `Erreur ${response.status}: ${response.statusText}`;
       
       // Ajouter les détails si disponibles
-      if (data.details) {
+      if (data?.details) {
         if (data.details.error) {
           errorMessage += ` (${data.details.error})`;
         }
@@ -142,12 +180,16 @@ export async function sendQuoteForSignature(
           const errorList = data.details.errors.map((e: any) => e.message || e).join(', ');
           errorMessage += ` - ${errorList}`;
         }
+        // Afficher le statut HTTP de SignWell si disponible
+        if (data.details.status) {
+          errorMessage += ` [Status SignWell: ${data.details.status}]`;
+        }
       }
       
       return {
         success: false,
         error: errorMessage,
-        details: data.details
+        details: data?.details
       };
     }
 
