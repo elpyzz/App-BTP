@@ -503,6 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         redirect_url: `${process.env.APP_URL || 'http://localhost:5000'}/devis/${id}/signature-confirmee`,
         apply_signing_order: false,
         // fields est un tableau de tableaux : [ [champs pour fichier 0] ]
+        // Coordonnées pour bas à droite : PDF A4 = 595x842 points, y=0 en haut
         fields: [
           [
             {
@@ -510,8 +511,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               required: true,
               recipient_id: '1',
               page: 1,
-              x: 50,
-              y: 100,
+              x: 380,  // Bas à droite (595 - 200 (largeur) - 15 (marge))
+              y: 750,  // Bas de page (842 - 60 (hauteur) - 32 (marge))
               width: 200,
               height: 60
             },
@@ -520,8 +521,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               required: true,
               recipient_id: '1',
               page: 1,
-              x: 50,
-              y: 170,
+              x: 380,  // Bas à droite, aligné avec la signature
+              y: 700,  // Juste au-dessus de la signature
               width: 150,
               height: 30
             }
