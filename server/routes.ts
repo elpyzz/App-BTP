@@ -496,26 +496,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             email: quoteData.client.email
           }
         ],
-        fields: [
-          {
-            recipient_id: '1',
-            type: 'signature',
-            page: 1,
-            x: 50,
-            y: 100,
-            width: 200,
-            height: 60
-          },
-          {
-            recipient_id: '1',
-            type: 'date',
-            page: 1,
-            x: 50,
-            y: 170,
-            width: 150,
-            height: 30
-          }
-        ],
+        // Ne pas définir de champs - SignWell les ajoutera automatiquement
+        // Le client pourra placer sa signature où il le souhaite sur le document
         name: `Devis N°${quoteData.quoteNumber || id} — ${clientName}`,
         message: messagePersonnalise || `Bonjour ${clientName}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`,
         redirect_url: `${process.env.APP_URL || 'http://localhost:5000'}/devis/${id}/signature-confirmee`,
@@ -532,9 +514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none',
         payloadKeys: Object.keys(signwellPayload),
         recipientsStructure: JSON.stringify(signwellPayload.recipients, null, 2),
-        hasFields: !!signwellPayload.fields,
-        fieldsCount: signwellPayload.fields?.length || 0,
-        fieldsStructure: JSON.stringify(signwellPayload.fields, null, 2)
+        note: 'Aucun champ défini - SignWell ajoutera automatiquement les champs de signature'
       });
       
       // Log du payload complet pour debug
