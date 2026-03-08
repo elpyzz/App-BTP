@@ -493,25 +493,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           {
             id: '1',
             name: clientName,
-            email: quoteData.client.email,
-            fields: [
-              {
-                type: 'signature',
-                page: 1,
-                x: 50,
-                y: 100,
-                width: 200,
-                height: 60
-              },
-              {
-                type: 'date',
-                page: 1,
-                x: 50,
-                y: 170,
-                width: 150,
-                height: 30
-              }
-            ]
+            email: quoteData.client.email
+          }
+        ],
+        fields: [
+          {
+            recipient_id: '1',
+            type: 'signature',
+            page: 1,
+            x: 50,
+            y: 100,
+            width: 200,
+            height: 60
+          },
+          {
+            recipient_id: '1',
+            type: 'date',
+            page: 1,
+            x: 50,
+            y: 170,
+            width: 150,
+            height: 30
           }
         ],
         name: `Devis N°${quoteData.quoteNumber || id} — ${clientName}`,
@@ -530,9 +532,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none',
         payloadKeys: Object.keys(signwellPayload),
         recipientsStructure: JSON.stringify(signwellPayload.recipients, null, 2),
-        hasFields: !!signwellPayload.recipients[0]?.fields,
-        fieldsCount: signwellPayload.recipients[0]?.fields?.length || 0,
-        fieldsStructure: JSON.stringify(signwellPayload.recipients[0]?.fields, null, 2)
+        hasFields: !!signwellPayload.fields,
+        fieldsCount: signwellPayload.fields?.length || 0,
+        fieldsStructure: JSON.stringify(signwellPayload.fields, null, 2)
       });
       
       // Log du payload complet pour debug
