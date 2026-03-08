@@ -493,17 +493,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           {
             id: '1',
             name: clientName,
-            email: quoteData.client.email,
-            placeholder_fields: [
-              {
-                api_id: 'signature_client',
-                type: 'signature'
-              },
-              {
-                api_id: 'date_signature',
-                type: 'date'
-              }
-            ]
+            email: quoteData.client.email
+            // SignWell ajoutera automatiquement les champs de signature
+            // Le client pourra placer sa signature où il le souhaite sur le document
           }
         ],
         name: `Devis N°${quoteData.quoteNumber || id} — ${clientName}`,
