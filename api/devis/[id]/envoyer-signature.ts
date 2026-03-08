@@ -1,18 +1,47 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // #region agent log
+  console.log('[Vercel Function] envoyer-signature appelée:', {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    hasBody: !!req.body
+  });
+  // #endregion
+
   // Seulement POST
   if (req.method !== 'POST') {
+    console.log('[Vercel Function] Méthode non autorisée:', req.method);
     return res.status(405).json({ 
       success: false,
       error: 'Method not allowed',
-      allowedMethods: ['POST']
+      allowedMethods: ['POST'],
+      receivedMethod: req.method
     });
   }
 
   try {
-    const { id } = req.query;
+    // Sur Vercel, les paramètres de route dynamique sont dans req.query
+    const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
     const { messagePersonnalise, pdfBase64, quoteData } = req.body;
+
+    // #region agent log
+    console.log('[Vercel Function] Paramètres reçus:', {
+      id,
+      hasMessage: !!messagePersonnalise,
+      hasPdf: !!pdfBase64,
+      hasQuoteData: !!quoteData,
+      pdfSize: pdfBase64?.length || 0
+    });
+    // #endregion
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID du devis manquant dans l\'URL'
+      });
+    }
 
     // Vérifier que SignWell est configuré
     if (!process.env.SIGNWELL_API_KEY) {

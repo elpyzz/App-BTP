@@ -63,7 +63,19 @@ export async function sendQuoteForSignature(
     }
 
     // Envoyer à SignWell via l'API backend
-    const response = await fetch(`/api/devis/${quoteId}/envoyer-signature`, {
+    const apiUrl = `/api/devis/${quoteId}/envoyer-signature`;
+    // #region agent log
+    console.log('[Client] Envoi requête SignWell:', {
+      url: apiUrl,
+      method: 'POST',
+      quoteId,
+      pdfSize: pdfBase64.length,
+      hasQuoteData: !!quote,
+      baseUrl: window.location.origin
+    });
+    // #endregion
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,6 +86,16 @@ export async function sendQuoteForSignature(
         messagePersonnalise: messagePersonnalise || `Bonjour ${quote.client.contactName || quote.client.name}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`
       })
     });
+
+    // #region agent log
+    console.log('[Client] Réponse reçue:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      contentType: response.headers.get('content-type'),
+      url: response.url
+    });
+    // #endregion
 
     // Vérifier si la réponse est JSON avant de parser
     let data;
