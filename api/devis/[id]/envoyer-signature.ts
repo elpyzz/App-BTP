@@ -104,11 +104,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         {
           id: '1',
           name: clientName,
-          email: quoteData.client.email
+          email: quoteData.client.email,
+          signing_fields: [
+            {
+              type: 'signature',
+              page: 1,
+              x: 50,
+              y: 100,
+              width: 200,
+              height: 60
+            },
+            {
+              type: 'date',
+              page: 1,
+              x: 50,
+              y: 170,
+              width: 150,
+              height: 30
+            }
+          ]
         }
       ],
-      // Ne pas définir de champs - SignWell les ajoutera automatiquement
-      // Le client pourra placer sa signature où il le souhaite sur le document
       name: `Devis N°${quoteData.quoteNumber || id} — ${clientName}`,
       message: messagePersonnalise || `Bonjour ${clientName}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`,
       redirect_url: `${process.env.APP_URL || 'https://app-btp-one.vercel.app'}/devis/${id}/signature-confirmee`,
