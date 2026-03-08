@@ -481,6 +481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Créer le document dans SignWell
+      // Structure correcte : fields est un tableau de tableaux au niveau racine
+      // Le tableau extérieur correspond aux fichiers, le tableau intérieur contient les champs
       const signwellPayload = {
         test_mode: process.env.NODE_ENV === 'development' || process.env.SIGNWELL_TEST_MODE === 'true',
         files: [
@@ -493,33 +495,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           {
             id: '1',
             name: clientName,
-            email: quoteData.client.email,
-            fields: [
-              {
-                api_id: 'signature_client',
-                type: 'signature',
-                page: 1,
-                x: 50,
-                y: 100,
-                width: 200,
-                height: 60
-              },
-              {
-                api_id: 'date_signature',
-                type: 'date',
-                page: 1,
-                x: 50,
-                y: 170,
-                width: 150,
-                height: 30
-              }
-            ]
+            email: quoteData.client.email
           }
         ],
         name: `Devis N°${quoteData.quoteNumber || id} — ${clientName}`,
         message: messagePersonnalise || `Bonjour ${clientName}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`,
         redirect_url: `${process.env.APP_URL || 'http://localhost:5000'}/devis/${id}/signature-confirmee`,
-        apply_signing_order: false
+        apply_signing_order: false,
+        // fields est un tableau de tableaux : [ [champs pour fichier 0] ]
+        fields: [
+          [
+            {
+              type: 'signature',
+              required: true,
+              recipient_id: '1',
+              page: 1,
+              x: 50,
+              y: 100,
+              width: 200,
+              height: 60
+            },
+            {
+              type: 'date',
+              required: true,
+              recipient_id: '1',
+              page: 1,
+              x: 50,
+              y: 170,
+              width: 150,
+              height: 30
+            }
+          ]
+        ]
       };
 
       console.log('[SignWell] Envoi du document:', {
@@ -532,7 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none',
         payloadKeys: Object.keys(signwellPayload),
         recipientsStructure: JSON.stringify(signwellPayload.recipients, null, 2),
-        note: 'Aucun champ défini - SignWell ajoutera automatiquement les champs de signature'
+        fieldsStructure: JSON.stringify(signwellPayload.fields, null, 2),
+        fieldsCount: signwellPayload.fields?.[0]?.length || 0
       });
       
       // Log du payload complet pour debug
