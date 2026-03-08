@@ -511,8 +511,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               required: true,
               recipient_id: '1',
               page: 1,
-              x: 400,  // Plus à droite pour être vraiment en bas à droite
-              y: 780,  // Plus en bas pour être dans la zone "Lu et approuvé"
+              x: 420,  // Plus à droite (au lieu de 400)
+              y: 820,  // Beaucoup plus bas - peut dépasser en bas (zone blanche)
               width: 200,
               height: 60
             },
@@ -521,8 +521,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               required: true,
               recipient_id: '1',
               page: 1,
-              x: 400,  // Plus à droite, aligné avec la signature
-              y: 730,  // Juste au-dessus de la signature
+              x: 420,  // Plus à droite, aligné avec la signature
+              y: 770,  // Juste au-dessus de la signature
               width: 150,
               height: 30
             }
