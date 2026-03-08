@@ -122,8 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: '1',
             page: 1,
-            x: 420,  // Plus à droite (au lieu de 400)
-            y: 820,  // Beaucoup plus bas - peut dépasser en bas (zone blanche)
+            x: 420,
+            y: 850,  // Encore plus bas (au lieu de 820) - peut dépasser en bas
             width: 200,
             height: 60
           },
@@ -132,8 +132,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: '1',
             page: 1,
-            x: 420,  // Plus à droite, aligné avec la signature
-            y: 770,  // Juste au-dessus de la signature
+            x: 420,
+            y: 800,  // Juste au-dessus de la signature (au lieu de 770)
             width: 150,
             height: 30
           }
