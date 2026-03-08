@@ -50,6 +50,9 @@ export const QuoteStatusEnum = z.enum([
   "accepted",   // Accepté
   "rejected",   // Refusé
   "expired",    // Expiré
+  "en_attente_signature", // En attente de signature électronique
+  "signe",      // Signé électroniquement
+  "refuse",     // Refusé de signer
 ]);
 
 export type QuoteStatus = z.infer<typeof QuoteStatusEnum>;

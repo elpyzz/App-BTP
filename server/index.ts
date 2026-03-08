@@ -12,8 +12,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -111,6 +111,25 @@ app.use((req, res, next) => {
   server.on("error", (err: any) => {
     if (err.code === "EADDRINUSE") {
       log(`Port ${finalPort} is already in use`, "server");
+      
+      // Provide helpful message for Windows
+      if (process.platform === "win32") {
+        console.error(`\n❌ Le port ${finalPort} est déjà utilisé.`);
+        console.error(`\n💡 Solution : Trouvez et arrêtez le processus qui utilise le port ${finalPort}`);
+        console.error(`\n   Dans PowerShell, exécutez :`);
+        console.error(`   netstat -ano | findstr :${finalPort}`);
+        console.error(`\n   Puis tuez le processus avec :`);
+        console.error(`   taskkill /PID <PID> /F`);
+        console.error(`\n   Ou utilisez cette commande en une ligne :`);
+        console.error(`   Get-NetTCPConnection -LocalPort ${finalPort} | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }`);
+      } else {
+        console.error(`\n❌ Le port ${finalPort} est déjà utilisé.`);
+        console.error(`\n💡 Solution : Trouvez et arrêtez le processus qui utilise le port ${finalPort}`);
+        console.error(`\n   Exécutez :`);
+        console.error(`   lsof -ti:${finalPort} | xargs kill -9`);
+        console.error(`\n   Ou :`);
+        console.error(`   sudo kill -9 $(lsof -ti:${finalPort})`);
+      }
     } else {
       log(`server listen error: ${err?.code || err?.message}`, "server");
     }

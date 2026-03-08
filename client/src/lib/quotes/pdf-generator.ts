@@ -673,3 +673,11 @@ export async function downloadQuotePDF(quote: Quote): Promise<void> {
   const fileName = `Devis_${quote.quoteNumber || quote.id}_${(quote.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(fileName);
 }
+
+/**
+ * Génère le PDF d'un devis en base64 pour l'envoi à SignWell
+ */
+export async function generateQuotePDFBase64(quote: Quote): Promise<string> {
+  const doc = await generateQuotePDF(quote);
+  return doc.output('datauristring').split(',')[1]; // Retourne seulement la partie base64
+}

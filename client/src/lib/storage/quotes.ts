@@ -52,6 +52,13 @@ function quoteToSupabase(quote: Quote): any {
   if (quote.signature) data.signature = quote.signature;
   if (quote.notes) data.notes = quote.notes;
 
+  // Champs SignWell
+  if ((quote as any).signwellDocumentId) data.signwell_document_id = (quote as any).signwellDocumentId;
+  if ((quote as any).signwellSignedPdfUrl) data.signwell_signed_pdf_url = (quote as any).signwellSignedPdfUrl;
+  if ((quote as any).dateEnvoiSignature) data.date_envoi_signature = (quote as any).dateEnvoiSignature;
+  if ((quote as any).dateSignature) data.date_signature = (quote as any).dateSignature;
+  if ((quote as any).dateRefus) data.date_refus = (quote as any).dateRefus;
+
   // Ajouter les colonnes numériques seulement si elles ont une valeur non-nulle
   // Les colonnes avec DEFAULT 0 seront gérées par Supabase si on ne les envoie pas
   const subtotalHT = Number(quote.subtotalHT ?? 0);
@@ -124,6 +131,18 @@ function supabaseToQuote(data: any): Quote {
     notes: data.notes ?? undefined,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
+    // Champs SignWell (ajoutés via migration SQL)
+    signwellDocumentId: data.signwell_document_id ?? undefined,
+    signwellSignedPdfUrl: data.signwell_signed_pdf_url ?? undefined,
+    dateEnvoiSignature: data.date_envoi_signature ?? undefined,
+    dateSignature: data.date_signature ?? undefined,
+    dateRefus: data.date_refus ?? undefined,
+  } as Quote & {
+    signwellDocumentId?: string;
+    signwellSignedPdfUrl?: string;
+    dateEnvoiSignature?: string;
+    dateSignature?: string;
+    dateRefus?: string;
   };
 }
 

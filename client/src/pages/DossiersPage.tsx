@@ -39,6 +39,8 @@ import { sendQuoteByEmail, sendInvoiceByEmail } from '@/lib/email/send-email';
 import { isResendConfigured } from '@/lib/email/resend';
 import { loadReminders, saveReminder } from '@/lib/storage/reminders';
 import type { Reminder } from '@/lib/storage/reminders';
+import { sendQuoteForSignature } from '@/lib/signwell/send-signature';
+import { PenSquare, Copy, RefreshCw } from 'lucide-react';
 
 interface QuoteItem {
   id: string;
@@ -61,6 +63,7 @@ interface Quote {
   validityDays: number;
   createdAt: string;
   isSigned?: boolean;
+  status?: string; // Statut du devis (draft, sent, en_attente_signature, signe, refuse, etc.)
 }
 
 export default function DossiersPage() {
@@ -88,6 +91,10 @@ export default function DossiersPage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [showRemindersHistory, setShowRemindersHistory] = useState(false);
   const [selectedInvoiceForReminders, setSelectedInvoiceForReminders] = useState<Invoice | null>(null);
+  const [signatureDialogOpen, setSignatureDialogOpen] = useState(false);
+  const [quoteForSignature, setQuoteForSignature] = useState<Quote | null>(null);
+  const [signatureMessage, setSignatureMessage] = useState('');
+  const [sendingSignature, setSendingSignature] = useState(false);
   const { toast } = useToast();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
@@ -163,7 +170,8 @@ export default function DossiersPage() {
         total: quote.totalTTC || 0,
         validityDays: quote.validityDays || 30,
         createdAt: quote.createdAt || quote.issueDate || new Date().toISOString(),
-        isSigned: quote.isSigned ?? false
+        isSigned: quote.isSigned ?? false,
+        status: quote.status // Ajouter le statut pour l'affichage des badges
       }));
       
       setQuotes(adaptedQuotes);
@@ -491,6 +499,78 @@ export default function DossiersPage() {
     }
   };
 
+  // Fonction pour ouvrir le dialogue d'envoi pour signature
+  const handleSendForSignature = async (quote: Quote) => {
+    try {
+      // Charger le devis complet pour obtenir les infos du client
+      const fullQuote = await loadQuote(quote.id);
+      if (!fullQuote) {
+        toast({
+          title: 'Erreur',
+          description: 'Devis introuvable',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Vérifier que le client a un email
+      if (!fullQuote.client?.email) {
+        toast({
+          title: 'Erreur',
+          description: 'Ce client n\'a pas d\'email renseigné. Ajoutez son email dans sa fiche client avant d\'envoyer pour signature.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setQuoteForSignature(fullQuote);
+      setSignatureMessage(`Bonjour ${fullQuote.client.contactName || fullQuote.client.name}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`);
+      setSignatureDialogOpen(true);
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger le devis',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Fonction pour confirmer l'envoi pour signature
+  const confirmSendForSignature = async () => {
+    if (!quoteForSignature) return;
+
+    setSendingSignature(true);
+    try {
+      const result = await sendQuoteForSignature(quoteForSignature.id, signatureMessage);
+
+      if (result.success) {
+        toast({
+          title: 'Devis envoyé pour signature',
+          description: `Le devis a été envoyé à ${quoteForSignature.client?.email}`,
+        });
+        setSignatureDialogOpen(false);
+        setQuoteForSignature(null);
+        setSignatureMessage('');
+        // Recharger les devis pour mettre à jour le statut
+        loadQuotesFromSupabase();
+      } else {
+        toast({
+          title: 'Erreur',
+          description: result.error || 'Impossible d\'envoyer le devis pour signature',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Erreur lors de l\'envoi pour signature',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingSignature(false);
+    }
+  };
+
   // Fonction pour envoyer une relance en 1 clic
   const handleSendReminder = async (invoice: Invoice) => {
     if (!invoice.client?.email) {
@@ -688,6 +768,30 @@ Cordialement`;
                                 <span>{quote.clientName}</span>
                               </div>
                             </div>
+                            {quote.status && (
+                              <Badge 
+                                variant="outline" 
+                                className={
+                                  quote.status === 'en_attente_signature' ? 'badge-en-attente-signature' :
+                                  quote.status === 'signe' ? 'badge-signe' :
+                                  quote.status === 'refuse' ? 'badge-refuse' :
+                                  quote.status === 'sent' ? 'border-blue-500/50 text-blue-300' :
+                                  quote.status === 'accepted' ? 'border-green-500/50 text-green-300' :
+                                  quote.status === 'rejected' ? 'border-red-500/50 text-red-300' :
+                                  quote.status === 'expired' ? 'border-gray-500/50 text-gray-300' :
+                                  'border-white/50 text-white/70'
+                                }
+                              >
+                                {quote.status === 'en_attente_signature' ? '⏳ En attente de signature' :
+                                 quote.status === 'signe' ? '✅ Signé' :
+                                 quote.status === 'refuse' ? '❌ Refusé' :
+                                 quote.status === 'sent' ? 'Envoyé' :
+                                 quote.status === 'accepted' ? 'Accepté' :
+                                 quote.status === 'rejected' ? 'Refusé' :
+                                 quote.status === 'expired' ? 'Expiré' :
+                                 'Brouillon'}
+                              </Badge>
+                            )}
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -741,6 +845,20 @@ Cordialement`;
                               disabled={!resendConfigured}
                             >
                               <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendForSignature(quote)}
+                              className="flex-shrink-0 btn-signature"
+                              title="Envoyer pour signature électronique"
+                              style={{
+                                background: 'var(--accent-amber)',
+                                color: '#050810',
+                                border: 'none'
+                              }}
+                            >
+                              <PenSquare className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
@@ -936,6 +1054,138 @@ Cordialement`;
                     <p className="text-white">{selectedQuote.chantierName}</p>
                   </div>
                 </div>
+
+                {/* Encart de suivi de signature électronique */}
+                {selectedQuote.status === 'en_attente_signature' || selectedQuote.status === 'signe' || selectedQuote.status === 'refuse' ? (
+                  <div className="p-4 bg-black/20 rounded-lg border border-white/10">
+                    {selectedQuote.status === 'en_attente_signature' ? (
+                      <>
+                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                          <PenSquare className="h-5 w-5" style={{ color: 'var(--accent-amber)' }} />
+                          Signature électronique
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Envoyé à :</span>
+                            <span className="text-white">{(selectedQuote as any).clientEmail || 'Email non disponible'}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Statut :</span>
+                            <Badge className="badge-en-attente-signature">⏳ En attente de signature</Badge>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                // Copier le lien de signature (à implémenter avec les données SignWell)
+                                const quote = await loadQuote(selectedQuote.id);
+                                if (quote && (quote as any).signwellSigningUrl) {
+                                  await navigator.clipboard.writeText((quote as any).signwellSigningUrl);
+                                  toast({
+                                    title: 'Lien copié',
+                                    description: 'Le lien de signature a été copié dans le presse-papiers',
+                                  });
+                                } else {
+                                  toast({
+                                    title: 'Information',
+                                    description: 'Le lien de signature n\'est pas encore disponible',
+                                  });
+                                }
+                              }}
+                              className="text-white border-white/20 hover:bg-white/10"
+                            >
+                              <Copy className="h-4 w-4 mr-2" />
+                              Copier le lien de signature
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                handleSendForSignature(selectedQuote);
+                              }}
+                              className="text-white border-white/20 hover:bg-white/10"
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Renvoyer le lien
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : selectedQuote.status === 'signe' ? (
+                      <>
+                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                          <PenSquare className="h-5 w-5" style={{ color: '#10B981' }} />
+                          ✅ Devis signé électroniquement
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Signé par :</span>
+                            <span className="text-white">{selectedQuote.clientName}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Le :</span>
+                            <span className="text-white">
+                              {new Date().toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                const quote = await loadQuote(selectedQuote.id);
+                                if (quote && (quote as any).signwellSignedPdfUrl) {
+                                  window.open((quote as any).signwellSignedPdfUrl, '_blank');
+                                } else {
+                                  toast({
+                                    title: 'Information',
+                                    description: 'Le PDF signé n\'est pas encore disponible',
+                                  });
+                                }
+                              }}
+                              className="text-white border-white/20 hover:bg-white/10"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Télécharger le PDF signé
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                          <PenSquare className="h-5 w-5" style={{ color: '#EF4444' }} />
+                          ❌ Signature refusée
+                        </h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Refusé par :</span>
+                            <span className="text-white">{selectedQuote.clientName}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-white/70">
+                            <span>Le :</span>
+                            <span className="text-white">
+                              {new Date().toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : null}
 
                 <div>
                   <h3 className="font-semibold text-white mb-3">Détail des prestations</h3>
@@ -1305,6 +1555,82 @@ Cordialement`;
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog pour l'envoi pour signature */}
+        <Dialog open={signatureDialogOpen} onOpenChange={setSignatureDialogOpen}>
+          <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <PenSquare className="h-5 w-5" />
+                Envoyer le devis pour signature électronique
+              </DialogTitle>
+            </DialogHeader>
+            {quoteForSignature && (
+              <div className="space-y-4">
+                <div className="p-4 bg-black/20 rounded-lg space-y-3">
+                  <div>
+                    <label className="text-sm text-white/70 mb-1 block">Document</label>
+                    <p className="text-white font-medium">Devis N°{quoteForSignature.quoteNumber || quoteForSignature.id}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-white/70 mb-1 block">Destinataire</label>
+                    <p className="text-white font-medium">{quoteForSignature.client?.contactName || quoteForSignature.client?.name || 'Client'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-white/70 mb-1 block">Email</label>
+                    <p className="text-white font-medium">{quoteForSignature.client?.email}</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm text-white/70 mb-2 block">Message personnalisé</label>
+                  <textarea
+                    value={signatureMessage}
+                    onChange={(e) => setSignatureMessage(e.target.value)}
+                    placeholder="Bonjour [Prénom], veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement."
+                    rows={4}
+                    className="w-full bg-black/20 backdrop-blur-md border border-white/10 rounded-lg p-3 text-white placeholder:text-white/50 resize-none"
+                  />
+                </div>
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSignatureDialogOpen(false);
+                      setQuoteForSignature(null);
+                      setSignatureMessage('');
+                    }}
+                    className="text-white border-white/20 hover:bg-white/10"
+                    disabled={sendingSignature}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={confirmSendForSignature}
+                    disabled={sendingSignature || !signatureMessage.trim()}
+                    className="btn-signature"
+                    style={{
+                      background: 'var(--accent-amber)',
+                      color: '#050810',
+                      border: 'none'
+                    }}
+                  >
+                    {sendingSignature ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Envoi...
+                      </>
+                    ) : (
+                      <>
+                        <PenSquare className="h-4 w-4 mr-2" />
+                        Envoyer pour signature →
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
