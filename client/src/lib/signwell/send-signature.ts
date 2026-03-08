@@ -121,14 +121,33 @@ export async function sendQuoteForSignature(
     }
 
     if (!response.ok) {
+      // #region agent log
       console.error('Erreur API:', {
         status: response.status,
         statusText: response.statusText,
-        data: data
+        data: data,
+        details: data.details
       });
+      // #endregion
+      
+      // Construire un message d'erreur détaillé
+      let errorMessage = data.message || `Erreur ${response.status}: ${response.statusText}`;
+      
+      // Ajouter les détails si disponibles
+      if (data.details) {
+        if (data.details.error) {
+          errorMessage += ` (${data.details.error})`;
+        }
+        if (data.details.errors && Array.isArray(data.details.errors) && data.details.errors.length > 0) {
+          const errorList = data.details.errors.map((e: any) => e.message || e).join(', ');
+          errorMessage += ` - ${errorList}`;
+        }
+      }
+      
       return {
         success: false,
-        error: data.message || `Erreur ${response.status}: ${response.statusText}`
+        error: errorMessage,
+        details: data.details
       };
     }
 

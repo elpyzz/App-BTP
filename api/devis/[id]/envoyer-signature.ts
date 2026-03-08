@@ -127,7 +127,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       testMode: signwellPayload.test_mode,
       fileName: signwellPayload.files[0].name,
       recipientEmail: signwellPayload.recipients[0].email,
-      pdfSize: pdfBase64.length
+      recipientName: signwellPayload.recipients[0].name,
+      pdfSize: pdfBase64.length,
+      hasApiKey: !!process.env.SIGNWELL_API_KEY,
+      apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none',
+      payloadKeys: Object.keys(signwellPayload)
     });
 
     const signwellResponse = await fetch('https://www.signwell.com/api/v1/documents/', {
@@ -151,7 +155,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!signwellResponse.ok) {
-      console.error('Erreur SignWell complète:', {
+      // Log complet de l'erreur pour diagnostic
+      const errorDetails = {
         status: signwellResponse.status,
         statusText: signwellResponse.statusText,
         data: signwellData,
@@ -159,17 +164,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           testMode: signwellPayload.test_mode,
           fileName: signwellPayload.files[0].name,
           recipientEmail: signwellPayload.recipients[0].email,
-          pdfSize: pdfBase64.length
+          pdfSize: pdfBase64.length,
+          hasApiKey: !!process.env.SIGNWELL_API_KEY,
+          apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none'
         }
-      });
+      };
+      console.error('Erreur SignWell complète:', JSON.stringify(errorDetails, null, 2));
+      
+      // Retourner plus de détails même en production pour diagnostiquer
       return res.status(500).json({
         success: false,
-        message: signwellData.message || signwellData.error || 'Erreur lors de l\'envoi à SignWell',
-        details: process.env.NODE_ENV === 'development' ? {
+        message: signwellData.message || signwellData.error || signwellData.errors?.[0]?.message || 'Erreur lors de l\'envoi à SignWell',
+        details: {
           status: signwellResponse.status,
-          error: signwellData.error || signwellData.message,
+          statusText: signwellResponse.statusText,
+          error: signwellData.error || signwellData.message || signwellData.errors?.[0]?.message,
+          errors: signwellData.errors,
           fullResponse: signwellData
-        } : undefined
+        }
       });
     }
 
@@ -182,10 +194,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (error) {
-    console.error('Erreur SignWell:', error);
+    console.error('Erreur SignWell (catch):', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Erreur serveur lors de l\'envoi à SignWell',
+      details: process.env.NODE_ENV === 'development' ? {
+        error: String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      } : undefined
     });
   }
 }
