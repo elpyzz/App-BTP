@@ -139,8 +139,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       pdfSize: pdfBase64.length,
       hasApiKey: !!process.env.SIGNWELL_API_KEY,
       apiKeyPrefix: process.env.SIGNWELL_API_KEY?.substring(0, 10) || 'none',
-      payloadKeys: Object.keys(signwellPayload)
+      payloadKeys: Object.keys(signwellPayload),
+      recipientsStructure: JSON.stringify(signwellPayload.recipients, null, 2),
+      hasFields: !!signwellPayload.recipients[0]?.fields,
+      fieldsCount: signwellPayload.recipients[0]?.fields?.length || 0,
+      fieldsStructure: JSON.stringify(signwellPayload.recipients[0]?.fields, null, 2)
     });
+    
+    // Log du payload complet pour debug
+    console.log('[SignWell] Payload complet:', JSON.stringify(signwellPayload, null, 2));
 
     const signwellResponse = await fetch('https://www.signwell.com/api/v1/documents/', {
       method: 'POST',
