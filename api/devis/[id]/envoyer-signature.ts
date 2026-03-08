@@ -114,7 +114,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       redirect_url: `${process.env.APP_URL || 'https://app-btp-one.vercel.app'}/devis/${id}/signature-confirmee`,
       apply_signing_order: false,
       // fields est un tableau de tableaux : [ [champs pour fichier 0] ]
-      // Coordonnées pour bas à droite : PDF A4 = 595x842 points, y=0 en bas (standard PDF)
+      // Coordonnées pour bas à droite : PDF A4 = 595x842 points, y=0 en haut
+      // Pour descendre, augmenter y (y=842 est le bas de la page)
       fields: [
         [
           {
@@ -123,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recipient_id: '1',
             page: 1,
             x: 420,
-            y: 50,  // Si y=0 est en bas, diminuer y descend (au lieu de 850)
+            y: 800,  // Proche du bas (842 - 60 hauteur - marge) - zone "Lu et approuvé"
             width: 200,
             height: 60
           },
@@ -133,7 +134,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recipient_id: '1',
             page: 1,
             x: 420,
-            y: 100,  // Juste au-dessus de la signature (au lieu de 800)
+            y: 750,  // Juste au-dessus de la signature
             width: 150,
             height: 30
           }
