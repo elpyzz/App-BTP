@@ -64,6 +64,9 @@ app.use((req, res, next) => {
   // Middleware CRITIQUE : Intercepter TOUTES les routes API avant Vite
   // Ce middleware garantit que les routes API ne passent jamais par Vite
   app.use('/api', (req, res, next) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:66',message:'Pre-Vite API Middleware',data:{method:req.method,originalUrl:req.originalUrl,path:req.path},timestamp:Date.now(),runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     console.log('[Pre-Vite API Middleware] Intercepting API route:', req.method, req.originalUrl);
     // Les routes API sont déjà enregistrées par registerRoutes
     // On laisse Express les gérer, on ne passe JAMAIS à Vite pour /api

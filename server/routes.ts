@@ -424,6 +424,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Route POST /devis/:id/envoyer-signature pour envoyer un devis à SignWell
   apiRouter.post('/devis/:id/envoyer-signature', async (req, res) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:426',message:'Route envoyer-signature appelée',data:{method:req.method,url:req.url,params:req.params,hasBody:!!req.body},timestamp:Date.now(),runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     try {
       const { id } = req.params;
       const { messagePersonnalise, pdfBase64, quoteData } = req.body;
@@ -695,8 +699,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Handler pour les routes API non trouvées (doit être APRÈS toutes les routes)
+  apiRouter.all('*', (req, res) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:apiRouter.all',message:'Route API non trouvée',data:{method:req.method,url:req.originalUrl,path:req.path,baseUrl:req.baseUrl},timestamp:Date.now(),runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    console.error('[API] Route non trouvée:', req.method, req.originalUrl, 'Path:', req.path);
+    res.status(404).json({
+      success: false,
+      error: 'Route API non trouvée',
+      method: req.method,
+      path: req.path,
+      originalUrl: req.originalUrl
+    });
+  });
+
   // Monter le router API sur /api
   console.log('[Routes] Mounting API router on /api');
+  // #region agent log
+  fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/routes.ts:702',message:'Mounting API router',data:{routesRegistered:['/devis/:id/envoyer-signature','/webhooks/signwell']},timestamp:Date.now(),runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
   app.use('/api', apiRouter);
   console.log('[Routes] API router mounted successfully');
   

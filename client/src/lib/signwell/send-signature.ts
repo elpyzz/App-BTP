@@ -75,7 +75,28 @@ export async function sendQuoteForSignature(
       })
     });
 
-    const data = await response.json();
+    // Vérifier si la réponse est JSON avant de parser
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        const textResponse = await response.text();
+        console.error('Erreur parsing JSON:', jsonError, 'Response:', textResponse);
+        return {
+          success: false,
+          error: `Erreur ${response.status}: Réponse invalide du serveur`
+        };
+      }
+    } else {
+      const textResponse = await response.text();
+      console.error('Réponse non-JSON:', textResponse);
+      return {
+        success: false,
+        error: `Erreur ${response.status}: ${textResponse || response.statusText}`
+      };
+    }
 
     if (!response.ok) {
       console.error('Erreur API:', {
