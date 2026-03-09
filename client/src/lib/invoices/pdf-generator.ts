@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { Invoice } from "./types";
+import type { Company } from "@/lib/quotes/types";
 import { formatVatRate } from "./calculations";
 import { UNIT_LABELS } from "@/lib/quotes/defaults";
 
@@ -45,9 +46,15 @@ function getImageTypeFromDataUrl(dataUrl: string): 'JPEG' | 'PNG' {
 }
 
 /**
- * Génère un PDF professionnel pour une facture
+ * Génère un PDF professionnel pour une facture.
+ * companyOverrides : logo/signature à jour (company actuelle) pour afficher le logo même si la facture a été créée avant.
  */
-export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
+export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Partial<Company>): Promise<jsPDF> {
+  const companyForPdf = companyOverrides
+    ? (invoice.company ? { ...invoice.company, ...companyOverrides } : (companyOverrides as Invoice["company"]))
+    : invoice.company;
+  const invoiceForPdf: Invoice = companyForPdf ? { ...invoice, company: companyForPdf } : invoice;
+
   const doc = new jsPDF();
   let yPos = 20; // Réduit de 25 à 20
 
@@ -62,11 +69,11 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   // EN-TÊTE AVEC LOGO ET NUMÉRO FACTURE
   // ============================================
   
-  // Logo à gauche (priorité : logo company, sinon fichier public /logo.jpg)
+  // Logo à gauche (priorité : logo company à jour, sinon facture, sinon /logo.jpg)
   const logoSize = 15;
   const logoX = margin;
   const logoY = yPos;
-  const logoFromCompany = invoice.company?.logo;
+  const logoFromCompany = invoiceForPdf.company?.logo;
   const logoImage = typeof logoFromCompany === 'string' && logoFromCompany.startsWith('data:')
     ? logoFromCompany
     : await loadLogoImage();
@@ -83,7 +90,7 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
       doc.setFontSize(12);
       doc.setFont(undefined, "bold");
       doc.setTextColor(255, 255, 255);
-      const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
+      const companyInitial = invoiceForPdf.company?.name?.charAt(0).toUpperCase() || "C";
       doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
     }
   } else {
@@ -93,14 +100,14 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
     doc.setFontSize(12); // Réduit de 14 à 12
     doc.setFont(undefined, "bold");
     doc.setTextColor(255, 255, 255);
-    const companyInitial = invoice.company?.name?.charAt(0).toUpperCase() || "C";
+    const companyInitial = invoiceForPdf.company?.name?.charAt(0).toUpperCase() || "C";
     doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   }
   
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
-  const companyName = (invoice.company?.name || "VOTRE ENTREPRISE").toLowerCase();
+  const companyName = (invoiceForPdf.company?.name || "VOTRE ENTREPRISE").toLowerCase();
   const maxCompanyNameWidth = pageWidth / 2 - logoX - logoSize - 8;
   const companyNameLines = doc.splitTextToSize(companyName, maxCompanyNameWidth);
   doc.text(companyNameLines, logoX + logoSize + 8, logoY + logoSize / 2 + 2);
@@ -148,61 +155,61 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(invoice.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
+  doc.text(invoiceForPdf.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
   
   let leftY = yPos + 5; // Réduit de 7 à 5
   doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
-  if (invoice.company?.address) {
+  if (invoiceForPdf.company?.address) {
     doc.text("Adresse", leftColX, leftY);
-    doc.text(invoice.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(invoiceForPdf.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   }
   
-  if (invoice.company?.postalCode && invoice.company?.city) {
+  if (invoiceForPdf.company?.postalCode && invoiceForPdf.company?.city) {
     doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${invoice.company.postalCode} ${invoice.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(`${invoiceForPdf.company.postalCode} ${invoiceForPdf.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   }
   
-  if (invoice.company?.phone) {
+  if (invoiceForPdf.company?.phone) {
     doc.text("Téléphone", leftColX, leftY);
-    doc.text(invoice.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(invoiceForPdf.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   }
   
-  if (invoice.company?.email) {
+  if (invoiceForPdf.company?.email) {
     doc.text("Email", leftColX, leftY);
-    doc.text(invoice.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(invoiceForPdf.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   }
 
   // RCS/RM (obligatoire pour factures B2B)
-  if (invoice.company?.rcsCity && invoice.company?.siret) {
+  if (invoiceForPdf.company?.rcsCity && invoiceForPdf.company?.siret) {
     doc.text("RCS/RM", leftColX, leftY);
-    const siretFormatted = invoice.company.siret.match(/.{1,3}/g)?.join(' ') || invoice.company.siret;
-    doc.text(`RCS ${invoice.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
+    const siretFormatted = invoiceForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || invoiceForPdf.company.siret;
+    doc.text(`RCS ${invoiceForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
     leftY += 6;
-  } else if (invoice.company?.siret) {
+  } else if (invoiceForPdf.company?.siret) {
     // Avertissement si SIRET sans RCS
     doc.setTextColor(200, 0, 0); // Rouge pour avertissement
-    doc.text("⚠️ RCS manquant (obligatoire B2B)", leftColX, leftY);
+    doc.text("Attention : RCS manquant (obligatoire B2B)", leftColX, leftY);
     doc.setTextColor(60, 60, 60);
     leftY += 6;
   }
 
   // Capital social (seulement si > 0 et forme juridique nécessite capital)
-  if (invoice.company?.capital && invoice.company.capital > 0) {
+  if (invoiceForPdf.company?.capital && invoiceForPdf.company.capital > 0) {
     doc.text("Capital social", leftColX, leftY);
-    doc.text(formatCurrencyForPDF(invoice.company.capital), leftColX, leftY + 3);
+    doc.text(formatCurrencyForPDF(invoiceForPdf.company.capital), leftColX, leftY + 3);
     leftY += 6;
   }
 
   // Pays
   doc.text("Pays", leftColX, leftY);
-  doc.text(invoice.company?.country || "France", leftColX, leftY + 3);
+  doc.text(invoiceForPdf.company?.country || "France", leftColX, leftY + 3);
   leftY += 6;
 
   // Colonne droite - Client
@@ -280,7 +287,7 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
     infoLines.push(`Période d'exécution : ${new Date(invoice.executionPeriodStart).toLocaleDateString("fr-FR")} au ${new Date(invoice.executionPeriodEnd).toLocaleDateString("fr-FR")}`);
   } else {
     // Avertissement si manquant
-    infoLines.push(`⚠️ Date de prestation manquante (obligatoire)`);
+    infoLines.push("Attention : Date de prestation manquante (obligatoire)");
   }
   
   // Référence au devis (recommandé en BTP)
@@ -486,7 +493,7 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   
   if (!invoice.paymentTerms || invoice.paymentTerms.trim() === "") {
     doc.setTextColor(200, 0, 0); // Rouge
-    doc.text("⚠️ Conditions de paiement manquantes (obligatoire)", margin, yPos);
+    doc.text("Attention : Conditions de paiement manquantes (obligatoire)", margin, yPos);
     doc.setTextColor(60, 60, 60);
     yPos += 6;
   } else {
@@ -524,7 +531,7 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   // Pénalités de retard (obligatoire B2B)
   if (!invoice.latePaymentPenalties || invoice.latePaymentPenalties.trim() === "") {
     doc.setTextColor(200, 0, 0); // Rouge
-    doc.text("⚠️ Pénalités de retard manquantes (obligatoire B2B)", margin, yPos);
+    doc.text("Attention : Pénalités de retard manquantes (obligatoire B2B)", margin, yPos);
     doc.setTextColor(60, 60, 60);
     yPos += 6;
   } else {
@@ -556,31 +563,32 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5); // Ajusté
   
   const footerLines = [];
-  if (invoice.company?.name) {
+  if (invoiceForPdf.company?.name) {
     // Afficher le capital seulement s'il est > 0
-    if (invoice.company?.capital && invoice.company.capital > 0) {
-      const capital = formatCurrencyForPDF(invoice.company.capital);
-      footerLines.push(`${invoice.company.name} au capital de ${capital}`);
+    if (invoiceForPdf.company?.capital && invoiceForPdf.company.capital > 0) {
+      const capital = formatCurrencyForPDF(invoiceForPdf.company.capital);
+      footerLines.push(`${invoiceForPdf.company.name} au capital de ${capital}`);
     } else {
-      footerLines.push(invoice.company.name);
+      footerLines.push(invoiceForPdf.company.name);
     }
   }
   
   // RCS (obligatoire pour factures B2B)
-  if (invoice.company?.rcsCity && invoice.company?.siret) {
-    const siretFormatted = invoice.company.siret.match(/.{1,3}/g)?.join(' ') || invoice.company.siret;
-    footerLines.push(`RCS ${invoice.company.rcsCity} n° ${siretFormatted}`);
-  } else if (invoice.company?.siret) {
+  if (invoiceForPdf.company?.rcsCity && invoiceForPdf.company?.siret) {
+    const siretFormatted = invoiceForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || invoiceForPdf.company.siret;
+    footerLines.push(`RCS ${invoiceForPdf.company.rcsCity} n° ${siretFormatted}`);
+  } else if (invoiceForPdf.company?.siret) {
     // Avertissement si SIRET sans RCS
-    footerLines.push(`⚠️ SIRET : ${invoice.company.siret} - RCS manquant (obligatoire B2B)`);
+    const siretFormatted = invoiceForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || invoiceForPdf.company.siret;
+    footerLines.push(`SIRET : ${siretFormatted} - RCS manquant (obligatoire B2B)`);
   }
   
-  if (invoice.company?.vatNumber) {
-    footerLines.push(`Numéro de TVA : ${invoice.company.vatNumber}`);
+  if (invoiceForPdf.company?.vatNumber) {
+    footerLines.push(`Numéro de TVA : ${invoiceForPdf.company.vatNumber}`);
   }
   
-  if (invoice.company?.insuranceDecennale?.company && invoice.company?.insuranceDecennale?.policyNumber) {
-    footerLines.push(`Assurance : ${invoice.company.insuranceDecennale.company} - Police n° ${invoice.company.insuranceDecennale.policyNumber}`);
+  if (invoiceForPdf.company?.insuranceDecennale?.company && invoiceForPdf.company?.insuranceDecennale?.policyNumber) {
+    footerLines.push(`Assurance : ${invoiceForPdf.company.insuranceDecennale.company} - Police n° ${invoiceForPdf.company.insuranceDecennale.policyNumber}`);
   }
   
   footerLines.forEach((line, index) => {
@@ -591,10 +599,11 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
 }
 
 /**
- * Télécharge le PDF d'une facture
+ * Télécharge le PDF d'une facture.
+ * companyOverrides : logo/signature à jour pour afficher le logo paramétré même si la facture a été créée avant.
  */
-export async function downloadInvoicePDF(invoice: Invoice): Promise<void> {
-  const doc = await generateInvoicePDF(invoice);
+export async function downloadInvoicePDF(invoice: Invoice, companyOverrides?: Partial<Company>): Promise<void> {
+  const doc = await generateInvoicePDF(invoice, companyOverrides);
   const fileName = `Facture_${invoice.invoiceNumber || invoice.id}_${(invoice.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(fileName);
 }

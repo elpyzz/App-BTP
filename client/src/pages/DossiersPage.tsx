@@ -361,7 +361,13 @@ export default function DossiersPage() {
         return;
       }
 
-      await downloadInvoicePDF(fullInvoice);
+      const companyForPdf = company ?? (await loadCurrentCompany());
+      const companyOverrides = companyForPdf
+        ? (fullInvoice.company
+            ? { signature: companyForPdf.signature, logo: companyForPdf.logo }
+            : { ...companyForPdf })
+        : undefined;
+      await downloadInvoicePDF(fullInvoice, companyOverrides);
       
       toast({
         title: 'Export réussi',
@@ -489,7 +495,13 @@ export default function DossiersPage() {
       } else {
         const fullInvoice = await loadInvoice((itemToEmail.data as Invoice).id);
         if (!fullInvoice) throw new Error('Facture introuvable');
-        result = await sendInvoiceByEmail(fullInvoice, emailRecipient, emailMessage);
+        const companyForPdf = company ?? (await loadCurrentCompany());
+        const companyOverrides = companyForPdf
+          ? (fullInvoice.company
+              ? { signature: companyForPdf.signature, logo: companyForPdf.logo }
+              : { ...companyForPdf })
+          : undefined;
+        result = await sendInvoiceByEmail(fullInvoice, emailRecipient, emailMessage, companyOverrides);
       }
       
       if (result.success) {
@@ -627,8 +639,14 @@ Merci de procéder au règlement dans les plus brefs délais.
 
 Cordialement`;
 
-      // Envoyer l'email de relance
-      const result = await sendInvoiceByEmail(invoice, invoice.client.email, reminderMessage);
+      // Envoyer l'email de relance (avec logo à jour)
+      const companyForPdf = company ?? (await loadCurrentCompany());
+      const companyOverrides = companyForPdf
+        ? (invoice.company
+            ? { signature: companyForPdf.signature, logo: companyForPdf.logo }
+            : { ...companyForPdf })
+        : undefined;
+      const result = await sendInvoiceByEmail(invoice, invoice.client.email, reminderMessage, companyOverrides);
       
       if (result.success) {
         // Enregistrer dans l'historique

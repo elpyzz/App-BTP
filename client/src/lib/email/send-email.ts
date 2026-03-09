@@ -1,6 +1,6 @@
 import { generateQuotePDF } from '@/lib/quotes/pdf-generator';
 import { generateInvoicePDF } from '@/lib/invoices/pdf-generator';
-import { Quote } from '@/lib/quotes/types';
+import { Quote, Company } from '@/lib/quotes/types';
 import { Invoice } from '@/lib/invoices/types';
 
 export interface SendEmailParams {
@@ -62,11 +62,12 @@ export async function sendQuoteByEmail(
 export async function sendInvoiceByEmail(
   invoice: Invoice,
   recipientEmail: string,
-  customMessage?: string
+  customMessage?: string,
+  companyOverrides?: Partial<Company>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Générer le PDF
-    const pdfDoc = await generateInvoicePDF(invoice);
+    // Générer le PDF (avec logo/signature à jour si fournis)
+    const pdfDoc = await generateInvoicePDF(invoice, companyOverrides);
     const pdfBlob = pdfDoc.output('blob');
     
     // Convertir en base64
