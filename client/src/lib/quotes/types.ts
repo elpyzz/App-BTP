@@ -117,6 +117,7 @@ export const QuoteClientSchema = z.object({
   billingAddress: z.string().min(1, "Adresse de facturation requise"),
   billingPostalCode: z.string().regex(/^\d{5}$/, "Code postal invalide"),
   billingCity: z.string().min(1, "Ville requise"),
+  billingCountry: z.string().optional(), // Pays de facturation (affiché sur devis/facture)
   
   // Adresse chantier (si différente)
   siteAddress: z.string().optional(),

@@ -103,6 +103,7 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
               billingAddress: quote.client.billingAddress,
               billingPostalCode: quote.client.billingPostalCode,
               billingCity: quote.client.billingCity,
+              billingCountry: quote.client.billingCountry,
               siteAddress: quote.client.siteAddress,
               sitePostalCode: quote.client.sitePostalCode,
               siteCity: quote.client.siteCity,

@@ -10,9 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { LEGAL_FORMS } from '@/lib/quotes/defaults';
-import { Building2, FileText, Package, PenTool } from 'lucide-react';
+import { Building2, FileText, ImagePlus, Package, PenTool, X } from 'lucide-react';
 import MaterialSettings from '@/components/MaterialSettings';
 import { SignatureCanvas } from '@/components/SignatureCanvas';
+
+const LOGO_MAX_SIZE_BYTES = 800 * 1024; // 800 Ko
+const LOGO_ACCEPT = 'image/jpeg,image/png';
 
 export default function SettingsPage() {
   const { company, setCompany, isLoading } = useCompany();
@@ -28,6 +31,32 @@ export default function SettingsPage() {
 
   const handleChange = (field: keyof Company, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > LOGO_MAX_SIZE_BYTES) {
+      toast({
+        title: 'Fichier trop volumineux',
+        description: `Le logo doit faire moins de ${Math.round(LOGO_MAX_SIZE_BYTES / 1024)} Ko. Choisissez une image plus légère.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      handleChange('logo', dataUrl);
+      toast({ title: 'Logo chargé', description: 'Enregistrez pour l\'appliquer aux devis et factures.' });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const clearLogo = () => {
+    handleChange('logo', null);
+    toast({ title: 'Logo supprimé', description: 'Enregistrez pour appliquer les changements.' });
   };
 
   const handleSave = async () => {
@@ -300,6 +329,48 @@ export default function SettingsPage() {
                       className="bg-black/20 border-white/10 text-white"
                       placeholder="France"
                     />
+                  </div>
+
+                  {/* Logo entreprise (devis & factures) */}
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-white flex items-center gap-2">
+                      <ImagePlus className="h-4 w-4" />
+                      Logo (devis et factures)
+                    </Label>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {formData.logo ? (
+                        <>
+                          <img
+                            src={formData.logo}
+                            alt="Logo"
+                            className="h-16 w-16 object-contain rounded border border-white/20 bg-black/20"
+                          />
+                          <div className="flex flex-col gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={clearLogo} className="border-white/20 text-white hover:bg-white/10">
+                              <X className="h-4 w-4 mr-1" />
+                              Supprimer le logo
+                            </Button>
+                            <p className="text-xs text-white/60">Enregistrez pour appliquer sur les prochains devis et factures.</p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept={LOGO_ACCEPT}
+                              onChange={handleLogoFile}
+                              className="sr-only"
+                            />
+                            <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/20 px-4 py-2 text-sm text-white hover:bg-white/10">
+                              <ImagePlus className="h-4 w-4" />
+                              Choisir un logo (JPG ou PNG, max 800 Ko)
+                            </span>
+                          </label>
+                          <p className="text-xs text-white/60">Le logo apparaîtra en haut à gauche des devis et factures.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>

@@ -15,7 +15,7 @@ function formatCurrencyForPDF(amount: number): string {
 }
 
 /**
- * Charge l'image du logo depuis le serveur public
+ * Charge l'image du logo depuis le serveur public (fallback si pas de logo company)
  */
 async function loadLogoImage(): Promise<string | null> {
   try {
@@ -39,6 +39,11 @@ async function loadLogoImage(): Promise<string | null> {
   }
 }
 
+function getImageTypeFromDataUrl(dataUrl: string): 'JPEG' | 'PNG' {
+  if (dataUrl.startsWith('data:image/png')) return 'PNG';
+  return 'JPEG';
+}
+
 /**
  * Génère un PDF professionnel pour une facture
  */
@@ -57,18 +62,19 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   // EN-TÊTE AVEC LOGO ET NUMÉRO FACTURE
   // ============================================
   
-  // Logo à gauche
-  const logoSize = 15; // Réduit de 18 à 15
+  // Logo à gauche (priorité : logo company, sinon fichier public /logo.jpg)
+  const logoSize = 15;
   const logoX = margin;
   const logoY = yPos;
-  
-  // Essayer de charger l'image du logo
-  const logoImage = await loadLogoImage();
-  
+  const logoFromCompany = invoice.company?.logo;
+  const logoImage = typeof logoFromCompany === 'string' && logoFromCompany.startsWith('data:')
+    ? logoFromCompany
+    : await loadLogoImage();
+
   if (logoImage) {
-    // Utiliser l'image du logo
     try {
-      doc.addImage(logoImage, 'JPEG', logoX, logoY, logoSize, logoSize * 1.15);
+      const format = getImageTypeFromDataUrl(logoImage);
+      doc.addImage(logoImage, format, logoX, logoY, logoSize, logoSize * 1.15);
     } catch (error) {
       console.warn('Erreur lors de l\'ajout de l\'image du logo:', error);
       // Fallback sur le carré ambre avec initiale
@@ -218,8 +224,29 @@ export async function generateInvoicePDF(invoice: Invoice): Promise<jsPDF> {
   
   if (invoice.client?.billingPostalCode && invoice.client?.billingCity) {
     doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
-    rightY += 6; // Réduit de 8 à 6
+    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY + 3);
+    rightY += 6;
+  }
+
+  doc.text("Pays", rightColX, rightY);
+  doc.text(invoice.client?.billingCountry || "France", rightColX, rightY + 3);
+  rightY += 6;
+
+  if (invoice.client?.phone) {
+    doc.text("Téléphone", rightColX, rightY);
+    doc.text(invoice.client.phone, rightColX, rightY + 3);
+    rightY += 6;
+  } else {
+    doc.text("Téléphone", rightColX, rightY);
+    rightY += 4;
+  }
+  if (invoice.client?.email) {
+    doc.text("Email", rightColX, rightY);
+    doc.text(invoice.client.email, rightColX, rightY + 3);
+    rightY += 6;
+  } else {
+    doc.text("Email", rightColX, rightY);
+    rightY += 4;
   }
 
   // ============================================

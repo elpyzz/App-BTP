@@ -46,6 +46,7 @@ export const InvoiceClientSchema = z.object({
   billingAddress: z.string().min(1, "Adresse de facturation requise"),
   billingPostalCode: z.string().regex(/^\d{5}$/, "Code postal invalide"),
   billingCity: z.string().min(1, "Ville requise"),
+  billingCountry: z.string().optional(),
   
   // Adresse livraison/chantier (si différente)
   deliveryAddress: z.string().optional(),

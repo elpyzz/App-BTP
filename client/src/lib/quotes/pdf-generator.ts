@@ -18,7 +18,7 @@ function formatCurrencyForPDF(amount: number): string {
 }
 
 /**
- * Charge l'image du logo depuis le serveur public
+ * Charge l'image du logo depuis le serveur public (fallback si pas de logo company)
  */
 async function loadLogoImage(): Promise<string | null> {
   try {
@@ -40,6 +40,12 @@ async function loadLogoImage(): Promise<string | null> {
     console.warn('Impossible de charger le logo:', error);
     return null;
   }
+}
+
+/** Retourne le type MIME pour jsPDF (JPEG ou PNG) à partir d'un data URL base64 */
+function getImageTypeFromDataUrl(dataUrl: string): 'JPEG' | 'PNG' {
+  if (dataUrl.startsWith('data:image/png')) return 'PNG';
+  return 'JPEG';
 }
 
 /**
@@ -67,18 +73,19 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   // EN-TÊTE AVEC LOGO ET NUMÉRO DEVIS
   // ============================================
   
-  // Logo à gauche
+  // Logo à gauche (priorité : logo company paramétré, sinon fichier public /logo.jpg)
   const logoSize = 15; // Réduit de 18 à 15
   const logoX = margin;
   const logoY = yPos;
-  
-  // Essayer de charger l'image du logo
-  const logoImage = await loadLogoImage();
+  const logoFromCompany = quoteForPdf.company?.logo;
+  const logoImage = typeof logoFromCompany === 'string' && logoFromCompany.startsWith('data:')
+    ? logoFromCompany
+    : await loadLogoImage();
   
   if (logoImage) {
-    // Utiliser l'image du logo
     try {
-      doc.addImage(logoImage, 'JPEG', logoX, logoY, logoSize, logoSize * 1.15);
+      const format = getImageTypeFromDataUrl(logoImage);
+      doc.addImage(logoImage, format, logoX, logoY, logoSize, logoSize * 1.15);
     } catch (error) {
       console.warn('Erreur lors de l\'ajout de l\'image du logo:', error);
       // Fallback sur le carré ambre avec initiale
@@ -262,6 +269,28 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   
   // Pays client
   doc.text("Pays", rightColX, rightY);
+  doc.text(quoteForPdf.client?.billingCountry || "France", rightColX, rightY + 3);
+  rightY += 6;
+
+  // Téléphone client
+  if (quoteForPdf.client?.phone) {
+    doc.text("Téléphone", rightColX, rightY);
+    doc.text(quoteForPdf.client.phone, rightColX, rightY + 3);
+    rightY += 6;
+  } else {
+    doc.text("Téléphone", rightColX, rightY);
+    rightY += 4;
+  }
+
+  // Email client
+  if (quoteForPdf.client?.email) {
+    doc.text("Email", rightColX, rightY);
+    doc.text(quoteForPdf.client.email, rightColX, rightY + 3);
+    rightY += 6;
+  } else {
+    doc.text("Email", rightColX, rightY);
+    rightY += 4;
+  }
 
   // ============================================
   // INTITULÉ DU DEVIS

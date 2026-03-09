@@ -33,6 +33,7 @@ export function StepClient({ client, chantier, onClientChange, onChantierChange 
         billingAddress: "",
         billingPostalCode: "",
         billingCity: "",
+        billingCountry: "",
       });
     }
   };
@@ -45,6 +46,7 @@ export function StepClient({ client, chantier, onClientChange, onChantierChange 
         billingAddress: "",
         billingPostalCode: "",
         billingCity: "",
+        billingCountry: "",
         [field]: value,
       });
     } else {
@@ -193,6 +195,17 @@ export function StepClient({ client, chantier, onClientChange, onChantierChange 
               onChange={(e) => handleClientChange("billingCity", e.target.value)}
               className="bg-black/20 border-white/10 text-white"
               placeholder="Paris"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="billingCountry" className="text-white">Pays</Label>
+            <Input
+              id="billingCountry"
+              value={client?.billingCountry ?? "France"}
+              onChange={(e) => handleClientChange("billingCountry", e.target.value)}
+              className="bg-black/20 border-white/10 text-white"
+              placeholder="France"
             />
           </div>
 
