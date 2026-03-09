@@ -42,7 +42,7 @@ import { loadReminders, saveReminder } from '@/lib/storage/reminders';
 import type { Reminder } from '@/lib/storage/reminders';
 import { sendQuoteForSignature } from '@/lib/signwell/send-signature';
 import { useCompany } from '@/context/CompanyContext';
-import { PenSquare, Copy, RefreshCw } from 'lucide-react';
+import { PenSquare, RefreshCw } from 'lucide-react';
 
 interface QuoteItem {
   id: string;
@@ -788,20 +788,14 @@ Cordialement`;
                               <Badge 
                                 variant="outline" 
                                 className={
-                                  quote.status === 'en_attente_signature' ? 'badge-en-attente-signature' :
-                                  quote.status === 'signe' ? 'badge-signe' :
-                                  quote.status === 'refuse' ? 'badge-refuse' :
-                                  quote.status === 'sent' ? 'border-blue-500/50 text-blue-300' :
+                                  quote.status === 'sent' || quote.status === 'en_attente_signature' || quote.status === 'signe' || quote.status === 'refuse' ? 'border-blue-500/50 text-blue-300' :
                                   quote.status === 'accepted' ? 'border-green-500/50 text-green-300' :
                                   quote.status === 'rejected' ? 'border-red-500/50 text-red-300' :
                                   quote.status === 'expired' ? 'border-gray-500/50 text-gray-300' :
                                   'border-white/50 text-white/70'
                                 }
                               >
-                                {quote.status === 'en_attente_signature' ? '⏳ En attente de signature' :
-                                 quote.status === 'signe' ? '✅ Signé' :
-                                 quote.status === 'refuse' ? '❌ Refusé' :
-                                 quote.status === 'sent' ? 'Envoyé' :
+                                {quote.status === 'sent' || quote.status === 'en_attente_signature' || quote.status === 'signe' || quote.status === 'refuse' ? 'Envoyé' :
                                  quote.status === 'accepted' ? 'Accepté' :
                                  quote.status === 'rejected' ? 'Refusé' :
                                  quote.status === 'expired' ? 'Expiré' :
@@ -1070,138 +1064,6 @@ Cordialement`;
                     <p className="text-white">{selectedQuote.chantierName}</p>
                   </div>
                 </div>
-
-                {/* Encart de suivi de signature électronique */}
-                {selectedQuote.status === 'en_attente_signature' || selectedQuote.status === 'signe' || selectedQuote.status === 'refuse' ? (
-                  <div className="p-4 bg-black/20 rounded-lg border border-white/10">
-                    {selectedQuote.status === 'en_attente_signature' ? (
-                      <>
-                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                          <PenSquare className="h-5 w-5" style={{ color: 'var(--accent-amber)' }} />
-                          Signature électronique
-                        </h3>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Envoyé à :</span>
-                            <span className="text-white">{(selectedQuote as any).clientEmail || 'Email non disponible'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Statut :</span>
-                            <Badge className="badge-en-attente-signature">⏳ En attente de signature</Badge>
-                          </div>
-                          <div className="flex gap-2 mt-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={async () => {
-                                // Copier le lien de signature (à implémenter avec les données SignWell)
-                                const quote = await loadQuote(selectedQuote.id);
-                                if (quote && (quote as any).signwellSigningUrl) {
-                                  await navigator.clipboard.writeText((quote as any).signwellSigningUrl);
-                                  toast({
-                                    title: 'Lien copié',
-                                    description: 'Le lien de signature a été copié dans le presse-papiers',
-                                  });
-                                } else {
-                                  toast({
-                                    title: 'Information',
-                                    description: 'Le lien de signature n\'est pas encore disponible',
-                                  });
-                                }
-                              }}
-                              className="text-white border-white/20 hover:bg-white/10"
-                            >
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copier le lien de signature
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                handleSendForSignature(selectedQuote);
-                              }}
-                              className="text-white border-white/20 hover:bg-white/10"
-                            >
-                              <RefreshCw className="h-4 w-4 mr-2" />
-                              Renvoyer le lien
-                            </Button>
-                          </div>
-                        </div>
-                      </>
-                    ) : selectedQuote.status === 'signe' ? (
-                      <>
-                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                          <PenSquare className="h-5 w-5" style={{ color: '#10B981' }} />
-                          ✅ Devis signé électroniquement
-                        </h3>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Signé par :</span>
-                            <span className="text-white">{selectedQuote.clientName}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Le :</span>
-                            <span className="text-white">
-                              {new Date().toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 mt-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={async () => {
-                                const quote = await loadQuote(selectedQuote.id);
-                                if (quote && (quote as any).signwellSignedPdfUrl) {
-                                  window.open((quote as any).signwellSignedPdfUrl, '_blank');
-                                } else {
-                                  toast({
-                                    title: 'Information',
-                                    description: 'Le PDF signé n\'est pas encore disponible',
-                                  });
-                                }
-                              }}
-                              className="text-white border-white/20 hover:bg-white/10"
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Télécharger le PDF signé
-                            </Button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                          <PenSquare className="h-5 w-5" style={{ color: '#EF4444' }} />
-                          ❌ Signature refusée
-                        </h3>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Refusé par :</span>
-                            <span className="text-white">{selectedQuote.clientName}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-white/70">
-                            <span>Le :</span>
-                            <span className="text-white">
-                              {new Date().toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : null}
 
                 <div>
                   <h3 className="font-semibold text-white mb-3">Détail des prestations</h3>

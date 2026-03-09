@@ -209,7 +209,7 @@ export async function sendQuoteForSignature(
       };
     }
 
-    // Mettre à jour le devis avec les informations SignWell
+    // Mettre à jour le devis avec les infos SignWell (statut restant "sent" : l'artisan vérifie la signature dans ses mails)
     const updatedQuote: Quote & {
       signwellDocumentId?: string;
       signwellSignedPdfUrl?: string;
@@ -218,7 +218,7 @@ export async function sendQuoteForSignature(
       dateRefus?: string;
     } = {
       ...quote,
-      status: 'en_attente_signature' as any,
+      status: 'sent' as any,
       signwellDocumentId: data.signwellDocumentId,
       dateEnvoiSignature: new Date().toISOString()
     };
