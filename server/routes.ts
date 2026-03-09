@@ -610,13 +610,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route POST /webhooks/signwell pour recevoir les notifications SignWell
+  // Payload SignWell : { event: { type: "document_completed" }, data: { object: { id, ... } } }
   apiRouter.post('/webhooks/signwell', async (req, res) => {
     try {
-      const { event_type, document } = req.body;
+      const eventType = req.body?.event?.type;
+      const document = req.body?.data?.object;
 
       if (!document || !document.id) {
         return res.status(400).json({ error: 'Document ID manquant' });
       }
+
+      const documentIdStr = String(document.id);
 
       // Initialiser Supabase avec la clé de service (service role key)
       // Cette clé permet de bypasser RLS et mettre à jour directement
@@ -631,11 +635,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { createClient } = await import('@supabase/supabase-js');
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-      // Trouver le devis par signwell_document_id
+      // Trouver le devis par signwell_document_id (string pour éviter type number vs string)
       const { data: quotes, error: findError } = await supabase
         .from('quotes')
         .select('id, status')
-        .eq('signwell_document_id', document.id)
+        .eq('signwell_document_id', documentIdStr)
         .limit(1);
 
       if (findError) {
@@ -644,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!quotes || quotes.length === 0) {
-        console.warn('[Webhook] Devis non trouvé pour document ID:', document.id);
+        console.warn('[Webhook] Devis non trouvé pour document ID:', documentIdStr);
         return res.status(404).json({ error: 'Devis non trouvé' });
       }
 
@@ -652,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let updateData: any = {};
 
       // Mettre à jour selon l'événement
-      if (event_type === 'document_completed') {
+      if (eventType === 'document_completed') {
         // Document signé
         updateData = {
           status: 'signe',
@@ -664,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           documentId: document.id,
           signedPdfUrl: document.completed_pdf_url
         });
-      } else if (event_type === 'document_declined') {
+      } else if (eventType === 'document_declined') {
         // Document refusé
         updateData = {
           status: 'refuse',
@@ -690,14 +694,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log('[Webhook] Devis mis à jour avec succès:', {
           quoteId: quote.id,
-          eventType: event_type,
+          eventType: eventType,
           newStatus: updateData.status
         });
       }
 
       res.json({
         received: true,
-        eventType: event_type,
+        eventType: eventType,
         documentId: document.id,
         quoteId: quote.id,
         updated: Object.keys(updateData).length > 0

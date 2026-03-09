@@ -8,11 +8,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { event_type, document } = req.body;
+    // Payload SignWell : { event: { type: "document_completed" }, data: { object: { id, ... } } }
+    const eventType = req.body?.event?.type;
+    const document = req.body?.data?.object;
 
     if (!document || !document.id) {
       return res.status(400).json({ error: 'Document ID manquant' });
     }
+
+    const documentIdStr = String(document.id);
 
     // Initialiser Supabase avec la clé de service (service role key)
     // Cette clé permet de bypasser RLS et mettre à jour directement
@@ -26,11 +30,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Trouver le devis par signwell_document_id
+    // Trouver le devis par signwell_document_id (string pour cohérence)
     const { data: quotes, error: findError } = await supabase
       .from('quotes')
       .select('id, status')
-      .eq('signwell_document_id', document.id)
+      .eq('signwell_document_id', documentIdStr)
       .limit(1);
 
     if (findError) {
@@ -39,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!quotes || quotes.length === 0) {
-      console.warn('[Webhook] Devis non trouvé pour document ID:', document.id);
+      console.warn('[Webhook] Devis non trouvé pour document ID:', documentIdStr);
       return res.status(404).json({ error: 'Devis non trouvé' });
     }
 
@@ -47,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let updateData: any = {};
 
     // Mettre à jour selon l'événement
-    if (event_type === 'document_completed') {
+    if (eventType === 'document_completed') {
       // Document signé
       updateData = {
         status: 'signe',
@@ -59,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         documentId: document.id,
         signedPdfUrl: document.completed_pdf_url
       });
-    } else if (event_type === 'document_declined') {
+    } else if (eventType === 'document_declined') {
       // Document refusé
       updateData = {
         status: 'refuse',
@@ -85,14 +89,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log('[Webhook] Devis mis à jour avec succès:', {
         quoteId: quote.id,
-        eventType: event_type,
+        eventType: eventType,
         newStatus: updateData.status
       });
     }
 
     res.json({
       received: true,
-      eventType: event_type,
+      eventType: eventType,
       documentId: document.id,
       quoteId: quote.id,
       updated: Object.keys(updateData).length > 0
