@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { Quote } from "./types";
+import { Quote, Company } from "./types";
 import { formatVatRate } from "./calculations";
 import { UNIT_LABELS } from "./defaults";
 
@@ -43,9 +43,16 @@ async function loadLogoImage(): Promise<string | null> {
 }
 
 /**
- * Génère un PDF professionnel pour un devis selon le modèle fourni
+ * Génère un PDF professionnel pour un devis selon le modèle fourni.
+ * companyOverrides : signature/logo à jour (company actuelle) pour afficher la signature de l'artisan même si le devis a été créé avant.
  */
-export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
+export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<Company>): Promise<jsPDF> {
+  // Fusionner la company du devis avec les overrides (signature/logo à jour), ou utiliser les overrides seuls si le devis n'a pas de company
+  const companyForPdf = companyOverrides
+    ? (quote.company ? { ...quote.company, ...companyOverrides } : (companyOverrides as Company))
+    : quote.company;
+  const quoteForPdf: Quote = companyForPdf ? { ...quote, company: companyForPdf } : quote;
+
   const doc = new jsPDF();
   let yPos = 20; // Réduit de 25 à 20
 
@@ -80,7 +87,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
       doc.setFontSize(12);
       doc.setFont(undefined, "bold");
       doc.setTextColor(255, 255, 255);
-      const companyInitial = quote.company?.name?.charAt(0).toUpperCase() || "C";
+      const companyInitial = quoteForPdf.company?.name?.charAt(0).toUpperCase() || "C";
       doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
     }
   } else {
@@ -90,7 +97,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
     doc.setFontSize(12); // Réduit de 14 à 12
     doc.setFont(undefined, "bold");
     doc.setTextColor(255, 255, 255);
-    const companyInitial = quote.company?.name?.charAt(0).toUpperCase() || "C";
+    const companyInitial = quoteForPdf.company?.name?.charAt(0).toUpperCase() || "C";
     doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   }
   
@@ -99,7 +106,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
   doc.setFontSize(14); // Réduit de 16 à 14
   doc.setFont(undefined, "bold");
-  const companyName = (quote.company?.name || "VOTRE ENTREPRISE").toLowerCase();
+  const companyName = (quoteForPdf.company?.name || "VOTRE ENTREPRISE").toLowerCase();
   const maxCompanyNameWidth = pageWidth / 2 - logoX - logoSize - 8;
   const companyNameLines = doc.splitTextToSize(companyName, maxCompanyNameWidth);
   doc.text(companyNameLines, logoX + logoSize + 8, logoY + logoSize / 2 + 2);
@@ -109,14 +116,14 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFontSize(16); // Réduit de 18 à 16
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(`Devis n° ${quote.quoteNumber || "N/A"}`, rightX, yPos + 4, { align: "right" });
+  doc.text(`Devis n° ${quoteForPdf.quoteNumber || "N/A"}`, rightX, yPos + 4, { align: "right" });
   
   yPos += 7; // Réduit de 10 à 7
   doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "normal");
-  doc.text(`Date d'émission : ${new Date(quote.issueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
+  doc.text(`Date d'émission : ${new Date(quoteForPdf.issueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
   yPos += 4; // Réduit de 5 à 4
-  doc.text(`Date d'expiration : ${new Date(quote.expirationDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
+  doc.text(`Date d'expiration : ${new Date(quoteForPdf.expirationDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
 
   // Nom du client centré (sous le logo et le numéro)
   yPos += 8; // Réduit de 10 à 8
@@ -124,7 +131,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
   const centerX = pageWidth / 2;
-  doc.text(quote.client?.name || "Nom du client", centerX, yPos, { align: "center" });
+  doc.text(quoteForPdf.client?.name || "Nom du client", centerX, yPos, { align: "center" });
 
   // ============================================
   // SECTION ENTREPRISE / CLIENT (DEUX COLONNES)
@@ -145,7 +152,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(quote.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
+  doc.text(quoteForPdf.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
   
   let leftY = yPos + 5; // Réduit de 7 à 5
   doc.setFontSize(8); // Réduit de 9 à 8
@@ -153,9 +160,9 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setTextColor(60, 60, 60);
   
   // Adresse entreprise
-  if (quote.company?.address) {
+  if (quoteForPdf.company?.address) {
     doc.text("Adresse", leftColX, leftY);
-    doc.text(quote.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(quoteForPdf.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Adresse", leftColX, leftY);
@@ -163,9 +170,9 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   }
   
   // Code postal et ville
-  if (quote.company?.postalCode && quote.company?.city) {
+  if (quoteForPdf.company?.postalCode && quoteForPdf.company?.city) {
     doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${quote.company.postalCode} ${quote.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(`${quoteForPdf.company.postalCode} ${quoteForPdf.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Code postal, Ville", leftColX, leftY);
@@ -174,13 +181,13 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   
   // Pays
   doc.text("Pays", leftColX, leftY);
-  doc.text(quote.company?.country || "France", leftColX, leftY + 3);
+  doc.text(quoteForPdf.company?.country || "France", leftColX, leftY + 3);
   leftY += 6; // Réduit de 4 à 6 pour avoir la valeur
   
   // Téléphone
-  if (quote.company?.phone) {
+  if (quoteForPdf.company?.phone) {
     doc.text("Téléphone", leftColX, leftY);
-    doc.text(quote.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(quoteForPdf.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Téléphone", leftColX, leftY);
@@ -188,9 +195,9 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   }
   
   // Site internet
-  if (quote.company?.website) {
+  if (quoteForPdf.company?.website) {
     doc.text("Site internet", leftColX, leftY);
-    doc.text(quote.company.website, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(quoteForPdf.company.website, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Site internet", leftColX, leftY);
@@ -198,9 +205,9 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   }
   
   // Email
-  if (quote.company?.email) {
+  if (quoteForPdf.company?.email) {
     doc.text("Email", leftColX, leftY);
-    doc.text(quote.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
+    doc.text(quoteForPdf.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
     leftY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Email", leftColX, leftY);
@@ -208,17 +215,17 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   }
 
   // RCS/RM (recommandé pour devis)
-  if (quote.company?.rcsCity && quote.company?.siret) {
+  if (quoteForPdf.company?.rcsCity && quoteForPdf.company?.siret) {
     doc.text("RCS/RM", leftColX, leftY);
-    const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
-    doc.text(`RCS ${quote.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
+    const siretFormatted = quoteForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || quoteForPdf.company.siret;
+    doc.text(`RCS ${quoteForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
     leftY += 6;
   }
 
   // Capital social (seulement si > 0)
-  if (quote.company?.capital && quote.company.capital > 0) {
+  if (quoteForPdf.company?.capital && quoteForPdf.company.capital > 0) {
     doc.text("Capital social", leftColX, leftY);
-    doc.text(formatCurrencyForPDF(quote.company.capital), leftColX, leftY + 3);
+    doc.text(formatCurrencyForPDF(quoteForPdf.company.capital), leftColX, leftY + 3);
     leftY += 6;
   }
 
@@ -227,16 +234,16 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFontSize(10); // Réduit de 11 à 10
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(quote.client?.name || "Nom du client", rightColX, yPos);
+  doc.text(quoteForPdf.client?.name || "Nom du client", rightColX, yPos);
   
   doc.setFontSize(8); // Réduit de 9 à 8
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
   // Adresse client
-  if (quote.client?.billingAddress) {
+  if (quoteForPdf.client?.billingAddress) {
     doc.text("Adresse", rightColX, rightY);
-    doc.text(quote.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
+    doc.text(quoteForPdf.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
     rightY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Adresse", rightColX, rightY);
@@ -244,9 +251,9 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   }
   
   // Code postal et ville client
-  if (quote.client?.billingPostalCode && quote.client?.billingCity) {
+  if (quoteForPdf.client?.billingPostalCode && quoteForPdf.client?.billingCity) {
     doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${quote.client.billingPostalCode} ${quote.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
+    doc.text(`${quoteForPdf.client.billingPostalCode} ${quoteForPdf.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
     rightY += 6; // Réduit de 8 à 6
   } else {
     doc.text("Code postal, Ville", rightColX, rightY);
@@ -272,7 +279,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setTextColor(0, 0, 0);
   
   // Intitulé avec le nom du chantier
-  const intitule = quote.chantier?.name || quote.chantier?.description || quote.notes || "Motif ou présentation du devis";
+  const intitule = quoteForPdf.chantier?.name || quoteForPdf.chantier?.description || quoteForPdf.notes || "Motif ou présentation du devis";
   doc.text(`Intitulé : ${intitule}`, margin, yPos);
   yPos += 5; // Réduit de 8 à 5
 
@@ -323,11 +330,11 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setTextColor(0, 0, 0);
 
   // Grouper par lots
-  const linesByLot = (quote.lots || []).map(lot => ({
+  const linesByLot = (quoteForPdf.lots || []).map(lot => ({
     lot,
-    lines: (quote.lines || []).filter(l => l.lotId === lot.id),
+    lines: (quoteForPdf.lines || []).filter(l => l.lotId === lot.id),
   }));
-  const linesWithoutLot = (quote.lines || []).filter(l => !l.lotId);
+  const linesWithoutLot = (quoteForPdf.lines || []).filter(l => !l.lotId);
 
   // Lignes groupées par lots
   linesByLot.forEach(({ lot, lines }) => {
@@ -429,13 +436,13 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   
   // Sous-total HT (dans la colonne Prix HT)
   doc.text("Sous-total HT", colDesignation, yPos);
-  doc.text(formatCurrencyForPDF(quote.subtotalHT || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
+  doc.text(formatCurrencyForPDF(quoteForPdf.subtotalHT || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
   yPos += 4; // Réduit de 6 à 4
   
   // Total TVA (dans la colonne Prix HT)
   doc.text("Total TVA", colDesignation, yPos);
-  doc.text(formatCurrencyForPDF(quote.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
+  doc.text(formatCurrencyForPDF(quoteForPdf.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
   
   yPos += 4; // Réduit de 6 à 4
   
@@ -444,7 +451,7 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFont(undefined, "bold");
   doc.setFontSize(9); // Réduit de 10 à 9
   doc.text("Total TTC", colDesignation + 5, yPos);
-  doc.text(formatCurrencyForPDF(quote.totalTTC || 0), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
+  doc.text(formatCurrencyForPDF(quoteForPdf.totalTTC || 0), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
   doc.setFont(undefined, "normal");
   doc.setFontSize(8); // Réduit de 9 à 8
 
@@ -462,8 +469,8 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
   
-  if (quote.conditions?.paymentTerms) {
-    const paymentLines = doc.splitTextToSize(quote.conditions.paymentTerms, contentWidth);
+  if (quoteForPdf.conditions?.paymentTerms) {
+    const paymentLines = doc.splitTextToSize(quoteForPdf.conditions.paymentTerms, contentWidth);
     doc.text(paymentLines, margin, yPos);
     yPos += paymentLines.length * 3.5; // Réduit de 4.5 à 3.5
   } else {
@@ -488,10 +495,10 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   // Utiliser les moyens de paiement sélectionnés dans les conditions
   let paymentMethodsText = "";
   
-  if (quote.conditions?.paymentMethods && quote.conditions.paymentMethods.length > 0) {
-    const methods = quote.conditions.paymentMethods.map(method => {
-      if (method.toLowerCase().includes("virement") && quote.company?.iban) {
-        return `Virement bancaire sur le compte : ${quote.company.iban}`;
+  if (quoteForPdf.conditions?.paymentMethods && quoteForPdf.conditions.paymentMethods.length > 0) {
+    const methods = quoteForPdf.conditions.paymentMethods.map(method => {
+      if (method.toLowerCase().includes("virement") && quoteForPdf.company?.iban) {
+        return `Virement bancaire sur le compte : ${quoteForPdf.company.iban}`;
       }
       return method;
     });
@@ -499,8 +506,8 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   } else {
     // Par défaut, afficher les moyens de paiement courants
     const methods = [];
-    if (quote.company?.iban) {
-      methods.push(`Virement bancaire sur le compte : ${quote.company.iban}`);
+    if (quoteForPdf.company?.iban) {
+      methods.push(`Virement bancaire sur le compte : ${quoteForPdf.company.iban}`);
     } else {
       methods.push("Virement bancaire");
     }
@@ -536,14 +543,14 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   yPos += 8;
   
   // Image de signature (si disponible)
-  if (quote.company?.signature) {
+  if (quoteForPdf.company?.signature) {
     try {
       // Calculer la taille de l'image (max 70px de hauteur, max 200px de largeur)
       const maxHeight = 25; // ~70px en mm
       const maxWidth = 70; // ~200px en mm
       
       // Charger l'image depuis le base64
-      const signatureImage = quote.company.signature;
+      const signatureImage = quoteForPdf.company.signature;
       doc.addImage(signatureImage, 'PNG', signatureLeftColX, yPos, maxWidth, maxHeight);
       yPos += maxHeight + 5;
     } catch (error) {
@@ -566,23 +573,23 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.setFontSize(8);
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  const artisanName = quote.company?.name || "Nom de l'artisan";
+  const artisanName = quoteForPdf.company?.name || "Nom de l'artisan";
   doc.text(artisanName, signatureLeftColX, yPos);
   yPos += 4;
   
   // Raison sociale (si différente du nom)
-  if (quote.company?.name) {
+  if (quoteForPdf.company?.name) {
     doc.setFontSize(7);
     doc.setFont(undefined, "normal");
     doc.setTextColor(100, 100, 100);
-    doc.text(quote.company.name, signatureLeftColX, yPos);
+    doc.text(quoteForPdf.company.name, signatureLeftColX, yPos);
     yPos += 4;
   }
   
   // Date de génération
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Date : ${new Date(quote.issueDate).toLocaleDateString("fr-FR")}`, signatureLeftColX, yPos);
+  doc.text(`Date : ${new Date(quoteForPdf.issueDate).toLocaleDateString("fr-FR")}`, signatureLeftColX, yPos);
   
   // Colonne droite : Bon pour accord client
   yPos = signatureStartY;
@@ -629,31 +636,31 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
   doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5); // Ajusté
   
   const footerLines = [];
-  if (quote.company?.name) {
+  if (quoteForPdf.company?.name) {
     // Afficher le capital seulement s'il est > 0
-    if (quote.company?.capital && quote.company.capital > 0) {
-      const capital = formatCurrencyForPDF(quote.company.capital);
-      footerLines.push(`${quote.company.name} au capital de ${capital}`);
+    if (quoteForPdf.company?.capital && quoteForPdf.company.capital > 0) {
+      const capital = formatCurrencyForPDF(quoteForPdf.company.capital);
+      footerLines.push(`${quoteForPdf.company.name} au capital de ${capital}`);
     } else {
-      footerLines.push(quote.company.name);
+      footerLines.push(quoteForPdf.company.name);
     }
   }
   
   // Afficher le RCS seulement si la ville RCS est renseignée (pas de valeur par défaut)
-  if (quote.company?.rcsCity && quote.company?.siret) {
-    const siretFormatted = quote.company.siret.match(/.{1,3}/g)?.join(' ') || quote.company.siret;
-    if (quote.company?.vatNumber) {
-      footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted} - Numéro de TVA : ${quote.company.vatNumber}`);
+  if (quoteForPdf.company?.rcsCity && quoteForPdf.company?.siret) {
+    const siretFormatted = quoteForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || quoteForPdf.company.siret;
+    if (quoteForPdf.company?.vatNumber) {
+      footerLines.push(`RCS ${quoteForPdf.company.rcsCity} n° ${siretFormatted} - Numéro de TVA : ${quoteForPdf.company.vatNumber}`);
     } else {
-      footerLines.push(`RCS ${quote.company.rcsCity} n° ${siretFormatted}`);
+      footerLines.push(`RCS ${quoteForPdf.company.rcsCity} n° ${siretFormatted}`);
     }
-  } else if (quote.company?.vatNumber) {
+  } else if (quoteForPdf.company?.vatNumber) {
     // Afficher seulement le numéro de TVA si pas de RCS mais qu'on a un numéro de TVA
-    footerLines.push(`Numéro de TVA : ${quote.company.vatNumber}`);
+    footerLines.push(`Numéro de TVA : ${quoteForPdf.company.vatNumber}`);
   }
   
-  if (quote.company?.insuranceDecennale?.company && quote.company?.insuranceDecennale?.policyNumber) {
-    footerLines.push(`Assurance : ${quote.company.insuranceDecennale.company} - Police n° ${quote.company.insuranceDecennale.policyNumber}`);
+  if (quoteForPdf.company?.insuranceDecennale?.company && quoteForPdf.company?.insuranceDecennale?.policyNumber) {
+    footerLines.push(`Assurance : ${quoteForPdf.company.insuranceDecennale.company} - Police n° ${quoteForPdf.company.insuranceDecennale.policyNumber}`);
   } else {
     footerLines.push("Assurance : XXX");
   }
@@ -668,8 +675,8 @@ export async function generateQuotePDF(quote: Quote): Promise<jsPDF> {
 /**
  * Télécharge le PDF d'un devis
  */
-export async function downloadQuotePDF(quote: Quote): Promise<void> {
-  const doc = await generateQuotePDF(quote);
+export async function downloadQuotePDF(quote: Quote, companyOverrides?: Partial<Company>): Promise<void> {
+  const doc = await generateQuotePDF(quote, companyOverrides);
   const fileName = `Devis_${quote.quoteNumber || quote.id}_${(quote.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(fileName);
 }
@@ -677,7 +684,7 @@ export async function downloadQuotePDF(quote: Quote): Promise<void> {
 /**
  * Génère le PDF d'un devis en base64 pour l'envoi à SignWell
  */
-export async function generateQuotePDFBase64(quote: Quote): Promise<string> {
-  const doc = await generateQuotePDF(quote);
+export async function generateQuotePDFBase64(quote: Quote, companyOverrides?: Partial<Company>): Promise<string> {
+  const doc = await generateQuotePDF(quote, companyOverrides);
   return doc.output('datauristring').split(',')[1]; // Retourne seulement la partie base64
 }

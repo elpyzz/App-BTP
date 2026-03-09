@@ -1,6 +1,7 @@
 import { Quote } from '@/lib/quotes/types';
 import { generateQuotePDFBase64 } from '@/lib/quotes/pdf-generator';
 import { loadQuote, saveQuote } from '@/lib/storage/quotes';
+import { loadCurrentCompany } from '@/lib/storage/company';
 
 export interface SendSignatureResponse {
   success: boolean;
@@ -44,10 +45,18 @@ export async function sendQuoteForSignature(
       };
     }
 
+    // Charger la company à jour (signature / logo) pour les inclure dans le PDF (ou toute la company si le devis n'en a pas)
+    const currentCompany = await loadCurrentCompany();
+    const companyOverrides = currentCompany
+      ? (quote.company
+          ? { signature: currentCompany.signature, logo: currentCompany.logo }
+          : currentCompany)
+      : undefined;
+
     // Générer le PDF en base64
     let pdfBase64: string;
     try {
-      pdfBase64 = await generateQuotePDFBase64(quote);
+      pdfBase64 = await generateQuotePDFBase64(quote, companyOverrides);
       if (!pdfBase64 || pdfBase64.length === 0) {
         return {
           success: false,

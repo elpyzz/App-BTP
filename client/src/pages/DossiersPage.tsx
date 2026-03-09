@@ -30,6 +30,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { downloadQuotePDF } from '@/lib/quotes/pdf-generator';
 import { loadQuote, loadQuotes, saveQuote, deleteQuote } from '@/lib/storage/quotes';
+import { loadCurrentCompany } from '@/lib/storage/company';
 import { Quote as NewQuote, generateId, generateQuoteNumber, calculateExpirationDate } from '@/lib/quotes/types';
 import { calculateQuoteTotals } from '@/lib/quotes/calculations';
 import { loadInvoices, loadInvoice, deleteInvoice } from '@/lib/storage/invoices';
@@ -40,6 +41,7 @@ import { isResendConfigured } from '@/lib/email/resend';
 import { loadReminders, saveReminder } from '@/lib/storage/reminders';
 import type { Reminder } from '@/lib/storage/reminders';
 import { sendQuoteForSignature } from '@/lib/signwell/send-signature';
+import { useCompany } from '@/context/CompanyContext';
 import { PenSquare, Copy, RefreshCw } from 'lucide-react';
 
 interface QuoteItem {
@@ -96,6 +98,7 @@ export default function DossiersPage() {
   const [signatureMessage, setSignatureMessage] = useState('');
   const [sendingSignature, setSendingSignature] = useState(false);
   const { toast } = useToast();
+  const { company } = useCompany();
   const previousQuotesLengthRef = useRef(0);
   const previousInvoicesLengthRef = useRef(0);
   
@@ -316,8 +319,14 @@ export default function DossiersPage() {
       // Le devis est déjà au nouveau format depuis Supabase
       const fullQuote: NewQuote = rawQuote;
 
-      // Générer et télécharger le PDF
-      await downloadQuotePDF(fullQuote);
+      // Inclure la signature / logo à jour : utiliser le contexte, ou charger la company depuis Supabase si absente (ex. pas encore chargée)
+      const companyForPdf = company ?? (await loadCurrentCompany());
+      const companyOverrides = companyForPdf
+        ? (fullQuote.company
+            ? { signature: companyForPdf.signature, logo: companyForPdf.logo }
+            : { ...companyForPdf })
+        : undefined;
+      await downloadQuotePDF(fullQuote, companyOverrides);
       
       toast({
         title: 'Export réussi',
@@ -469,7 +478,14 @@ export default function DossiersPage() {
       if (itemToEmail.type === 'quote') {
         const fullQuote = await loadQuote((itemToEmail.data as Quote).id);
         if (!fullQuote) throw new Error('Devis introuvable');
-        result = await sendQuoteByEmail(fullQuote, emailRecipient, emailMessage);
+        // Inclure la signature / logo à jour (contexte ou chargement Supabase si absent)
+        const companyForPdf = company ?? (await loadCurrentCompany());
+        const quoteToSend = companyForPdf
+          ? (fullQuote.company
+              ? { ...fullQuote, company: { ...fullQuote.company, signature: companyForPdf.signature, logo: companyForPdf.logo } }
+              : { ...fullQuote, company: companyForPdf })
+          : fullQuote;
+        result = await sendQuoteByEmail(quoteToSend, emailRecipient, emailMessage);
       } else {
         const fullInvoice = await loadInvoice((itemToEmail.data as Invoice).id);
         if (!fullInvoice) throw new Error('Facture introuvable');

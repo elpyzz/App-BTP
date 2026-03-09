@@ -73,12 +73,12 @@ export const CompanySchema = z.object({
   phone: z.string().min(1, "Téléphone requis"),
   email: z.string().email("Email invalide"),
   
-  // Recommandés
-  vatNumber: z.string().optional(), // N° TVA intracommunautaire
-  rcsCity: z.string().optional(),   // Ville RCS
-  capital: z.number().optional(),   // Capital social
+  // Recommandés (nullish = optional + accepte null, ex. retour Supabase)
+  vatNumber: z.string().nullish(),   // N° TVA intracommunautaire
+  rcsCity: z.string().nullish(),     // Ville RCS
+  capital: z.number().nullish(),    // Capital social
   country: z.string().optional().default("France"), // Pays
-  apeCode: z.string().optional(),   // Code APE/NAF
+  apeCode: z.string().nullish(),    // Code APE/NAF
   
   // Optionnels (acceptent null et undefined car Supabase peut retourner null)
   logo: z.string().nullish(),      // Base64 ou URL

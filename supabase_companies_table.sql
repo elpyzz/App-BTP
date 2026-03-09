@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS companies (
   insurance_decennale JSONB,
   insurance_rc JSONB,
   qualifications JSONB,
+  signature TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)

@@ -147,7 +147,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await supabase
         .from('companies')
-        .upsert(companyData)
+        .upsert(companyData, { onConflict: 'user_id' })
         .select()
         .single();
 
