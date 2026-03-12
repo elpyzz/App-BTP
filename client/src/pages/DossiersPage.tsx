@@ -33,7 +33,7 @@ import { loadQuote, loadQuotes, saveQuote, deleteQuote } from '@/lib/storage/quo
 import { loadCurrentCompany } from '@/lib/storage/company';
 import { Quote as NewQuote, generateId, generateQuoteNumber, calculateExpirationDate } from '@/lib/quotes/types';
 import { calculateQuoteTotals } from '@/lib/quotes/calculations';
-import { loadInvoices, loadInvoice, deleteInvoice } from '@/lib/storage/invoices';
+import { loadInvoices, loadInvoice, saveInvoice, deleteInvoice } from '@/lib/storage/invoices';
 import { Invoice } from '@/lib/invoices/types';
 import { downloadInvoicePDF } from '@/lib/invoices/pdf-generator';
 import { sendQuoteByEmail, sendInvoiceByEmail } from '@/lib/email/send-email';
@@ -97,6 +97,7 @@ export default function DossiersPage() {
   const [quoteForSignature, setQuoteForSignature] = useState<Quote | null>(null);
   const [signatureMessage, setSignatureMessage] = useState('');
   const [sendingSignature, setSendingSignature] = useState(false);
+  const [paidAtEdit, setPaidAtEdit] = useState<string>('');
   const { toast } = useToast();
   const { company } = useCompany();
   const previousQuotesLengthRef = useRef(0);
@@ -292,6 +293,7 @@ export default function DossiersPage() {
   // Ouvrir les détails d'une facture
   const handleViewInvoiceDetails = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
+    setPaidAtEdit(invoice.paidAt ?? '');
     setIsInvoiceDetailDialogOpen(true);
   };
 
@@ -1138,7 +1140,7 @@ Cordialement`;
         </Dialog>
 
         {/* Dialog de détails facture */}
-        <Dialog open={isInvoiceDetailDialogOpen} onOpenChange={setIsInvoiceDetailDialogOpen}>
+        <Dialog open={isInvoiceDetailDialogOpen} onOpenChange={(open) => { setIsInvoiceDetailDialogOpen(open); if (!open) setPaidAtEdit(''); }}>
           <DialogContent className="bg-black/20 backdrop-blur-md border border-white/10 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white">Détails de la Facture</DialogTitle>
@@ -1185,6 +1187,69 @@ Cordialement`;
                        selectedInvoice.status === 'overdue' ? 'En retard' :
                        selectedInvoice.status === 'cancelled' ? 'Annulée' : 'Brouillon'}
                     </Badge>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-black/20 rounded-lg border border-white/10 space-y-4">
+                  <h3 className="font-semibold text-white mb-2">Statut de paiement (comptabilité)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm text-white/70 block mb-1">Statut</label>
+                      <Select
+                        value={selectedInvoice.paymentStatus ?? 'unpaid'}
+                        onValueChange={async (value: 'paid' | 'unpaid' | 'partial') => {
+                          const updated = { ...selectedInvoice, paymentStatus: value };
+                          try {
+                            const saved = await saveInvoice(updated);
+                            setSelectedInvoice(saved);
+                            const list = await loadInvoices();
+                            setInvoices(list);
+                            window.dispatchEvent(new Event('invoicesUpdated'));
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unpaid">Non payé</SelectItem>
+                          <SelectItem value="partial">Partiel</SelectItem>
+                          <SelectItem value="paid">Payé</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm text-white/70 block mb-1">Date d&apos;encaissement</label>
+                      <Input
+                        type="date"
+                        value={paidAtEdit}
+                        onChange={(e) => setPaidAtEdit(e.target.value)}
+                        onBlur={async () => {
+                          const value = paidAtEdit.trim() || undefined;
+                          if (value === (selectedInvoice.paidAt ?? '')) return;
+                          const updated = { ...selectedInvoice, paidAt: value };
+                          try {
+                            // #region agent log
+                            fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'DossiersPage.tsx:paidAtBlur',message:'save paidAt on blur',data:{value},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+                            // #endregion
+                            const saved = await saveInvoice(updated);
+                            setSelectedInvoice(saved);
+                            setPaidAtEdit(saved.paidAt ?? '');
+                            const list = await loadInvoices();
+                            setInvoices(list);
+                            window.dispatchEvent(new Event('invoicesUpdated'));
+                          } catch (err) {
+                            console.error(err);
+                            // #region agent log
+                            fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'DossiersPage.tsx:paidAtBlurCatch',message:'saveInvoice error',data:{err:String(err)},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+                            // #endregion
+                          }
+                        }}
+                        className="bg-white/10 border-white/20 text-white"
+                      />
+                    </div>
                   </div>
                 </div>
 

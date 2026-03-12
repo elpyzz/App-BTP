@@ -16,6 +16,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell }
 import { loadQuotes } from '@/lib/storage/quotes'
 import { loadInvoices } from '@/lib/storage/invoices'
 import { useChantiers } from '@/context/ChantiersContext'
+import type { Invoice } from '@/lib/invoices/types'
+import {
+  caEncaisseDuMois,
+  caEnAttente,
+  caEncaisseAnnee,
+  evolutionMensuelleEncaissements,
+} from '@/lib/accounting/stats'
 
 export default function Dashboard() {
   const [location] = useLocation();
@@ -69,6 +76,7 @@ function OverviewTab() {
   const [signedQuotesTotal, setSignedQuotesTotal] = useState(0);
   const [totalInvoices, setTotalInvoices] = useState(0);
   const [invoicesTotal, setInvoicesTotal] = useState(0);
+  const [invoicesList, setInvoicesList] = useState<Invoice[]>([]);
   const [quotesByMonth, setQuotesByMonth] = useState<any[]>([]);
   
   // Charger les statistiques des devis
@@ -140,10 +148,12 @@ function OverviewTab() {
         const total = invoices.reduce((sum, inv) => sum + (inv.totalTTC || 0), 0);
         setTotalInvoices(invoices.length);
         setInvoicesTotal(total);
+        setInvoicesList(invoices);
       } catch (error) {
         console.error('Erreur lors du chargement des factures:', error);
         setTotalInvoices(0);
         setInvoicesTotal(0);
+        setInvoicesList([]);
       }
     };
     
@@ -198,6 +208,14 @@ function OverviewTab() {
       maximumFractionDigits: 0,
     }).format(amount);
   }, []);
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const caMois = caEncaisseDuMois(invoicesList, currentYear, currentMonth);
+  const caAttente = caEnAttente(invoicesList);
+  const caAnnee = caEncaisseAnnee(invoicesList, currentYear);
+  const evolutionEncaissements = evolutionMensuelleEncaissements(invoicesList);
   
   return (
     <div className="space-y-6">
@@ -260,6 +278,64 @@ function OverviewTab() {
                   <p>Aucun devis créé</p>
                   <p className="text-sm mt-2">Les données apparaîtront ici une fois que vous aurez créé des devis</p>
                 </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tableau de bord financier */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-medium text-white">Tableau de bord financier</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <MetricCard
+            title="CA encaissé du mois"
+            value={formatAmount(caMois)}
+            change="Factures payées ce mois"
+            icon={Euro}
+            delay={0}
+          />
+          <MetricCard
+            title="CA en attente"
+            value={formatAmount(caAttente)}
+            change="Factures non payées ou partiel"
+            icon={Euro}
+            delay={0}
+            onClick={() => setLocation('/dashboard/dossiers?tab=invoices')}
+          />
+          <MetricCard
+            title="CA de l'année"
+            value={formatAmount(caAnnee)}
+            change={`Encaissements ${currentYear}`}
+            icon={Euro}
+            delay={0}
+          />
+        </div>
+        <Card className="bg-black/20 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl text-white">
+          <CardHeader>
+            <CardTitle className="text-white font-light">Évolution mensuelle des encaissements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {evolutionEncaissements.some((d) => d.montant > 0) ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={evolutionEncaissements}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                  <XAxis
+                    dataKey="label"
+                    stroke="rgba(255, 255, 255, 0.7)"
+                    tick={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: 11 }}
+                  />
+                  <YAxis
+                    stroke="rgba(255, 255, 255, 0.7)"
+                    tick={{ fill: 'rgba(255, 255, 255, 0.7)', fontSize: 12 }}
+                    tickFormatter={(v) => `${(v / 1000).toFixed(0)} k€`}
+                  />
+                  <Bar dataKey="montant" fill="var(--accent-amber)" radius={[4, 4, 0, 0]} name="Encaissements" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[280px] text-white/50">
+                <p>Aucun encaissement enregistré sur les 12 derniers mois</p>
               </div>
             )}
           </CardContent>

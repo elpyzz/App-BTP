@@ -31,6 +31,10 @@ export const InvoiceStatusEnum = z.enum([
 
 export type InvoiceStatus = z.infer<typeof InvoiceStatusEnum>;
 
+/** Statut de paiement comptable (pour livre de recettes et tableau de bord financier) */
+export const PaymentStatusEnum = z.enum(["paid", "unpaid", "partial"]);
+export type PaymentStatus = z.infer<typeof PaymentStatusEnum>;
+
 // ============================================
 // SCHEMAS
 // ============================================
@@ -149,6 +153,10 @@ export const InvoiceSchema = z.object({
   // Acomptes
   depositsPaid: z.number().min(0).default(0), // Acomptes déjà payés
   remainingAmount: z.number().default(0), // Reste à payer = totalTTC - depositsPaid
+  
+  // Statut de paiement comptable
+  paymentStatus: PaymentStatusEnum.default("unpaid"),
+  paidAt: z.string().optional(), // Date d'encaissement (YYYY-MM-DD)
   
   // Paiement
   paymentTerms: z.string().min(1, "Conditions de paiement obligatoires").optional(),

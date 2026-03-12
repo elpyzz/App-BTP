@@ -339,6 +339,8 @@ export function InvoiceWizard({ initialInvoice, quoteId, onSave, onCancel }: Inv
         specialVatMention,
         notes,
         ...totals,
+        paymentStatus: initialInvoice?.paymentStatus ?? "unpaid",
+        paidAt: initialInvoice?.paidAt,
         createdAt: initialInvoice?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

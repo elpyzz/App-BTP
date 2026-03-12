@@ -26,6 +26,7 @@ const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const DossiersPage = lazy(() => import("@/pages/DossiersPage"));
 const InvoicesPage = lazy(() => import("@/pages/InvoicesPage"));
+const LivreRecettesPage = lazy(() => import("@/pages/LivreRecettesPage"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const pageVariants = {
@@ -90,6 +91,8 @@ function Router() {
         return <ProtectedRoute><PlanningPage /></ProtectedRoute>;
       case "/dashboard/settings":
         return <ProtectedRoute><SettingsPage /></ProtectedRoute>;
+      case "/dashboard/livre-recettes":
+        return <ProtectedRoute><LivreRecettesPage /></ProtectedRoute>;
       default:
         return <NotFound />;
     }

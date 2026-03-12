@@ -23,6 +23,7 @@ function invoiceToSupabase(invoice: Invoice): any {
   const data: any = {
     invoice_number: invoice.invoiceNumber,
     status: invoice.status,
+    payment_status: invoice.paymentStatus ?? "unpaid",
     issue_date: invoice.issueDate,
     due_date: invoice.dueDate,
     payment_delay_days: invoice.paymentDelayDays ?? 30,
@@ -55,6 +56,7 @@ function invoiceToSupabase(invoice: Invoice): any {
   if (invoice.latePaymentPenalties) data.late_payment_penalties = invoice.latePaymentPenalties;
   if (invoice.specialVatMention) data.special_vat_mention = invoice.specialVatMention;
   if (invoice.notes) data.notes = invoice.notes;
+  if (invoice.paidAt) data.paid_at = invoice.paidAt;
 
   // Ajouter les colonnes numériques seulement si elles ont une valeur non-nulle
   const subtotalHT = Number(invoice.subtotalHT ?? 0);
@@ -103,6 +105,8 @@ function supabaseToInvoice(data: any): Invoice {
     userId: data.user_id,
     invoiceNumber: data.invoice_number,
     status: data.status,
+    paymentStatus: data.payment_status ?? "unpaid",
+    paidAt: data.paid_at ?? undefined,
     issueDate: data.issue_date,
     saleDate: data.sale_date ?? undefined,
     executionPeriodStart: data.execution_period_start ?? undefined,
@@ -165,6 +169,7 @@ function saveInvoicesToLocalStorage(invoices: Invoice[]): void {
 export async function loadInvoicesFromSupabase(filters?: {
   quoteId?: string;
   status?: string;
+  paymentStatus?: string;
 }): Promise<Invoice[]> {
   try {
     const userId = await getCurrentUserId();
@@ -183,6 +188,9 @@ export async function loadInvoicesFromSupabase(filters?: {
     }
     if (filters?.status) {
       query = query.eq('status', filters.status);
+    }
+    if (filters?.paymentStatus) {
+      query = query.eq('payment_status', filters.paymentStatus);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -450,6 +458,7 @@ export async function loadInvoiceFromSupabase(id: string): Promise<Invoice | nul
 export async function loadInvoices(filters?: {
   quoteId?: string;
   status?: string;
+  paymentStatus?: string;
 }): Promise<Invoice[]> {
   return loadInvoicesFromSupabase(filters);
 }
