@@ -130,20 +130,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: 1,
             page: 1,
-            x: sigX,
-            y: sigY,
-            width: 220,
-            height: 30
+            x: 307,
+            y: 155,
+            width: 240,
+            height: 32
           },
           {
             type: "date",
             required: true,
             recipient_id: 1,
             page: 1,
-            x: sigX,
-            y: dateY,
-            width: 180,
-            height: 22
+            x: 307,
+            y: 118,
+            width: 190,
+            height: 24
           }
         ]
       ]
