@@ -455,7 +455,7 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     doc.text("TVA non applicable - article 293B du CGI", colDesignation, yPos);
     doc.setFont(undefined, "normal");
     doc.setTextColor(0, 0, 0);
-    yPos += 5;
+    yPos += 6;
   }
 
   yPos += 2;
@@ -475,21 +475,21 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   // Acompte et solde (si acompte défini)
   const depositAmount = quoteForPdf.depositAmount ?? 0;
   if (quoteForPdf.deposit?.enabled && depositAmount > 0) {
-    yPos += 8;
+    yPos += 10;
     const pct = quoteForPdf.deposit?.value ?? 30;
     doc.text(`Acompte demandé (${pct}%) : ${formatCurrencyForPDF(depositAmount)}`, margin, yPos);
-    yPos += 5;
+    yPos += 7;
     doc.setFont(undefined, "bold");
     doc.text(`Solde restant dû : ${formatCurrencyForPDF(quoteForPdf.remainingAmount ?? (quoteForPdf.totalTTC || 0) - depositAmount)}`, margin, yPos);
     doc.setFont(undefined, "normal");
-    yPos += 6;
+    yPos += 12;
   }
 
   // ============================================
   // CONDITIONS DE PAIEMENT
   // ============================================
-  yPos += 10; // Réduit de 18 à 10
-  
+  yPos += 14;
+
   doc.setFontSize(9); // Réduit de 10 à 9
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
