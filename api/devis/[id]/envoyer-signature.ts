@@ -118,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           {
             type: "signature",
             required: true,
-            signer_id: 1,
+            recipient_id: 1,
             page: 1,
             x: 320,
             y: 680,
@@ -128,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           {
             type: "date",
             required: true,
-            signer_id: 1,
+            recipient_id: 1,
             page: 1,
             x: 320,
             y: 720,
