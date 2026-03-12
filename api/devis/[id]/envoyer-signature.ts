@@ -131,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recipient_id: 1,
             page: 1,
             x: 307,
-            y: 155,
+            y: 910,
             width: 240,
             height: 32
           },
@@ -141,7 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recipient_id: 1,
             page: 1,
             x: 307,
-            y: 118,
+            y: 948,
             width: 190,
             height: 24
           }
