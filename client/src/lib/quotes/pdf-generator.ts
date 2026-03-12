@@ -445,6 +445,19 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.text(formatCurrencyForPDF(quoteForPdf.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
 
   yPos += 4;
+
+  // Mention TVA non applicable (uniquement si 0% sur toutes les lignes)
+  const allLinesZeroVat = (quoteForPdf.lines || []).length > 0 && (quoteForPdf.lines || []).every((l) => l.vatRate === "0");
+  if ((quoteForPdf.totalTVA ?? 0) === 0 && allLinesZeroVat) {
+    doc.setFontSize(8);
+    doc.setTextColor(102, 102, 102);
+    doc.setFont(undefined, "italic");
+    doc.text("TVA non applicable - article 293B du CGI", colDesignation, yPos);
+    doc.setFont(undefined, "normal");
+    doc.setTextColor(0, 0, 0);
+    yPos += 5;
+  }
+
   yPos += 2;
 
   // Total TTC — fond ambre sur toute la largeur (label + montant sur le fond)
@@ -458,6 +471,19 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, "normal");
   doc.setFontSize(8);
+
+  // Acompte et solde (si acompte défini)
+  const depositAmount = quoteForPdf.depositAmount ?? 0;
+  if (quoteForPdf.deposit?.enabled && depositAmount > 0) {
+    yPos += 8;
+    const pct = quoteForPdf.deposit?.value ?? 30;
+    doc.text(`Acompte demandé (${pct}%) : ${formatCurrencyForPDF(depositAmount)}`, margin, yPos);
+    yPos += 5;
+    doc.setFont(undefined, "bold");
+    doc.text(`Solde restant dû : ${formatCurrencyForPDF(quoteForPdf.remainingAmount ?? (quoteForPdf.totalTTC || 0) - depositAmount)}`, margin, yPos);
+    doc.setFont(undefined, "normal");
+    yPos += 6;
+  }
 
   // ============================================
   // CONDITIONS DE PAIEMENT
@@ -660,10 +686,10 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     footerLines.push(`Numéro de TVA : ${quoteForPdf.company.vatNumber}`);
   }
   
-  if (quoteForPdf.company?.insuranceDecennale?.company && quoteForPdf.company?.insuranceDecennale?.policyNumber) {
-    footerLines.push(`Assurance : ${quoteForPdf.company.insuranceDecennale.company} - Police n° ${quoteForPdf.company.insuranceDecennale.policyNumber}`);
-  } else {
-    footerLines.push("Assurance : XXX");
+  const insuranceCompany = quoteForPdf.company?.insuranceDecennale?.company?.trim();
+  const insurancePolicy = quoteForPdf.company?.insuranceDecennale?.policyNumber?.trim();
+  if (insuranceCompany && insurancePolicy && insuranceCompany !== "XXX" && insurancePolicy !== "XXX") {
+    footerLines.push(`Assurance : ${quoteForPdf.company!.insuranceDecennale!.company} - Police n° ${quoteForPdf.company!.insuranceDecennale!.policyNumber}`);
   }
   
   footerLines.forEach((line, index) => {
