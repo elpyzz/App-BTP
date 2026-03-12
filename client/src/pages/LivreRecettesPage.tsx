@@ -130,7 +130,7 @@ export default function LivreRecettesPage() {
                     className="mt-1 block w-full rounded-md bg-white/10 border border-white/20 text-white px-3 py-2"
                   >
                     {years.map((y) => (
-                      <option key={y} value={y}>
+                      <option key={y} value={y} style={{ backgroundColor: '#fff', color: '#000' }}>
                         {y}
                       </option>
                     ))}
@@ -147,9 +147,9 @@ export default function LivreRecettesPage() {
                     }
                     className="mt-1 block w-full rounded-md bg-white/10 border border-white/20 text-white px-3 py-2"
                   >
-                    <option value="all">Tous les mois</option>
+                    <option value="all" style={{ backgroundColor: '#fff', color: '#000' }}>Tous les mois</option>
                     {MONTHS.map((m, i) => (
-                      <option key={i} value={i + 1}>
+                      <option key={i} value={i + 1} style={{ backgroundColor: '#fff', color: '#000' }}>
                         {m}
                       </option>
                     ))}
