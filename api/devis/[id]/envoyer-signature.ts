@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       redirect_url: `${process.env.APP_URL || 'https://app-btp-one.vercel.app'}/devis/${id}/signature-confirmee`,
       apply_signing_order: false,
       // fields est un tableau de tableaux : [ [champs pour fichier 0] ]
-      // Coordonnées normalisées (0-1) : zone "Bon pour accord" en bas à droite
+      // Coordonnées en pourcentage (0-100) : zone "Bon pour accord" en bas à droite
       fields: [
         [
           {
@@ -122,20 +122,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: '1',
             page: 1,
-            x: 0.55,
-            y: 0.88,
-            width: 0.25,
-            height: 0.04
+            x: 55,
+            y: 88,
+            width: 25,
+            height: 4
           },
           {
             type: 'date',
             required: true,
             recipient_id: '1',
             page: 1,
-            x: 0.55,
-            y: 0.93,
-            width: 0.20,
-            height: 0.03
+            x: 55,
+            y: 93,
+            width: 20,
+            height: 3
           }
         ]
       ]
