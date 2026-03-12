@@ -130,14 +130,6 @@ export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Pa
   }
   doc.text(`Date d'échéance : ${new Date(invoice.dueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
 
-  // Nom du client centré
-  yPos += 8; // Réduit de 10 à 8
-  doc.setFontSize(12); // Réduit de 13 à 12
-  doc.setFont(undefined, "bold");
-  doc.setTextColor(0, 0, 0);
-  const centerX = pageWidth / 2;
-  doc.text(invoice.client?.name || "Nom du client", centerX, yPos, { align: "center" });
-
   // ============================================
   // SECTION ENTREPRISE / CLIENT (DEUX COLONNES)
   // ============================================
@@ -163,54 +155,43 @@ export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Pa
   doc.setTextColor(60, 60, 60);
   
   if (invoiceForPdf.company?.address) {
-    doc.text("Adresse", leftColX, leftY);
-    doc.text(invoiceForPdf.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
+    doc.text(invoiceForPdf.company.address, leftColX, leftY);
+    leftY += 5;
   }
   
   if (invoiceForPdf.company?.postalCode && invoiceForPdf.company?.city) {
-    doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${invoiceForPdf.company.postalCode} ${invoiceForPdf.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
+    doc.text(`${invoiceForPdf.company.postalCode} ${invoiceForPdf.company.city}`, leftColX, leftY);
+    leftY += 5;
   }
   
   if (invoiceForPdf.company?.phone) {
-    doc.text("Téléphone", leftColX, leftY);
-    doc.text(invoiceForPdf.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
+    doc.text(invoiceForPdf.company.phone, leftColX, leftY);
+    leftY += 5;
   }
   
   if (invoiceForPdf.company?.email) {
-    doc.text("Email", leftColX, leftY);
-    doc.text(invoiceForPdf.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
+    doc.text(invoiceForPdf.company.email, leftColX, leftY);
+    leftY += 5;
   }
 
-  // RCS/RM (obligatoire pour factures B2B)
   if (invoiceForPdf.company?.rcsCity && invoiceForPdf.company?.siret) {
-    doc.text("RCS/RM", leftColX, leftY);
     const siretFormatted = invoiceForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || invoiceForPdf.company.siret;
-    doc.text(`RCS ${invoiceForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
-    leftY += 6;
+    doc.text(`RCS ${invoiceForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY);
+    leftY += 5;
   } else if (invoiceForPdf.company?.siret) {
-    // Avertissement si SIRET sans RCS
-    doc.setTextColor(200, 0, 0); // Rouge pour avertissement
+    doc.setTextColor(200, 0, 0);
     doc.text("Attention : RCS manquant (obligatoire B2B)", leftColX, leftY);
     doc.setTextColor(60, 60, 60);
-    leftY += 6;
+    leftY += 5;
   }
 
-  // Capital social (seulement si > 0 et forme juridique nécessite capital)
   if (invoiceForPdf.company?.capital && invoiceForPdf.company.capital > 0) {
-    doc.text("Capital social", leftColX, leftY);
-    doc.text(formatCurrencyForPDF(invoiceForPdf.company.capital), leftColX, leftY + 3);
-    leftY += 6;
+    doc.text(formatCurrencyForPDF(invoiceForPdf.company.capital), leftColX, leftY);
+    leftY += 5;
   }
 
-  // Pays
-  doc.text("Pays", leftColX, leftY);
-  doc.text(invoiceForPdf.company?.country || "France", leftColX, leftY + 3);
-  leftY += 6;
+  doc.text(invoiceForPdf.company?.country || "France", leftColX, leftY);
+  leftY += 5;
 
   // Colonne droite - Client
   let rightY = yPos + 5; // Réduit de 7 à 5
@@ -224,36 +205,25 @@ export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Pa
   doc.setTextColor(60, 60, 60);
   
   if (invoice.client?.billingAddress) {
-    doc.text("Adresse", rightColX, rightY);
-    doc.text(invoice.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
-    rightY += 6; // Réduit de 8 à 6
+    doc.text(invoice.client.billingAddress, rightColX, rightY);
+    rightY += 5;
   }
   
   if (invoice.client?.billingPostalCode && invoice.client?.billingCity) {
-    doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY + 3);
-    rightY += 6;
+    doc.text(`${invoice.client.billingPostalCode} ${invoice.client.billingCity}`, rightColX, rightY);
+    rightY += 5;
   }
 
-  doc.text("Pays", rightColX, rightY);
-  doc.text(invoice.client?.billingCountry || "France", rightColX, rightY + 3);
-  rightY += 6;
+  doc.text(invoice.client?.billingCountry || "France", rightColX, rightY);
+  rightY += 5;
 
   if (invoice.client?.phone) {
-    doc.text("Téléphone", rightColX, rightY);
-    doc.text(invoice.client.phone, rightColX, rightY + 3);
-    rightY += 6;
-  } else {
-    doc.text("Téléphone", rightColX, rightY);
-    rightY += 4;
+    doc.text(invoice.client.phone, rightColX, rightY);
+    rightY += 5;
   }
   if (invoice.client?.email) {
-    doc.text("Email", rightColX, rightY);
-    doc.text(invoice.client.email, rightColX, rightY + 3);
-    rightY += 6;
-  } else {
-    doc.text("Email", rightColX, rightY);
-    rightY += 4;
+    doc.text(invoice.client.email, rightColX, rightY);
+    rightY += 5;
   }
 
   // ============================================
@@ -545,9 +515,10 @@ export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Pa
     yPos += 4; // Réduit de 6 à 4
   }
   
-  if (invoice.specialVatMention) {
-    doc.text(invoice.specialVatMention, margin, yPos);
-    yPos += 4; // Réduit de 6 à 4
+  const specialVat = invoice.specialVatMention?.trim().toLowerCase();
+  if (specialVat && (specialVat.includes("franchise") || specialVat.includes("293b"))) {
+    doc.text("TVA non applicable - article 293B du CGI (franchise en base)", margin, yPos);
+    yPos += 4;
   }
 
   // ============================================
