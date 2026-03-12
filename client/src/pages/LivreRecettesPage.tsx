@@ -7,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { loadInvoices } from "@/lib/storage/invoices";
+import { loadCurrentCompany } from "@/lib/storage/company";
 import type { Invoice } from "@/lib/invoices/types";
 import {
   generateReceiptsBookPDF,
   type ReceiptsBookLine,
 } from "@/lib/accounting/receipts-book-pdf";
+import { useCompany } from "@/context/CompanyContext";
 
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -45,6 +47,7 @@ function buildLines(invoices: Invoice[]): ReceiptsBookLine[] {
 }
 
 export default function LivreRecettesPage() {
+  const { company } = useCompany();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
@@ -87,8 +90,9 @@ export default function LivreRecettesPage() {
       : `${MONTHS[selectedMonth - 1]} ${selectedYear}`;
   const total = lines.reduce((s, l) => s + l.amount, 0);
 
-  const handleExportPDF = () => {
-    const doc = generateReceiptsBookPDF(lines, periodLabel);
+  const handleExportPDF = async () => {
+    const companyForPdf = company ?? (await loadCurrentCompany());
+    const doc = generateReceiptsBookPDF(lines, periodLabel, companyForPdf ?? undefined);
     doc.save(`Livre_de_recettes_${periodLabel.replace(/\s/g, "_")}.pdf`);
   };
 
