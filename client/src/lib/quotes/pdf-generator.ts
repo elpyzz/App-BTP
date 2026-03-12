@@ -482,7 +482,7 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     doc.setFont(undefined, "bold");
     doc.text(`Solde restant dû : ${formatCurrencyForPDF(quoteForPdf.remainingAmount ?? (quoteForPdf.totalTTC || 0) - depositAmount)}`, margin, yPos);
     doc.setFont(undefined, "normal");
-    yPos += 12;
+    yPos += 6;
   }
 
   // ============================================
