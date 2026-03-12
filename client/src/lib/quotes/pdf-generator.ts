@@ -640,6 +640,11 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.setFont(undefined, "normal");
   doc.setTextColor(100, 100, 100);
   doc.text("Signature :", signatureRightColX, yPos);
+  doc.setFontSize(1);
+  doc.setTextColor(255, 255, 255);
+  doc.text("[[s|1]]", signatureRightColX + 28, yPos);
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(signatureRightColX + 25, yPos - 2, signatureRightColX + signatureColWidth - 5, yPos - 2);
@@ -647,6 +652,11 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   
   // Ligne date client
   doc.text("Date :", signatureRightColX, yPos);
+  doc.setFontSize(1);
+  doc.setTextColor(255, 255, 255);
+  doc.text("[[d|1]]", signatureRightColX + 18, yPos);
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
   doc.line(signatureRightColX + 15, yPos - 2, signatureRightColX + signatureColWidth - 5, yPos - 2);
   
   // Ajuster yPos pour le pied de page
