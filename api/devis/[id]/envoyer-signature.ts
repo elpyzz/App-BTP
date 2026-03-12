@@ -113,8 +113,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       message: messagePersonnalise || `Bonjour ${clientName}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`,
       redirect_url: `${process.env.APP_URL || 'https://app-btp-one.vercel.app'}/devis/${id}/signature-confirmee`,
       apply_signing_order: false,
-      use_text_tags: true,
-      text_tag_syntax: "smart"
+      fields: [
+        [
+          {
+            type: "signature",
+            required: true,
+            recipient_id: 1,
+            page: 1,
+            x: 320,
+            y: 680,
+            width: 220,
+            height: 30
+          },
+          {
+            type: "date",
+            required: true,
+            recipient_id: 1,
+            page: 1,
+            x: 320,
+            y: 720,
+            width: 180,
+            height: 22
+          }
+        ]
+      ]
     };
 
     console.log('[SignWell] Envoi du document:', {
