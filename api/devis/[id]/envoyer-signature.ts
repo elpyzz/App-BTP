@@ -130,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: 1,
             page: 1,
-            x: 370,
+            x: 450,
             y: 910,
             width: 240,
             height: 32
@@ -140,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: 1,
             page: 1,
-            x: 370,
+            x: 450,
             y: 948,
             width: 190,
             height: 24
