@@ -53,10 +53,13 @@ export async function sendQuoteForSignature(
           : currentCompany)
       : undefined;
 
-    // Générer le PDF en base64
+    // Générer le PDF en base64 et récupérer les coords de la zone "Bon pour accord"
     let pdfBase64: string;
+    let signatureBlockCoords: { xMm: number; ySignatureMm: number; yDateMm: number } | undefined;
     try {
-      pdfBase64 = await generateQuotePDFBase64(quote, companyOverrides);
+      const pdfResult = await generateQuotePDFBase64(quote, companyOverrides);
+      pdfBase64 = pdfResult.base64;
+      signatureBlockCoords = pdfResult.signatureBlockCoords;
       if (!pdfBase64 || pdfBase64.length === 0) {
         return {
           success: false,
@@ -92,7 +95,8 @@ export async function sendQuoteForSignature(
       body: JSON.stringify({
         pdfBase64,
         quoteData: quote,
-        messagePersonnalise: messagePersonnalise || `Bonjour ${quote.client.contactName || quote.client.name}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`
+        messagePersonnalise: messagePersonnalise || `Bonjour ${quote.client.contactName || quote.client.name}, veuillez trouver ci-joint le devis pour votre projet. Merci de le signer électroniquement.`,
+        signatureBlockCoords: signatureBlockCoords ?? undefined
       })
     });
 

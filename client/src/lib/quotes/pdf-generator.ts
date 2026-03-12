@@ -48,11 +48,18 @@ function getImageTypeFromDataUrl(dataUrl: string): 'JPEG' | 'PNG' {
   return 'JPEG';
 }
 
+/** Coordonnées de la zone "Bon pour accord" en mm (jsPDF), pour aligner les champs SignWell */
+export interface SignatureBlockCoords {
+  xMm: number;
+  ySignatureMm: number;
+  yDateMm: number;
+}
+
 /**
  * Génère un PDF professionnel pour un devis selon le modèle fourni.
  * companyOverrides : signature/logo à jour (company actuelle) pour afficher la signature de l'artisan même si le devis a été créé avant.
  */
-export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<Company>): Promise<jsPDF> {
+export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<Company>): Promise<{ doc: jsPDF; signatureBlockCoords?: SignatureBlockCoords }> {
   // Fusionner la company du devis avec les overrides (signature/logo à jour), ou utiliser les overrides seuls si le devis n'a pas de company
   const companyForPdf = companyOverrides
     ? (quote.company ? { ...quote.company, ...companyOverrides } : (companyOverrides as Company))
@@ -61,6 +68,7 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
 
   const doc = new jsPDF();
   let yPos = 20;
+  let signatureBlockCoords: SignatureBlockCoords | undefined;
 
   // Configuration
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -573,6 +581,8 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.setLineWidth(0.3);
   doc.rect(signatureLeftColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "S");
   doc.rect(signatureRightColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "S");
+  // Coordonnées zone "Bon pour accord" (Signature : à +16mm, Date : à +28mm) pour SignWell
+  signatureBlockCoords = { xMm: signatureRightColX, ySignatureMm: signatureStartY + 16, yDateMm: signatureStartY + 28 };
 
   // Colonne gauche : Signature de l'artisan
   doc.setFontSize(9);
@@ -706,22 +716,24 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     doc.text(line, pageWidth / 2, footerY + (index * 3), { align: "center" }); // Réduit de 3.5 à 3
   });
 
-  return doc;
+  return { doc, signatureBlockCoords };
 }
 
 /**
  * Télécharge le PDF d'un devis
  */
 export async function downloadQuotePDF(quote: Quote, companyOverrides?: Partial<Company>): Promise<void> {
-  const doc = await generateQuotePDF(quote, companyOverrides);
+  const { doc } = await generateQuotePDF(quote, companyOverrides);
   const fileName = `Devis_${quote.quoteNumber || quote.id}_${(quote.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
   doc.save(fileName);
 }
 
 /**
- * Génère le PDF d'un devis en base64 pour l'envoi à SignWell
+ * Génère le PDF d'un devis en base64 pour l'envoi à SignWell.
+ * Retourne aussi les coordonnées de la zone "Bon pour accord" pour positionner les champs SignWell.
  */
-export async function generateQuotePDFBase64(quote: Quote, companyOverrides?: Partial<Company>): Promise<string> {
-  const doc = await generateQuotePDF(quote, companyOverrides);
-  return doc.output('datauristring').split(',')[1]; // Retourne seulement la partie base64
+export async function generateQuotePDFBase64(quote: Quote, companyOverrides?: Partial<Company>): Promise<{ base64: string; signatureBlockCoords?: SignatureBlockCoords }> {
+  const { doc, signatureBlockCoords } = await generateQuotePDF(quote, companyOverrides);
+  const base64 = doc.output('datauristring').split(',')[1];
+  return { base64, signatureBlockCoords };
 }

@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Sur Vercel, les paramètres de route dynamique sont dans req.query
     const id = Array.isArray(req.query.id) ? req.query.id[0] : req.query.id;
-    const { messagePersonnalise, pdfBase64, quoteData } = req.body;
+    const { messagePersonnalise, pdfBase64, quoteData, signatureBlockCoords } = req.body;
 
     // #region agent log
     console.log('[Vercel Function] Paramètres reçus:', {
@@ -91,9 +91,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Convertir coords zone "Bon pour accord" (mm) en pixels 72 DPI (A4 = 595×842)
+    const A4_PX_WIDTH = 595;
+    const A4_PX_HEIGHT = 842;
+    const A4_MM_WIDTH = 210;
+    const A4_MM_HEIGHT = 297;
+    const mmToPxX = (mm: number) => Math.round(mm * A4_PX_WIDTH / A4_MM_WIDTH);
+    const mmToPxY = (mm: number) => Math.round(mm * A4_PX_HEIGHT / A4_MM_HEIGHT);
+
+    const sigX = signatureBlockCoords?.xMm != null ? mmToPxX(signatureBlockCoords.xMm) : 320;
+    const sigY = signatureBlockCoords?.ySignatureMm != null ? mmToPxY(signatureBlockCoords.ySignatureMm) : 760;
+    const dateY = signatureBlockCoords?.yDateMm != null ? mmToPxY(signatureBlockCoords.yDateMm) : 795;
+
     // Créer le document dans SignWell
-    // Structure correcte : fields est un tableau de tableaux au niveau racine
-    // Le tableau extérieur correspond aux fichiers, le tableau intérieur contient les champs
     const signwellPayload = {
       test_mode: process.env.NODE_ENV === 'development' || process.env.SIGNWELL_TEST_MODE === 'true',
       files: [
@@ -120,8 +130,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: 1,
             page: 1,
-            x: 320,
-            y: 680,
+            x: sigX,
+            y: sigY,
             width: 220,
             height: 30
           },
@@ -130,8 +140,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             required: true,
             recipient_id: 1,
             page: 1,
-            x: 320,
-            y: 720,
+            x: sigX,
+            y: dateY,
             width: 180,
             height: 22
           }

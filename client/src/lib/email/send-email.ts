@@ -18,7 +18,7 @@ export async function sendQuoteByEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Générer le PDF
-    const pdfDoc = await generateQuotePDF(quote);
+    const { doc: pdfDoc } = await generateQuotePDF(quote);
     const pdfBlob = pdfDoc.output('blob');
     
     // Convertir en base64
