@@ -316,22 +316,13 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
             if (attempts >= maxAttempts) {
               throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
             }
-            // Attendre un peu avant de réessayer pour éviter les collisions simultanées
             await new Promise(resolve => setTimeout(resolve, 100 * attempts));
-            // Charger les factures existantes et générer un nouveau numéro
-            // Utiliser un timestamp pour garantir l'unicité si loadInvoicesFromSupabase ne retourne pas toutes les factures
-            const existing = await loadInvoicesFromSupabase();
-            
-            // Si aucune facture n'est chargée mais qu'on a une erreur de doublon, utiliser un suffixe unique
-            if (existing.length === 0 && attempts > 0) {
-              const timestamp = Date.now().toString().slice(-6);
-              const year = new Date().getFullYear();
-              const baseNumber = invoiceNumber.replace(`FAC-${year}-`, '');
-              invoiceNumber = `FAC-${year}-${baseNumber}-${timestamp}`;
-            } else {
-              invoiceNumber = generateInvoiceNumber(existing);
-            }
-            continue; // Réessayer avec le nouveau numéro
+            // invoice_number est UNIQUE sur toute la table : loadInvoices ne voit que l'utilisateur courant,
+            // donc on force un suffixe 6 chiffres (timestamp) pour garantir l'unicité globale
+            const base = invoiceNumber.replace(/-\d{6}$/, '');
+            const suffix = String(Date.now()).slice(-6).padStart(6, '0');
+            invoiceNumber = `${base}-${suffix}`;
+            continue;
           }
           
           // Message d'erreur plus clair pour les problèmes de schéma
@@ -372,24 +363,14 @@ export async function saveInvoiceToSupabase(invoice: Invoice): Promise<Invoice> 
       if (!isDuplicateError) {
         throw error;
       }
-      // Sinon, continuer la boucle de retry
       attempts++;
       if (attempts >= maxAttempts) {
         throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives');
       }
-      // Attendre un peu avant de réessayer
       await new Promise(resolve => setTimeout(resolve, 100 * attempts));
-      const existing = await loadInvoicesFromSupabase();
-      
-      // Si aucune facture n'est chargée mais qu'on a une erreur de doublon, utiliser un suffixe unique
-      if (existing.length === 0 && attempts > 0) {
-        const timestamp = Date.now().toString().slice(-6);
-        const year = new Date().getFullYear();
-        const baseNumber = invoiceNumber.replace(`FAC-${year}-`, '');
-        invoiceNumber = `FAC-${year}-${baseNumber}-${timestamp}`;
-      } else {
-        invoiceNumber = generateInvoiceNumber(existing);
-      }
+      const base = invoiceNumber.replace(/-\d{6}$/, '');
+      const suffix = String(Date.now()).slice(-6).padStart(6, '0');
+      invoiceNumber = `${base}-${suffix}`;
     }
   }
   

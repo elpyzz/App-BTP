@@ -60,23 +60,26 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   const quoteForPdf: Quote = companyForPdf ? { ...quote, company: companyForPdf } : quote;
 
   const doc = new jsPDF();
-  let yPos = 20; // Réduit de 25 à 20
+  let yPos = 20;
 
   // Configuration
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20; // Réduit de 25 à 20
+  const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
   const accentColor = [245, 158, 11]; // Ambre RGB (#F59E0B)
 
   // ============================================
   // EN-TÊTE AVEC LOGO ET NUMÉRO DEVIS
   // ============================================
-  
-  // Logo à gauche (priorité : logo company paramétré, sinon fichier public /logo.jpg)
-  const logoSize = 15; // Réduit de 18 à 15
+  // Bande colorée en haut
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.rect(0, 0, pageWidth, 28, "F");
+
+  // Logo à gauche dans la bande (priorité : logo company, sinon /logo.jpg)
+  const logoSize = 15;
   const logoX = margin;
-  const logoY = yPos;
+  const logoY = 6;
   const logoFromCompany = quoteForPdf.company?.logo;
   const logoImage = typeof logoFromCompany === 'string' && logoFromCompany.startsWith('data:')
     ? logoFromCompany
@@ -108,188 +111,146 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     doc.text(companyInitial, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { align: "center" });
   }
   
-  // Nom de l'entreprise à côté du logo (en ambre, en minuscules)
-  // Limiter la largeur pour éviter le chevauchement avec le numéro de devis
-  doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-  doc.setFontSize(14); // Réduit de 16 à 14
+  // Nom de l'entreprise à côté du logo (blanc sur bande ambre)
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
   doc.setFont(undefined, "bold");
   const companyName = (quoteForPdf.company?.name || "VOTRE ENTREPRISE").toLowerCase();
   const maxCompanyNameWidth = pageWidth / 2 - logoX - logoSize - 8;
   const companyNameLines = doc.splitTextToSize(companyName, maxCompanyNameWidth);
   doc.text(companyNameLines, logoX + logoSize + 8, logoY + logoSize / 2 + 2);
 
-  // Numéro de devis à droite (pas centré pour éviter le chevauchement)
+  // Numéro de devis à droite (blanc, plus grand)
   const rightX = pageWidth - margin;
-  doc.setFontSize(16); // Réduit de 18 à 16
+  doc.setFontSize(18);
   doc.setFont(undefined, "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Devis n° ${quoteForPdf.quoteNumber || "N/A"}`, rightX, yPos + 4, { align: "right" });
-  
-  yPos += 7; // Réduit de 10 à 7
-  doc.setFontSize(9); // Réduit de 10 à 9
-  doc.setFont(undefined, "normal");
-  doc.text(`Date d'émission : ${new Date(quoteForPdf.issueDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
-  yPos += 4; // Réduit de 5 à 4
-  doc.text(`Date d'expiration : ${new Date(quoteForPdf.expirationDate).toLocaleDateString("fr-FR")}`, rightX, yPos, { align: "right" });
+  doc.setTextColor(255, 255, 255);
+  doc.text(`Devis n° ${quoteForPdf.quoteNumber || "N/A"}`, rightX, logoY + 4, { align: "right" });
 
-  // Nom du client centré (sous le logo et le numéro)
-  yPos += 8; // Réduit de 10 à 8
-  doc.setFontSize(12); // Réduit de 13 à 12
-  doc.setFont(undefined, "bold");
-  doc.setTextColor(0, 0, 0);
-  const centerX = pageWidth / 2;
-  doc.text(quoteForPdf.client?.name || "Nom du client", centerX, yPos, { align: "center" });
+  doc.setFontSize(9);
+  doc.setFont(undefined, "normal");
+  doc.setTextColor(220, 220, 220);
+  doc.text(`Date d'émission : ${new Date(quoteForPdf.issueDate).toLocaleDateString("fr-FR")}`, rightX, logoY + 10, { align: "right" });
+  doc.text(`Date d'expiration : ${new Date(quoteForPdf.expirationDate).toLocaleDateString("fr-FR")}`, rightX, logoY + 14, { align: "right" });
+
+  // Repartir sous la bande
+  yPos = 35;
 
   // ============================================
   // SECTION ENTREPRISE / CLIENT (DEUX COLONNES)
   // ============================================
-  yPos += 12; // Réduit de 20 à 12
-  
-  // Ligne de séparation
+  yPos += 12;
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 8; // Réduit de 12 à 8
-  
-  // Colonne gauche - Entreprise
+  yPos += 8;
+
   const leftColX = margin;
   const rightColX = pageWidth / 2 + 15;
   const colWidth = (pageWidth - 2 * margin - 30) / 2;
-  
-  doc.setFontSize(10); // Réduit de 11 à 10
+
+  // --- Calcul de la hauteur nécessaire pour chaque colonne ---
+  let leftLines = 1; // nom entreprise
+  if (quoteForPdf.company?.address) leftLines++;
+  if (quoteForPdf.company?.postalCode && quoteForPdf.company?.city) leftLines++;
+  leftLines++; // pays
+  if (quoteForPdf.company?.phone) leftLines++;
+  if (quoteForPdf.company?.website) leftLines++;
+  if (quoteForPdf.company?.email) leftLines++;
+  if (quoteForPdf.company?.rcsCity && quoteForPdf.company?.siret) leftLines++;
+  if (quoteForPdf.company?.capital && quoteForPdf.company.capital > 0) leftLines++;
+
+  let rightLines = 1; // nom client
+  if (quoteForPdf.client?.billingAddress) rightLines++;
+  if (quoteForPdf.client?.billingPostalCode && quoteForPdf.client?.billingCity) rightLines++;
+  rightLines++; // pays
+  if (quoteForPdf.client?.phone) rightLines++;
+  if (quoteForPdf.client?.email) rightLines++;
+
+  const lineHeightCoord = 5;
+  const boxPaddingV = 8;
+  const maxLines = Math.max(leftLines, rightLines);
+  const dynamicBoxHeight = maxLines * lineHeightCoord + boxPaddingV + 4;
+
+  doc.setFillColor(248, 248, 248);
+  doc.rect(leftColX - 4, yPos - 6, colWidth + 4, dynamicBoxHeight, "F");
+  doc.rect(rightColX - 2, yPos - 6, colWidth + 4, dynamicBoxHeight, "F");
+
+  doc.setTextColor(150, 150, 150);
+  doc.setFontSize(7);
+  doc.text("VOS COORDONNÉES", leftColX, yPos - 2);
+  doc.text("COORDONNÉES CLIENT", rightColX, yPos - 2);
+
+  doc.setFontSize(10);
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(quoteForPdf.company?.name || "VOTRE ENTREPRISE", leftColX, yPos);
-  
-  let leftY = yPos + 5; // Réduit de 7 à 5
-  doc.setFontSize(8); // Réduit de 9 à 8
+  doc.text(quoteForPdf.company?.name || "VOTRE ENTREPRISE", leftColX, yPos + 3);
+
+  let leftY = yPos + 8;
+  doc.setFontSize(8);
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
-  
-  // Adresse entreprise
+
   if (quoteForPdf.company?.address) {
-    doc.text("Adresse", leftColX, leftY);
-    doc.text(quoteForPdf.company.address, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Adresse", leftColX, leftY);
-    leftY += 4; // Réduit de 5 à 4
+    doc.text(quoteForPdf.company.address, leftColX, leftY);
+    leftY += 5;
   }
-  
-  // Code postal et ville
   if (quoteForPdf.company?.postalCode && quoteForPdf.company?.city) {
-    doc.text("Code postal, Ville", leftColX, leftY);
-    doc.text(`${quoteForPdf.company.postalCode} ${quoteForPdf.company.city}`, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Code postal, Ville", leftColX, leftY);
-    leftY += 4; // Réduit de 5 à 4
+    doc.text(`${quoteForPdf.company.postalCode} ${quoteForPdf.company.city}`, leftColX, leftY);
+    leftY += 5;
   }
-  
-  // Pays
-  doc.text("Pays", leftColX, leftY);
-  doc.text(quoteForPdf.company?.country || "France", leftColX, leftY + 3);
-  leftY += 6; // Réduit de 4 à 6 pour avoir la valeur
-  
-  // Téléphone
+  doc.text(quoteForPdf.company?.country || "France", leftColX, leftY);
+  leftY += 5;
   if (quoteForPdf.company?.phone) {
-    doc.text("Téléphone", leftColX, leftY);
-    doc.text(quoteForPdf.company.phone, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Téléphone", leftColX, leftY);
-    leftY += 4; // Réduit de 5 à 4
+    doc.text(quoteForPdf.company.phone, leftColX, leftY);
+    leftY += 5;
   }
-  
-  // Site internet
   if (quoteForPdf.company?.website) {
-    doc.text("Site internet", leftColX, leftY);
-    doc.text(quoteForPdf.company.website, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Site internet", leftColX, leftY);
-    leftY += 4; // Réduit de 5 à 4
+    doc.text(quoteForPdf.company.website, leftColX, leftY);
+    leftY += 5;
   }
-  
-  // Email
   if (quoteForPdf.company?.email) {
-    doc.text("Email", leftColX, leftY);
-    doc.text(quoteForPdf.company.email, leftColX, leftY + 3); // Réduit de 4 à 3
-    leftY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Email", leftColX, leftY);
-    leftY += 4; // Réduit de 5 à 4
+    doc.text(quoteForPdf.company.email, leftColX, leftY);
+    leftY += 5;
   }
-
-  // RCS/RM (recommandé pour devis)
   if (quoteForPdf.company?.rcsCity && quoteForPdf.company?.siret) {
-    doc.text("RCS/RM", leftColX, leftY);
     const siretFormatted = quoteForPdf.company.siret.match(/.{1,3}/g)?.join(' ') || quoteForPdf.company.siret;
-    doc.text(`RCS ${quoteForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY + 3);
-    leftY += 6;
+    doc.text(`RCS ${quoteForPdf.company.rcsCity} n° ${siretFormatted}`, leftColX, leftY);
+    leftY += 5;
   }
-
-  // Capital social (seulement si > 0)
   if (quoteForPdf.company?.capital && quoteForPdf.company.capital > 0) {
-    doc.text("Capital social", leftColX, leftY);
-    doc.text(formatCurrencyForPDF(quoteForPdf.company.capital), leftColX, leftY + 3);
-    leftY += 6;
+    doc.text(formatCurrencyForPDF(quoteForPdf.company.capital), leftColX, leftY);
+    leftY += 5;
   }
 
   // Colonne droite - Client
-  let rightY = yPos + 5; // Réduit de 7 à 5
-  doc.setFontSize(10); // Réduit de 11 à 10
+  let rightY = yPos + 8;
+  doc.setFontSize(10);
   doc.setFont(undefined, "bold");
   doc.setTextColor(0, 0, 0);
-  doc.text(quoteForPdf.client?.name || "Nom du client", rightColX, yPos);
-  
-  doc.setFontSize(8); // Réduit de 9 à 8
+  doc.text(quoteForPdf.client?.name || "Nom du client", rightColX, yPos + 3);
+
+  doc.setFontSize(8);
   doc.setFont(undefined, "normal");
   doc.setTextColor(60, 60, 60);
-  
-  // Adresse client
+
   if (quoteForPdf.client?.billingAddress) {
-    doc.text("Adresse", rightColX, rightY);
-    doc.text(quoteForPdf.client.billingAddress, rightColX, rightY + 3); // Réduit de 4 à 3
-    rightY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Adresse", rightColX, rightY);
-    rightY += 4; // Réduit de 5 à 4
+    doc.text(quoteForPdf.client.billingAddress, rightColX, rightY);
+    rightY += 5;
   }
-  
-  // Code postal et ville client
   if (quoteForPdf.client?.billingPostalCode && quoteForPdf.client?.billingCity) {
-    doc.text("Code postal, Ville", rightColX, rightY);
-    doc.text(`${quoteForPdf.client.billingPostalCode} ${quoteForPdf.client.billingCity}`, rightColX, rightY + 3); // Réduit de 4 à 3
-    rightY += 6; // Réduit de 8 à 6
-  } else {
-    doc.text("Code postal, Ville", rightColX, rightY);
-    rightY += 4; // Réduit de 5 à 4
+    doc.text(`${quoteForPdf.client.billingPostalCode} ${quoteForPdf.client.billingCity}`, rightColX, rightY);
+    rightY += 5;
   }
-  
-  // Pays client
-  doc.text("Pays", rightColX, rightY);
-  doc.text(quoteForPdf.client?.billingCountry || "France", rightColX, rightY + 3);
-  rightY += 6;
-
-  // Téléphone client
+  doc.text(quoteForPdf.client?.billingCountry || "France", rightColX, rightY);
+  rightY += 5;
   if (quoteForPdf.client?.phone) {
-    doc.text("Téléphone", rightColX, rightY);
-    doc.text(quoteForPdf.client.phone, rightColX, rightY + 3);
-    rightY += 6;
-  } else {
-    doc.text("Téléphone", rightColX, rightY);
-    rightY += 4;
+    doc.text(quoteForPdf.client.phone, rightColX, rightY);
+    rightY += 5;
   }
-
-  // Email client
   if (quoteForPdf.client?.email) {
-    doc.text("Email", rightColX, rightY);
-    doc.text(quoteForPdf.client.email, rightColX, rightY + 3);
-    rightY += 6;
-  } else {
-    doc.text("Email", rightColX, rightY);
-    rightY += 4;
+    doc.text(quoteForPdf.client.email, rightColX, rightY);
+    rightY += 5;
   }
 
   // ============================================
@@ -317,15 +278,15 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   // ============================================
   yPos += 3; // Réduit de 5 à 3
   
-  // En-tête du tableau avec fond gris clair
-  doc.setFillColor(245, 245, 245);
-  doc.rect(margin, yPos - 3, contentWidth, 6, "F"); // Réduit de 8 à 6
-  
-  doc.setFontSize(8); // Réduit de 9 à 8
+  // En-tête du tableau avec fond accent
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.rect(margin, yPos - 4, contentWidth, 8, "F");
+
+  doc.setFontSize(8);
   doc.setFont(undefined, "bold");
-  doc.setTextColor(0, 0, 0);
+  doc.setTextColor(255, 255, 255);
   const tableStartY = yPos;
-  
+
   // Colonnes : Désignation, Qté, TVA, Prix HT, Montant TTC
   // Réorganiser avec des largeurs fixes pour un meilleur alignement
   // Largeur utilisable : 210mm - 2*25mm = 160mm
@@ -352,10 +313,10 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 4; // Réduit de 6 à 4
-  
+  yPos += 4;
+
   doc.setFont(undefined, "normal");
-  doc.setFontSize(8); // Réduit de 9 à 8
+  doc.setFontSize(8);
   doc.setTextColor(0, 0, 0);
 
   // Grouper par lots
@@ -378,8 +339,13 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     lines.forEach((line, index) => {
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, colDesignationWidth - 5);
-      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit de 6 et 4.5 à 4 et 3.5
-      
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5);
+
+      if (index % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(margin, yPos - 3, contentWidth, lineHeight + 3, "F");
+      }
+
       // Description avec numéro de ligne
       doc.setFont(undefined, "bold");
       const fullDescription = `Ligne n°${index + 1}\n${description}`;
@@ -414,11 +380,16 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   // Lignes sans lot
   if (linesWithoutLot.length > 0) {
     let lineNumber = 1;
-    linesWithoutLot.forEach((line) => {
+    linesWithoutLot.forEach((line, index) => {
       const description = line.description || "";
       const descriptionLines = doc.splitTextToSize(description, 85);
-      const lineHeight = Math.max(4, descriptionLines.length * 3.5); // Réduit
-      
+      const lineHeight = Math.max(4, descriptionLines.length * 3.5);
+
+      if (index % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(margin, yPos - 3, contentWidth, lineHeight + 3, "F");
+      }
+
       // Description avec numéro de ligne
       doc.setFont(undefined, "bold");
       const fullDescription = `Ligne n°${lineNumber}\n${description}`;
@@ -472,17 +443,21 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   // Total TVA (dans la colonne Prix HT)
   doc.text("Total TVA", colDesignation, yPos);
   doc.text(formatCurrencyForPDF(quoteForPdf.totalTVA || 0), colPrixHT + colPrixHTWidth, yPos, { align: "right" });
-  
-  yPos += 4; // Réduit de 6 à 4
-  
-  // Total TTC (en gras et plus grand, dans la colonne Montant TTC)
-  // Le label "Total TTC" est légèrement décalé à gauche pour un meilleur alignement visuel
+
+  yPos += 4;
+  yPos += 2;
+
+  // Total TTC — fond ambre sur toute la largeur (label + montant sur le fond)
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.rect(margin, yPos - 4, contentWidth, 10, "F");
   doc.setFont(undefined, "bold");
-  doc.setFontSize(9); // Réduit de 10 à 9
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
   doc.text("Total TTC", colDesignation + 5, yPos);
   doc.text(formatCurrencyForPDF(quoteForPdf.totalTTC || 0), colMontantTTC + colMontantTTCWidth, yPos, { align: "right" });
+  doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, "normal");
-  doc.setFontSize(8); // Réduit de 9 à 8
+  doc.setFontSize(8);
 
   // ============================================
   // CONDITIONS DE PAIEMENT
@@ -544,26 +519,35 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
     methods.push("Espèces");
     paymentMethodsText = methods.join(", ");
   }
-  
-  doc.text(paymentMethodsText, margin, yPos);
+
+  const paymentMethodsLines = doc.splitTextToSize(paymentMethodsText, contentWidth);
+  doc.text(paymentMethodsLines, margin, yPos);
+  yPos += (paymentMethodsLines.length - 1) * 3.5;
 
   // ============================================
   // BLOC SIGNATURE (ARTISAN + CLIENT)
   // ============================================
-  yPos += 15; // Espacement avant le bloc signature
-  
-  // Ligne de séparation avant le bloc signature
+  yPos += 8;
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.5);
   doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 10;
+  yPos += 7;
   
   // Calculer les positions des colonnes
   const signatureColWidth = (pageWidth - 2 * margin) / 2;
   const signatureLeftColX = margin;
   const signatureRightColX = margin + signatureColWidth;
   const signatureStartY = yPos;
-  
+  const signatureBlockHeight = 58;
+
+  doc.setFillColor(248, 248, 248);
+  doc.rect(signatureLeftColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "F");
+  doc.rect(signatureRightColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "F");
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.rect(signatureLeftColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "S");
+  doc.rect(signatureRightColX - 2, signatureStartY - 4, signatureColWidth - 8, signatureBlockHeight, "S");
+
   // Colonne gauche : Signature de l'artisan
   doc.setFontSize(9);
   doc.setFont(undefined, "bold");
@@ -605,16 +589,7 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   const artisanName = quoteForPdf.company?.name || "Nom de l'artisan";
   doc.text(artisanName, signatureLeftColX, yPos);
   yPos += 4;
-  
-  // Raison sociale (si différente du nom)
-  if (quoteForPdf.company?.name) {
-    doc.setFontSize(7);
-    doc.setFont(undefined, "normal");
-    doc.setTextColor(100, 100, 100);
-    doc.text(quoteForPdf.company.name, signatureLeftColX, yPos);
-    yPos += 4;
-  }
-  
+
   // Date de génération
   doc.setFontSize(7);
   doc.setTextColor(148, 163, 184);
@@ -649,21 +624,18 @@ export async function generateQuotePDF(quote: Quote, companyOverrides?: Partial<
   doc.line(signatureRightColX + 15, yPos - 2, signatureRightColX + signatureColWidth - 5, yPos - 2);
   
   // Ajuster yPos pour le pied de page
-  yPos = Math.max(yPos + 10, signatureStartY + 50);
+  yPos = Math.max(yPos + 10, signatureStartY + signatureBlockHeight);
 
   // ============================================
   // PIED DE PAGE (INFORMATIONS LÉGALES)
   // ============================================
-  const footerY = pageHeight - 12; // Réduit de 18 à 12
-  doc.setFontSize(6); // Réduit de 7 à 6
+  const footerY = pageHeight - 12;
+  doc.setFillColor(40, 40, 40);
+  doc.rect(0, footerY - 8, pageWidth, 20, "F");
+  doc.setFontSize(6);
   doc.setFont(undefined, "normal");
-  doc.setTextColor(100, 100, 100);
-  
-  // Ligne de séparation pour le footer
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.3);
-  doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5); // Ajusté
-  
+  doc.setTextColor(180, 180, 180);
+
   const footerLines = [];
   if (quoteForPdf.company?.name) {
     // Afficher le capital seulement s'il est > 0

@@ -48,27 +48,31 @@ export default function AuthPage() {
         }
         
         const { error: signInError } = await signIn(email, password)
-        
+
         if (signInError) {
           setError(signInError.message || "Email ou mot de passe incorrect")
         } else {
-          // Attendre que onAuthStateChange se déclenche et mette à jour l'état
-          // Attendre jusqu'à 2 secondes que la session soit disponible
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'AuthPage.tsx:afterSignIn',message:'waiting for session',data:{step:'start'},timestamp:Date.now(),hypothesisId:'H4_H5'})}).catch(()=>{});
+          // #endregion
           let attempts = 0;
-          const maxAttempts = 20; // 2 secondes max (20 * 100ms)
-          
+          const maxAttempts = 20;
           while (attempts < maxAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100));
             const { data: { session } } = await supabase.auth.getSession();
-            
+
             if (session) {
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'AuthPage.tsx:redirectDashboard',message:'session found redirect',data:{attempts},timestamp:Date.now(),hypothesisId:'H4_H5'})}).catch(()=>{});
+              // #endregion
               setLocation("/dashboard")
               return;
             }
             attempts++;
           }
-          
-          // Si après 2 secondes, toujours pas de session, afficher une erreur
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'AuthPage.tsx:sessionTimeout',message:'session not found after 2s',data:{attempts:maxAttempts},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+          // #endregion
           setError("Erreur lors de la connexion. Veuillez réessayer.")
         }
       }

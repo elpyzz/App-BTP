@@ -6,8 +6,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { loadQuotes } from "@/lib/storage/quotes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { calculateDueDate } from "@/lib/invoices/types";
+
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2100;
+
+/** Normalise une chaîne de date pour <input type="date"> (YYYY-MM-DD). Rejette les années hors 1900-2100. */
+function toDateOnlyString(value: string | undefined): string {
+  if (!value || typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.includes("T")) {
+    const datePart = trimmed.split("T")[0];
+    const y = parseInt(datePart.slice(0, 4), 10);
+    if (y < MIN_YEAR || y > MAX_YEAR) return "";
+    return datePart;
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const y = parseInt(trimmed.slice(0, 4), 10);
+    if (y < MIN_YEAR || y > MAX_YEAR) return "";
+    return trimmed;
+  }
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  if (y < MIN_YEAR || y > MAX_YEAR) return "";
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 interface StepInvoiceInfoProps {
   invoice: Partial<Invoice>;
@@ -17,6 +45,12 @@ interface StepInvoiceInfoProps {
 export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoProps) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string>("");
+  /** Saisie en cours pour ne pas écraser avec une date invalide (ex. "20" pour le jour) */
+  const [executionPeriodStartInput, setExecutionPeriodStartInput] = useState<string | undefined>(undefined);
+  const [executionPeriodEndInput, setExecutionPeriodEndInput] = useState<string | undefined>(undefined);
+  /** Refs pour lire la valeur à jour dans onBlur (éviter closure stale) */
+  const executionPeriodStartRef = useRef<string>("");
+  const executionPeriodEndRef = useRef<string>("");
 
   useEffect(() => {
     loadQuotes().then(setQuotes);
@@ -76,7 +110,7 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
           <Input
             id="issueDate"
             type="date"
-            value={invoice.issueDate || ""}
+            value={toDateOnlyString(invoice.issueDate)}
             onChange={(e) => handleChange("issueDate", e.target.value)}
             className="bg-black/20 border-white/10 text-white"
           />
@@ -89,7 +123,7 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
           <Input
             id="saleDate"
             type="date"
-            value={invoice.saleDate || ""}
+            value={toDateOnlyString(invoice.saleDate)}
             onChange={(e) => handleChange("saleDate", e.target.value || undefined)}
             className="bg-black/20 border-white/10 text-white"
             required
@@ -106,8 +140,21 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
           <Input
             id="executionPeriodStart"
             type="date"
-            value={invoice.executionPeriodStart || ""}
-            onChange={(e) => handleChange("executionPeriodStart", e.target.value || undefined)}
+            value={executionPeriodStartInput ?? (toDateOnlyString(invoice.executionPeriodStart) || "")}
+            onChange={(e) => {
+              const v = e.target.value || "";
+              executionPeriodStartRef.current = v;
+              setExecutionPeriodStartInput(v);
+              const normalized = v ? toDateOnlyString(v) : "";
+              if (normalized) handleChange("executionPeriodStart", normalized);
+            }}
+            onBlur={() => {
+              const current = executionPeriodStartRef.current;
+              const normalized = current ? toDateOnlyString(current) : "";
+              if (normalized) handleChange("executionPeriodStart", normalized);
+              executionPeriodStartRef.current = "";
+              setExecutionPeriodStartInput(undefined);
+            }}
             className="bg-black/20 border-white/10 text-white"
           />
           <p className="text-xs text-white/50 mt-1">
@@ -122,8 +169,21 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
           <Input
             id="executionPeriodEnd"
             type="date"
-            value={invoice.executionPeriodEnd || ""}
-            onChange={(e) => handleChange("executionPeriodEnd", e.target.value || undefined)}
+            value={executionPeriodEndInput ?? (toDateOnlyString(invoice.executionPeriodEnd) || "")}
+            onChange={(e) => {
+              const v = e.target.value || "";
+              executionPeriodEndRef.current = v;
+              setExecutionPeriodEndInput(v);
+              const normalized = v ? toDateOnlyString(v) : "";
+              if (normalized) handleChange("executionPeriodEnd", normalized);
+            }}
+            onBlur={() => {
+              const current = executionPeriodEndRef.current;
+              const normalized = current ? toDateOnlyString(current) : "";
+              if (normalized) handleChange("executionPeriodEnd", normalized);
+              executionPeriodEndRef.current = "";
+              setExecutionPeriodEndInput(undefined);
+            }}
             className="bg-black/20 border-white/10 text-white"
           />
         </div>
@@ -150,7 +210,7 @@ export function StepInvoiceInfo({ invoice, onInvoiceChange }: StepInvoiceInfoPro
           <Input
             id="dueDate"
             type="date"
-            value={invoice.dueDate || ""}
+            value={toDateOnlyString(invoice.dueDate)}
             onChange={(e) => handleChange("dueDate", e.target.value)}
             className="bg-black/20 border-white/10 text-white"
             disabled

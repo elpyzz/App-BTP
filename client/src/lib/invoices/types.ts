@@ -202,8 +202,7 @@ export function generateInvoiceNumber(existingInvoices: Invoice[]): string {
   const exists = existingInvoices.some(inv => inv.invoiceNumber === baseNumber);
   
   if (exists) {
-    // Si collision, utiliser un timestamp pour garantir l'unicité
-    const timestamp = Date.now().toString().slice(-4);
+    const timestamp = String(Date.now()).slice(-6).padStart(6, '0');
     return `${baseNumber}-${timestamp}`;
   }
   

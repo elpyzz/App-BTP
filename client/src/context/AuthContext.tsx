@@ -23,17 +23,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'AuthContext.tsx:initializeAuth',message:'init getSession result',data:{sessionFound:!!session,error:error?.message||null},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+        // #endregion
+
         if (error) {
           console.error('Error getting session:', error);
           setLoading(false);
           return;
         }
-        
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
+
         } catch (error) {
         console.error('Error initializing auth:', error);
         setLoading(false);
@@ -46,8 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // #region agent log
+      const hasSession = !!session;
+      const branch = event === 'SIGNED_OUT' ? 'SIGNED_OUT' : (event === 'INITIAL_SESSION' && !session ? 'INITIAL_SESSION_null' : 'other');
+      fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'AuthContext.tsx:onAuthStateChange',message:'auth state change',data:{event,hasSession,branch},timestamp:Date.now(),hypothesisId:'H1_H2'})}).catch(()=>{});
+      // #endregion
       console.log('Auth state change:', event, session ? 'has session' : 'no session');
-      
+
       // Pour SIGNED_OUT, toujours mettre à jour l'état à null
       if (event === 'SIGNED_OUT') {
         console.log('SIGNED_OUT event détecté');
@@ -56,13 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
-      
+
       // Ignorer INITIAL_SESSION si la session est null (première initialisation)
       if (event === 'INITIAL_SESSION' && !session) {
         setLoading(false);
         return;
       }
-      
+
       // Mettre à jour normalement pour tous les autres cas
       setSession(session);
       setUser(session?.user ?? null);

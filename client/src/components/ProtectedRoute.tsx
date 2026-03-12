@@ -32,6 +32,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     // Si pas de session après vérification, rediriger vers /auth
     if (hasCheckedSession && !loading && !user && !session) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2bc13647-e8ed-45f5-9680-8af1344cbade',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'28a3ac'},body:JSON.stringify({sessionId:'28a3ac',location:'ProtectedRoute.tsx:redirect',message:'redirect to auth',data:{hasCheckedSession,loading,userPresent:!!user,sessionPresent:!!session},timestamp:Date.now(),hypothesisId:'H3_H4'})}).catch(()=>{});
+      // #endregion
       setLocation('/auth');
     }
   }, [hasCheckedSession, loading, user, session, setLocation]);
