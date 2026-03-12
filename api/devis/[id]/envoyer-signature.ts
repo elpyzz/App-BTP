@@ -104,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ],
       recipients: [
         {
-          id: '1',
+          id: 1,
           name: clientName,
           email: quoteData.client.email
         }
@@ -118,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           {
             type: "signature",
             required: true,
-            recipient_id: 1,
+            signer_id: 1,
             page: 1,
             x: 320,
             y: 680,
@@ -128,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           {
             type: "date",
             required: true,
-            recipient_id: 1,
+            signer_id: 1,
             page: 1,
             x: 320,
             y: 720,
