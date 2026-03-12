@@ -49,21 +49,24 @@ export function SignatureCanvas({ initialSignature, onSave }: SignatureCanvasPro
     let lastX = 0;
     let lastY = 0;
 
-    // Fonction pour obtenir les coordonnées
+    // Coordonnées relatives au canvas + scaling si le canvas est redimensionné en CSS
     const getCoordinates = (e: MouseEvent | TouchEvent): { x: number; y: number } => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      let clientX: number;
+      let clientY: number;
       if ('touches' in e) {
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        return {
-          x: touch.clientX - rect.left,
-          y: touch.clientY - rect.top,
-        };
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
       } else {
-        return {
-          x: e.offsetX,
-          y: e.offsetY,
-        };
+        clientX = e.clientX;
+        clientY = e.clientY;
       }
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY,
+      };
     };
 
     // Desktop - Mouse events
