@@ -252,6 +252,7 @@ function enrichMaterialsWithExisting(
       // Matériau trouvé dans les paramètres
       return {
         ...mat,
+        quantite,
         prixReel: true,
         materialId: match.material.id,
         confidence: match.confidence,
@@ -262,6 +263,7 @@ function enrichMaterialsWithExisting(
       // Matériau non trouvé
       return {
         ...mat,
+        quantite,
         prixReel: false,
         needsAdding: true,
         confidence: match?.confidence || 0
@@ -272,12 +274,22 @@ function enrichMaterialsWithExisting(
   // Recalculer le coût total des matériaux
   const totalMateriaux = enrichedMateriaux.reduce((sum, mat) => sum + (mat.prixTotal || 0), 0);
   
-  // Recalculer le coût total
+  // Recalculer le coût total (coût de base)
   const newCoutTotal = (estimation.detailsCouts?.mainOeuvre || 0) + 
                        totalMateriaux + 
                        (estimation.detailsCouts?.transport || 0) + 
                        (estimation.detailsCouts?.outillage || 0) + 
                        (estimation.detailsCouts?.gestionDechets || 0);
+
+  // Calcul de la marge et du bénéfice à partir d'un taux (par défaut 30 %)
+  const defaultMarginRate = 0.30;
+  const marginRate = (typeof (estimation as any).margeTaux === 'number' && (estimation as any).margeTaux > 0 && (estimation as any).margeTaux < 1)
+    ? (estimation as any).margeTaux
+    : (typeof estimation.marge === 'number' && estimation.marge > 0 && estimation.marge < 1)
+      ? estimation.marge
+      : defaultMarginRate;
+
+  const margeMontant = newCoutTotal * marginRate;
   
   return {
     ...estimation,
@@ -287,6 +299,9 @@ function enrichMaterialsWithExisting(
       materiaux: totalMateriaux
     },
     coutTotal: newCoutTotal,
-    benefice: newCoutTotal - (newCoutTotal - (estimation.marge || 0))
+    marge: margeMontant,
+    // Stocker aussi le taux appliqué pour l'affichage
+    ...( { margeTaux: marginRate } as any ),
+    benefice: margeMontant
   };
 }

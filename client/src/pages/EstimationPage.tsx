@@ -194,9 +194,16 @@ export default function EstimationPage() {
                          detailsCouts.transport + 
                          detailsCouts.outillage + 
                          detailsCouts.gestionDechets;
-    
-    const marge = analysisResults.marge || 0;
-    const benefice = newCoutTotal - (newCoutTotal - marge);
+
+    // Recalculer la marge et le bénéfice avec un taux de marge (par défaut 30 %)
+    const defaultMarginRate = 0.30;
+    const marginRate = (typeof (analysisResults as any).margeTaux === 'number' && (analysisResults as any).margeTaux > 0 && (analysisResults as any).margeTaux < 1)
+      ? (analysisResults as any).margeTaux
+      : (typeof analysisResults.marge === 'number' && analysisResults.marge > 0 && analysisResults.marge < 1)
+        ? analysisResults.marge
+        : defaultMarginRate;
+
+    const margeMontant = newCoutTotal * marginRate;
     
     setAnalysisResults({
       ...analysisResults,
@@ -205,7 +212,9 @@ export default function EstimationPage() {
         materiaux: totalMateriaux
       },
       coutTotal: newCoutTotal,
-      benefice: benefice
+      marge: margeMontant,
+      ...( { margeTaux: marginRate } as any ),
+      benefice: margeMontant
     });
   };
 
