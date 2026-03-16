@@ -68,7 +68,12 @@ export const MaterialEstimationCard = ({ material, onUpdatePrice, onAddToLibrary
         <div className="flex justify-between text-sm">
           <span className="text-white/70">Quantité:</span>
           <span className="font-mono text-white">
-            {typeof material.quantite === 'number' ? material.quantite : material.quantite} {material.unite}
+            {(material.quantiteAvecPerte != null && material.quantiteAvecPerte > 0
+              ? material.quantiteAvecPerte
+              : typeof material.quantite === 'number'
+                ? material.quantite
+                : parseFloat(String(material.quantite).replace(',', '.')) || 0
+            )} {material.unite}
           </span>
         </div>
         

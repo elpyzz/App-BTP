@@ -2410,7 +2410,6 @@ export default function EstimationPage() {
                           { value: 'carreleur', emoji: '🪣', label: 'Carreleur' },
                           { value: 'peintre', emoji: '🎨', label: 'Peintre' },
                           { value: 'macon', emoji: '🧱', label: 'Maçon' },
-                          { value: 'charpentier', emoji: '🪵', label: 'Charpentier' },
                           { value: 'chauffagiste', emoji: '🔥', label: 'Chauffagiste' },
                           { value: 'serrurier', emoji: '🔐', label: 'Serrurier' }
                         ].map((metier) => (
@@ -2539,8 +2538,8 @@ export default function EstimationPage() {
                     <Label className="text-white mb-3 block">Fourniture des matériaux *</Label>
                     <div className="choices-grid-3">
                       {[
-                        { value: 'artisan', emoji: '🧑‍🔧', label: 'L\'artisan fournit tout' },
-                        { value: 'client', emoji: '📦', label: 'Je fournis les matériaux' },
+                        { value: 'artisan', emoji: '🧑‍🔧', label: 'Je fournis tout' },
+                        { value: 'client', emoji: '📦', label: 'Le client fournit' },
                         { value: 'partage', emoji: '🤝', label: 'On partage' }
                       ].map((option) => (
                         <div
