@@ -269,25 +269,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
   
   // Route POST /estimate
-  // Middleware pour capturer les erreurs multer
+  // Accepter soit multipart (fichiers) soit JSON (images base64 envoyé par le frontend)
   apiRouter.post('/estimate', (req, res, next) => {
-    next();
-  }, upload.array('images', 10), async (req, res) => {
+    const isJson = req.headers['content-type']?.includes('application/json');
+    if (isJson) {
+      return next();
+    }
+    upload.array('images', 10)(req, res, next);
+  }, async (req, res) => {
     try {
-      const { surface, metier, materiaux, localisation, delai, existingMaterials } = req.body;
-      const files = req.files as Express.Multer.File[];
-      
-      // Validation stricte
-      if (!files || files.length === 0) {
-        return res.status(400).json({ error: 'Au moins une image est requise' });
+      const isJson = req.headers['content-type']?.includes('application/json');
+      let optimizedImages: string[];
+      let surface: string;
+      let metier: string;
+      let materiaux: string;
+      let localisation: string;
+      let delai: string;
+      let existingMaterials: string | undefined;
+
+      if (isJson && req.body && typeof req.body === 'object') {
+        // Payload JSON (frontend actuel) : images en base64, metier, reponsesMetier, contexteCommun
+        const { images: bodyImages, metier: bodyMetier, reponsesMetier, contexteCommun, existingMaterials: bodyExisting } = req.body;
+        if (!bodyImages || !Array.isArray(bodyImages) || bodyImages.length === 0) {
+          return res.status(400).json({ error: 'Au moins une image est requise' });
+        }
+        if (!bodyMetier) {
+          return res.status(400).json({ error: 'Métier requis' });
+        }
+        metier = bodyMetier;
+        const ctx = contexteCommun || {};
+        localisation = ctx.localisation || '';
+        delai = ctx.delai || '';
+        materiaux = ctx.precisions || (reponsesMetier ? JSON.stringify(reponsesMetier) : '') || '';
+        surface = (reponsesMetier && reponsesMetier.surface != null) ? String(reponsesMetier.surface) : 'Non précisée';
+        existingMaterials = bodyExisting;
+        // Images : déjà en base64 (éventuellement data:image/...;base64,xxx) → normaliser pour OpenAI
+        optimizedImages = bodyImages.map((img: string) => {
+          const base64 = typeof img === 'string' && img.includes(',') ? img.split(',')[1] : img;
+          return typeof base64 === 'string' ? base64 : '';
+        }).filter(Boolean);
+        if (optimizedImages.length === 0) {
+          return res.status(400).json({ error: 'Au moins une image valide est requise' });
+        }
+      } else {
+        // Payload multipart (Multer)
+        const { surface: bSurface, metier: bMetier, materiaux: bMateriaux, localisation: bLocalisation, delai: bDelai, existingMaterials: bExisting } = req.body;
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
+          return res.status(400).json({ error: 'Au moins une image est requise' });
+        }
+        if (!bSurface || !bMetier) {
+          return res.status(400).json({ error: 'Surface et métier sont requis' });
+        }
+        surface = bSurface;
+        metier = bMetier;
+        materiaux = bMateriaux || '';
+        localisation = bLocalisation || '';
+        delai = bDelai || '';
+        existingMaterials = bExisting;
+        optimizedImages = await optimizeImages(files);
       }
-      
-      if (!surface || !metier) {
-        return res.status(400).json({ error: 'Surface et métier sont requis' });
-      }
-      
-      // Optimisation des images avec Sharp
-      const optimizedImages = await optimizeImages(files);
+
       // Parse existingMaterials
       let materialsList: any[] = [];
       try {
@@ -295,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (e) {
         console.warn('Erreur parsing existingMaterials:', e);
       }
-      
+
       // Construction du prompt
       const userPrompt = buildPromptUtilisateur(surface, metier, materiaux || '', localisation || '', delai || '', materialsList);
       
