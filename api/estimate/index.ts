@@ -39,22 +39,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch(e) {}
     // #endregion
 
-    // Parser les données de la requête
-    const { surface, metier, materiaux, localisation, delai, existingMaterials, images } = req.body;
+    // Parser les données : accepter le payload frontend (reponsesMetier, contexteCommun) ou l'ancien (surface, metier, etc.)
+    const body = req.body as Record<string, unknown>;
+    const {
+      surface: bodySurface,
+      metier: bodyMetier,
+      materiaux: bodyMateriaux,
+      localisation: bodyLocalisation,
+      delai: bodyDelai,
+      existingMaterials,
+      images,
+      reponsesMetier,
+      contexteCommun
+    } = body;
 
-    // #region agent log
-    try {
-      fetch('http://127.0.0.1:7245/ingest/92008ec0-4865-46b1-a863-69afada2c59a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'estimate/index.ts:35',message:'Données parsées',data:{hasImages:!!images,imagesCount:images?.length||0,surface,metier},timestamp:Date.now(),runId:'run7',hypothesisId:'H4'})}).catch(()=>{});
-    } catch(e) {}
-    // #endregion
+    const ctx = (contexteCommun && typeof contexteCommun === 'object') ? (contexteCommun as Record<string, unknown>) : {};
+    const metier = typeof bodyMetier === 'string' ? bodyMetier : '';
+    const surface = typeof bodySurface === 'string' && bodySurface
+      ? bodySurface
+      : (reponsesMetier && typeof reponsesMetier === 'object' && (reponsesMetier as Record<string, unknown>).surface != null)
+        ? String((reponsesMetier as Record<string, unknown>).surface)
+        : 'Non précisée';
+    const localisation = typeof bodyLocalisation === 'string' ? bodyLocalisation : (ctx.localisation != null ? String(ctx.localisation) : '');
+    const delai = typeof bodyDelai === 'string' ? bodyDelai : (ctx.delai != null ? String(ctx.delai) : '');
+    const materiaux = typeof bodyMateriaux === 'string' ? bodyMateriaux : (ctx.precisions != null ? String(ctx.precisions) : (reponsesMetier ? JSON.stringify(reponsesMetier) : ''));
 
     // Validation des données
     if (!images || !Array.isArray(images) || images.length === 0) {
       return res.status(400).json({ error: 'Aucune image fournie' });
     }
 
-    if (!surface || !metier) {
-      return res.status(400).json({ error: 'Surface et métier requis' });
+    if (!metier) {
+      return res.status(400).json({ error: 'Métier requis' });
     }
 
     // Vérifier la clé API OpenAI
