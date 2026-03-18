@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { Invoice } from "./types";
 import type { Company } from "@/lib/quotes/types";
+import { generateFacturX } from "./factur-x";
 import { formatVatRate } from "./calculations";
 import { UNIT_LABELS } from "@/lib/quotes/defaults";
 
@@ -570,11 +571,22 @@ export async function generateInvoicePDF(invoice: Invoice, companyOverrides?: Pa
 }
 
 /**
- * Télécharge le PDF d'une facture.
+ * Télécharge le PDF d'une facture (Factur-X si possible, sinon PDF simple en fallback).
  * companyOverrides : logo/signature à jour pour afficher le logo paramétré même si la facture a été créée avant.
  */
 export async function downloadInvoicePDF(invoice: Invoice, companyOverrides?: Partial<Company>): Promise<void> {
   const doc = await generateInvoicePDF(invoice, companyOverrides);
   const fileName = `Facture_${invoice.invoiceNumber || invoice.id}_${(invoice.client?.name || "Client").replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-  doc.save(fileName);
+  try {
+    const facturXBytes = await generateFacturX(invoice, companyOverrides);
+    const blob = new Blob([facturXBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    doc.save(fileName);
+  }
 }
