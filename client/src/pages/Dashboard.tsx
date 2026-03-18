@@ -9,7 +9,8 @@ import {
   Building, 
   FileText, 
   Euro,
-  Plus
+  Plus,
+  X
 } from 'lucide-react'
 import { Link, useLocation } from 'wouter'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts'
@@ -26,6 +27,27 @@ import {
 
 export default function Dashboard() {
   const [location] = useLocation();
+  const [showFacturxPopup, setShowFacturxPopup] = useState(false);
+
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem("popup_facturx_v1_seen");
+      if (seen !== "true") {
+        setShowFacturxPopup(true);
+      }
+    } catch {
+      setShowFacturxPopup(true);
+    }
+  }, []);
+
+  const handleCloseFacturxPopup = () => {
+    try {
+      window.localStorage.setItem("popup_facturx_v1_seen", "true");
+    } catch {
+      // ignore storage errors
+    }
+    setShowFacturxPopup(false);
+  };
   
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -34,6 +56,49 @@ export default function Dashboard() {
         
         {/* User Account Button - fixed top right */}
         <UserAccountButton />
+
+        {showFacturxPopup && (
+          <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/70">
+            <div className="relative max-w-lg w-full mx-4">
+              <div className="bg-black/90 backdrop-blur-xl border border-amber-400/80 shadow-2xl rounded-2xl p-6 md:p-8 text-white">
+                <button
+                  type="button"
+                  onClick={handleCloseFacturxPopup}
+                  className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="text-2xl md:text-3xl">📄</div>
+                  <h2 className="text-lg md:text-xl font-semibold">
+                    Mise à jour — Facturation électronique 2027
+                  </h2>
+                </div>
+                <div className="space-y-3 text-sm md:text-base text-white/90">
+                  <p>
+                    Bonne nouvelle ! Vos factures sont désormais conformes au format Factur-X EN 16931, le standard imposé par la loi française à partir de septembre 2027.
+                  </p>
+                  <p>
+                    Vous n&apos;avez rien à faire — chaque facture générée depuis votre app intègre automatiquement les données structurées requises par l&apos;administration fiscale.
+                  </p>
+                  <p>
+                    Vous êtes en avance sur vos concurrents. ✅
+                  </p>
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <Button
+                    variant="default"
+                    onClick={handleCloseFacturxPopup}
+                    className="bg-amber-500 hover:bg-amber-400 text-black font-medium px-4 md:px-6"
+                  >
+                    J&apos;ai compris
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="ml-0 lg:ml-0 p-4 md:p-6 lg:p-8">
